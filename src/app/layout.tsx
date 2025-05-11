@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Button } from '@/components/ui/button';
 import { PanelLeft } from 'lucide-react';
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { BottomToolbar } from '@/components/layout/bottom-toolbar'; // Added import
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -52,12 +53,13 @@ export default function RootLayout({
                     The default sr-only text in SidebarTrigger is "Toggle Sidebar".
                 */}
               </header>
-              <main className="flex-1 p-4 sm:p-6 animate-slide-in-up min-w-0">
+              <main className="flex-1 p-4 sm:p-6 animate-slide-in-up min-w-0 pb-20 md:pb-6"> {/* Added padding-bottom for mobile */}
                 {children}
               </main>
             </SidebarInset>
           </SidebarProvider>
           <Toaster />
+          <BottomToolbar /> {/* Added BottomToolbar */}
         </ThemeProvider>
       </body>
     </html>
