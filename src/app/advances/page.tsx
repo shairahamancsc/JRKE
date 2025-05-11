@@ -21,7 +21,7 @@ export default function AdvancesPage() {
   useEffect(() => {
     setAdvances(initialAdvancePayments);
     setLaborers(initialLaborers);
-     if (window.location.hash === "#add") {
+     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; // Clear hash
     }
@@ -75,7 +75,7 @@ export default function AdvancesPage() {
     { 
       accessorKey: 'amount' as keyof AdvancePayment, 
       header: 'Amount',
-      cell: (item: AdvancePayment) => `$${item.amount.toFixed(2)}`
+      cell: (item: AdvancePayment) => `₹${item.amount.toFixed(2)}`
     },
   ];
 
