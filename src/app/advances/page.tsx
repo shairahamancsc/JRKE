@@ -83,9 +83,12 @@ export default function AdvancesPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col items-start sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold text-foreground">Advance Payments</h1>
-        <Button onClick={handleAddAdvance} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button 
+          onClick={handleAddAdvance} 
+          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground self-stretch sm:self-auto"
+        >
           <PlusCircle className="mr-2 h-5 w-5" /> Record Advance
         </Button>
       </div>
