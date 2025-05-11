@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
@@ -62,7 +61,7 @@ export default function LaboursPage() {
         photoPreview: photoFile ? labourToSave.photoPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.photoPreview : labourToSave.photoPreview),
         aadhaarPreview: aadhaarFile ? labourToSave.aadhaarPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.aadhaarPreview : labourToSave.aadhaarPreview),
         panPreview: panFile ? labourToSave.panPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.panPreview : labourToSave.panPreview),
-        licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.licensePreview : labourToSave.licensePreview),
+        licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.licensePreview : labourToSave.licensePreview),
     };
 
     if (editingLabour) {
