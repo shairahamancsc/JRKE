@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2 } from 'lucide-react';
 import { DailyEntryForm } from '@/components/daily-entry/daily-entry-form';
+import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
 import { DataTable } from '@/components/common/data-table';
 import type { DailyLogEntry, Laborer } from '@/lib/types';
 import { initialDailyLogEntries, initialLaborers } from '@/lib/data';
@@ -14,15 +15,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 export default function DailyEntryPage() {
-  const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
-  const [laborers, setLaborers] = useState<Laborer[]>([]);
+  const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>(initialDailyLogEntries);
+  const [laborers, setLaborers] = useState<Laborer[]>(initialLaborers);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<DailyLogEntry | undefined>(undefined);
+  // const [editingEntry, setEditingEntry] = useState<DailyLogEntry | undefined>(undefined); // Editing single entry removed for now
   const { toast } = useToast();
 
   useEffect(() => {
-    setDailyEntries(initialDailyLogEntries);
-    setLaborers(initialLaborers);
+    // Simulating data fetching
+    // setDailyEntries(initialDailyLogEntries);
+    // setLaborers(initialLaborers);
      if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; 
@@ -30,17 +32,17 @@ export default function DailyEntryPage() {
   }, []);
 
   const handleAddEntry = () => {
-    setEditingEntry(undefined);
+    // setEditingEntry(undefined); // Not needed for bulk add
     setIsFormOpen(true);
   };
 
-  const handleEditEntry = (entry: DailyLogEntry) => {
-    setEditingEntry(entry);
-    setIsFormOpen(true);
-  };
+  // const handleEditEntry = (entry: DailyLogEntry) => { // Single entry editing removed for this iteration
+  //   setEditingEntry(entry);
+  //   setIsFormOpen(true);
+  // };
 
   const handleDeleteEntry = (entryToDelete: DailyLogEntry) => {
-    setDailyEntries(dailyEntries.filter(e => e.id !== entryToDelete.id));
+    setDailyEntries(currentEntries => currentEntries.filter(e => e.id !== entryToDelete.id));
     const laborerName = getLaborerInfo(entryToDelete.laborerId).name;
     toast({
       title: "Daily Log Deleted",
@@ -49,23 +51,27 @@ export default function DailyEntryPage() {
     });
   };
 
-  const handleFormSubmit = (entry: DailyLogEntry) => {
-    if (editingEntry) {
-      setDailyEntries(dailyEntries.map(e => e.id === entry.id ? entry : e));
-      toast({ title: "Daily Log Updated", description: `Log for ${getLaborerInfo(entry.laborerId).name} has been updated.` });
-    } else {
-      // Add laborer name and photo to the entry for immediate display if not already present from form
-      const laborerInfo = getLaborerInfo(entry.laborerId);
-      const newEntry = {
-        ...entry,
+  const handleFormSubmit = (formData: BulkDailyLogEntriesFormData) => {
+    const newEntries: DailyLogEntry[] = formData.entries.map(entryData => {
+      const laborerInfo = getLaborerInfo(entryData.laborerId);
+      return {
+        id: crypto.randomUUID(),
+        laborerId: entryData.laborerId,
+        date: formData.date.toISOString(),
+        attendanceStatus: entryData.attendanceStatus,
+        advanceAmount: entryData.advanceAmount ? Number(entryData.advanceAmount) : undefined,
+        workLocation: entryData.attendanceStatus === 'present' ? entryData.workLocation : undefined,
         laborerName: laborerInfo.name,
         laborerPhotoPreview: laborerInfo.photoPreview,
       };
-      setDailyEntries([newEntry, ...dailyEntries]);
-      toast({ title: "Daily Log Added", description: `New log for ${laborerInfo.name} has been recorded.` });
-    }
+    });
+
+    setDailyEntries(currentEntries => [...newEntries, ...currentEntries]);
+    toast({ 
+      title: "Daily Logs Added", 
+      description: `${newEntries.length} log(s) for ${format(formData.date, 'PPP')} have been recorded.` 
+    });
     setIsFormOpen(false);
-    setEditingEntry(undefined);
   };
   
   const getLaborerInfo = (laborerId: string) => {
@@ -79,7 +85,9 @@ export default function DailyEntryPage() {
   const columns = [
     { 
       accessorKey: (item: DailyLogEntry) => {
-        const { name, photoPreview } = getLaborerInfo(item.laborerId);
+        // Use item.laborerName and item.laborerPhotoPreview if available from submission
+        const name = item.laborerName || getLaborerInfo(item.laborerId).name;
+        const photoPreview = item.laborerPhotoPreview || getLaborerInfo(item.laborerId).photoPreview;
         return (
           <div className="flex items-center gap-2">
             <Avatar className="h-10 w-10">
@@ -104,7 +112,9 @@ export default function DailyEntryPage() {
       header: 'Attendance',
       cell: (item: DailyLogEntry) => (
         <Badge variant={item.attendanceStatus === 'present' ? 'default' : 'secondary'}
-               className={item.attendanceStatus === 'present' ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : 'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30'}
+               className={item.attendanceStatus === 'present' ? 
+                            'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : 
+                            'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30'}
         >
           {item.attendanceStatus.charAt(0).toUpperCase() + item.attendanceStatus.slice(1)}
         </Badge>
@@ -125,14 +135,14 @@ export default function DailyEntryPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-foreground">Daily Labor Entries</h1>
         <Button onClick={handleAddEntry} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          <PlusCircle className="mr-2 h-5 w-5" /> Add Daily Log
+          <PlusCircle className="mr-2 h-5 w-5" /> Add Daily Logs
         </Button>
       </div>
 
       <DataTable
         columns={columns}
         data={dailyEntries}
-        onEdit={handleEditEntry}
+        // onEdit={handleEditEntry} // Single entry edit removed for now
         onDelete={handleDeleteEntry}
       />
 
@@ -140,11 +150,11 @@ export default function DailyEntryPage() {
         isOpen={isFormOpen}
         onClose={() => {
           setIsFormOpen(false);
-          setEditingEntry(undefined);
+          // setEditingEntry(undefined); // Not needed
         }}
         onSubmit={handleFormSubmit}
         laborers={laborers}
-        defaultValues={editingEntry}
+        // defaultValues={editingEntry} // Not passing defaultValues for bulk add
       />
     </div>
   );

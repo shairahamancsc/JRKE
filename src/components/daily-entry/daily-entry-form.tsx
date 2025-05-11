@@ -3,20 +3,19 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CalendarIcon, UserCircle2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -27,141 +26,94 @@ import {
 } from '@/components/ui/dialog';
 import type { DailyLogEntry, Laborer } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-const dailyLogEntrySchema = z.object({
-  laborerId: z.string().min(1, "Laborer is required"),
-  date: z.date({ required_error: "Date is required" }),
+const individualLaborerDailyEntrySchema = z.object({
+  laborerId: z.string(),
+  laborerName: z.string(), // For display
+  laborerPhotoPreview: z.string().optional(), // For display
   attendanceStatus: z.enum(['present', 'absent'], { required_error: "Attendance status is required" }),
-  advanceAmount: z.coerce.number().min(0.01, "Advance must be a positive amount if entered.").optional(),
+  advanceAmount: z.coerce.number().min(0.01, "Advance must be a positive amount if entered.").optional().or(z.literal('')),
   workLocation: z.string().optional(),
-})
-.refine(data => {
-    if (data.attendanceStatus === 'present' && (!data.workLocation || data.workLocation.trim() === '')) {
-        return false;
-    }
-    return true;
+}).refine(data => {
+  if (data.attendanceStatus === 'present' && (!data.workLocation || data.workLocation.trim() === '')) {
+    return false;
+  }
+  return true;
 }, {
-    message: "Work location is required if laborer is present.",
-    path: ["workLocation"],
+  message: "Work location is required if laborer is present.",
+  path: ["workLocation"],
 });
 
-type DailyLogEntryFormData = z.infer<typeof dailyLogEntrySchema>;
+const bulkDailyLogEntriesSchema = z.object({
+  date: z.date({ required_error: "Date is required" }),
+  entries: z.array(individualLaborerDailyEntrySchema),
+});
 
-interface DailyLogEntryFormProps {
+export type BulkDailyLogEntriesFormData = z.infer<typeof bulkDailyLogEntriesSchema>;
+
+interface DailyEntryFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: DailyLogEntry) => void;
+  onSubmit: (data: BulkDailyLogEntriesFormData) => void;
   laborers: Laborer[];
-  defaultValues?: DailyLogEntry;
 }
 
-export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers, defaultValues }: DailyLogEntryFormProps) {
-  const [selectedLaborerPhoto, setSelectedLaborerPhoto] = useState<string | undefined>(undefined);
-
-  const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = useForm<DailyLogEntryFormData>({
-    resolver: zodResolver(dailyLogEntrySchema),
+export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEntryFormProps) {
+  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<BulkDailyLogEntriesFormData>({
+    resolver: zodResolver(bulkDailyLogEntriesSchema),
     defaultValues: {
-      laborerId: defaultValues?.laborerId || '',
-      date: defaultValues?.date ? parseISO(defaultValues.date) : new Date(),
-      attendanceStatus: defaultValues?.attendanceStatus || 'present',
-      advanceAmount: defaultValues?.advanceAmount || undefined,
-      workLocation: defaultValues?.workLocation || '',
+      date: new Date(),
+      entries: [],
     },
   });
 
-  const watchedLaborerId = watch('laborerId');
-  const watchedAttendanceStatus = watch('attendanceStatus');
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "entries",
+  });
+
   const selectedDate = watch('date');
 
   useEffect(() => {
-    if (defaultValues) {
+    if (isOpen) {
       reset({
-        laborerId: defaultValues.laborerId,
-        date: parseISO(defaultValues.date),
-        attendanceStatus: defaultValues.attendanceStatus,
-        advanceAmount: defaultValues.advanceAmount,
-        workLocation: defaultValues.workLocation,
-      });
-      const laborer = laborers.find(l => l.id === defaultValues.laborerId);
-      setSelectedLaborerPhoto(laborer?.photoPreview);
-    } else {
-      reset({
-        laborerId: '',
         date: new Date(),
-        attendanceStatus: 'present',
-        advanceAmount: undefined,
-        workLocation: '',
+        entries: laborers.map(laborer => ({
+          laborerId: laborer.id,
+          laborerName: laborer.name || 'Unknown Laborer',
+          laborerPhotoPreview: laborer.photoPreview,
+          attendanceStatus: 'present',
+          advanceAmount: undefined,
+          workLocation: '',
+        })),
       });
-      setSelectedLaborerPhoto(undefined);
     }
-  }, [defaultValues, reset, isOpen, laborers]);
+  }, [isOpen, laborers, reset]);
 
-  useEffect(() => {
-    if (watchedLaborerId) {
-      const laborer = laborers.find(l => l.id === watchedLaborerId);
-      setSelectedLaborerPhoto(laborer?.photoPreview);
-    } else {
-      setSelectedLaborerPhoto(undefined);
-    }
-  }, [watchedLaborerId, laborers]);
-  
-  // Clear workLocation if absent
-  useEffect(() => {
-    if (watchedAttendanceStatus === 'absent') {
-      setValue('workLocation', '');
-    }
-  }, [watchedAttendanceStatus, setValue]);
-
-  const handleFormSubmit: SubmitHandler<DailyLogEntryFormData> = (data) => {
-    const selectedLaborer = laborers.find(l => l.id === data.laborerId);
-    onSubmit({
-      id: defaultValues?.id || crypto.randomUUID(),
+  const handleFormSubmit: SubmitHandler<BulkDailyLogEntriesFormData> = (data) => {
+    const processedData = {
       ...data,
-      date: data.date.toISOString(),
-      advanceAmount: data.advanceAmount || undefined, // Ensure undefined if not provided
-      workLocation: data.attendanceStatus === 'present' ? data.workLocation : undefined, // Clear location if absent
-      laborerName: selectedLaborer?.name,
-      laborerPhotoPreview: selectedLaborer?.photoPreview,
-    });
+      entries: data.entries.map(entry => ({
+        ...entry,
+        advanceAmount: entry.advanceAmount === '' ? undefined : Number(entry.advanceAmount),
+        workLocation: entry.attendanceStatus === 'present' ? entry.workLocation : undefined,
+      })),
+    };
+    onSubmit(processedData);
     onClose();
   };
+  
+  const watchedEntryAttendanceStatus = watch('entries');
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{defaultValues ? 'Edit Daily Log' : 'Add Daily Log'}</DialogTitle>
+          <DialogTitle>Add Daily Logs for All Laborers</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
-          <div>
-            <Label htmlFor="laborerId">Laborer</Label>
-            <Controller
-              name="laborerId"
-              control={control}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <SelectTrigger id="laborerId" className={errors.laborerId ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Select a laborer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {laborers.map(laborer => (
-                      <SelectItem key={laborer.id} value={laborer.id}>
-                        {laborer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.laborerId && <p className="text-xs text-destructive mt-1">{errors.laborerId.message}</p>}
-            {selectedLaborerPhoto && (
-              <Avatar className="h-16 w-16 mt-2">
-                <AvatarImage src={selectedLaborerPhoto} alt="Laborer photo" data-ai-hint="person" />
-                <AvatarFallback><UserCircle2 className="h-10 w-10 text-muted-foreground" /></AvatarFallback>
-              </Avatar>
-            )}
-          </div>
-
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
           <div>
             <Label htmlFor="date">Date</Label>
             <Controller
@@ -196,63 +148,91 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers, defaultVal
             {errors.date && <p className="text-xs text-destructive mt-1">{errors.date.message}</p>}
           </div>
 
-          <div>
-            <Label>Attendance Status</Label>
-            <Controller
-              name="attendanceStatus"
-              control={control}
-              render={({ field }) => (
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex space-x-4 mt-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="present" id="present" />
-                    <Label htmlFor="present">Present</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="absent" id="absent" />
-                    <Label htmlFor="absent">Absent</Label>
-                  </div>
-                </RadioGroup>
-              )}
-            />
-            {errors.attendanceStatus && <p className="text-xs text-destructive mt-1">{errors.attendanceStatus.message}</p>}
-          </div>
-          
-          {watchedAttendanceStatus === 'present' && (
-            <div>
-              <Label htmlFor="workLocation">Work Location</Label>
-              <Textarea 
-                id="workLocation" 
-                {...register('workLocation')} 
-                className={errors.workLocation ? 'border-destructive' : ''}
-                placeholder="Enter work location/details"
-              />
-              {errors.workLocation && <p className="text-xs text-destructive mt-1">{errors.workLocation.message}</p>}
-            </div>
-          )}
+          <ScrollArea className="h-[50vh] pr-3">
+            <div className="space-y-6">
+              {fields.map((field, index) => {
+                const currentAttendanceStatus = watchedEntryAttendanceStatus?.[index]?.attendanceStatus;
+                return (
+                  <Card key={field.id} className="p-4 shadow-sm">
+                    <div className="flex items-center mb-3">
+                      <Avatar className="h-12 w-12 mr-3">
+                        <AvatarImage src={field.laborerPhotoPreview} alt={field.laborerName} data-ai-hint="person" />
+                        <AvatarFallback><UserCircle2 className="h-8 w-8 text-muted-foreground" /></AvatarFallback>
+                      </Avatar>
+                      <h3 className="text-lg font-medium text-foreground">{field.laborerName}</h3>
+                    </div>
 
-          <div>
-            <Label htmlFor="advanceAmount">Advance Amount (Optional)</Label>
-            <Input 
-              id="advanceAmount" 
-              type="number" 
-              step="0.01" 
-              {...register('advanceAmount')} 
-              className={errors.advanceAmount ? 'border-destructive' : ''}
-              placeholder="e.g., 100.00"
-            />
-            {errors.advanceAmount && <p className="text-xs text-destructive mt-1">{errors.advanceAmount.message}</p>}
-          </div>
+                    {/* Hidden laborerId input, not strictly needed if field object already has it from defaultValues */}
+                    <input type="hidden" {...control.register(`entries.${index}.laborerId`)} />
+
+
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Attendance Status</Label>
+                        <Controller
+                          name={`entries.${index}.attendanceStatus`}
+                          control={control}
+                          render={({ field: controllerField }) => (
+                            <RadioGroup
+                              onValueChange={controllerField.onChange}
+                              defaultValue={controllerField.value}
+                              className="flex space-x-4 mt-1"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="present" id={`present-${field.id}`} />
+                                <Label htmlFor={`present-${field.id}`}>Present</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="absent" id={`absent-${field.id}`} />
+                                <Label htmlFor={`absent-${field.id}`}>Absent</Label>
+                              </div>
+                            </RadioGroup>
+                          )}
+                        />
+                        {errors.entries?.[index]?.attendanceStatus && <p className="text-xs text-destructive mt-1">{errors.entries?.[index]?.attendanceStatus?.message}</p>}
+                      </div>
+                      
+                      {currentAttendanceStatus === 'present' && (
+                        <div>
+                          <Label htmlFor={`workLocation-${field.id}`}>Work Location</Label>
+                          <Textarea 
+                            id={`workLocation-${field.id}`}
+                            {...control.register(`entries.${index}.workLocation`)}
+                            className={errors.entries?.[index]?.workLocation ? 'border-destructive' : ''}
+                            placeholder="Enter work location/details"
+                          />
+                          {errors.entries?.[index]?.workLocation && <p className="text-xs text-destructive mt-1">{errors.entries?.[index]?.workLocation?.message}</p>}
+                        </div>
+                      )}
+
+                      <div>
+                        <Label htmlFor={`advanceAmount-${field.id}`}>Advance Amount (Optional)</Label>
+                        <Input 
+                          id={`advanceAmount-${field.id}`}
+                          type="number" 
+                          step="0.01" 
+                          {...control.register(`entries.${index}.advanceAmount`)}
+                          className={errors.entries?.[index]?.advanceAmount ? 'border-destructive' : ''}
+                          placeholder="e.g., 100.00"
+                        />
+                        {errors.entries?.[index]?.advanceAmount && <p className="text-xs text-destructive mt-1">{errors.entries?.[index]?.advanceAmount?.message}</p>}
+                      </div>
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          </ScrollArea>
+          
+          {errors.entries && typeof errors.entries === 'string' && <p className="text-xs text-destructive mt-1">{errors.entries.message}</p>}
+
 
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>
             <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              {defaultValues ? 'Save Changes' : 'Save Log'}
+              Save All Logs
             </Button>
           </DialogFooter>
         </form>
@@ -260,3 +240,9 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers, defaultVal
     </Dialog>
   );
 }
+
+// Add Card component if not already globally available or imported from ui
+// For simplicity, assuming Card, CardHeader, CardTitle, CardContent etc. are available
+// If not, basic div styling can be used or import shadcn Card.
+// Added shadcn Card and ScrollArea imports.
+import { Card } from '@/components/ui/card';
