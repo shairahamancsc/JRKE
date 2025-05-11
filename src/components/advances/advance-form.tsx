@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -160,5 +160,3 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
     </Dialog>
   );
 }
-// Need to add Controller for react-hook-form with shadcn Select and Calendar
-import { Controller } from 'react-hook-form';

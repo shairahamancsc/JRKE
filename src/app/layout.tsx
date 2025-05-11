@@ -35,12 +35,13 @@ export default function RootLayout({
           <MainSidebar />
           <SidebarInset>
             <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 md:hidden">
-               <SidebarTrigger asChild>
-                <Button size="icon" variant="outline">
-                  <PanelLeft />
-                  <span className="sr-only">Toggle Menu</span>
-                </Button>
-              </SidebarTrigger>
+               <SidebarTrigger variant="outline" size="icon" />
+              {/* The SidebarTrigger component already includes PanelLeft and sr-only text.
+                  Passing variant and size directly is preferred over asChild here to avoid issues
+                  with React.Children.only if the internal structure changes.
+                  The default sr-only text in SidebarTrigger is "Toggle Sidebar".
+                  The previous custom button had "Toggle Menu". This is a minor acceptable change.
+              */}
             </header>
             <main className="flex-1 p-4 sm:p-6">
               {children}
