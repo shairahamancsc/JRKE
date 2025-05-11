@@ -1,16 +1,18 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { WorkLogForm } from '@/components/work-logs/work-log-form';
+import { PlusCircle, Loader2 } from 'lucide-react';
+// import { WorkLogForm } from '@/components/work-logs/work-log-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { WorkLog, Laborer } from '@/lib/types';
 import { initialWorkLogs, initialLaborers } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
+
+const WorkLogForm = lazy(() => import('@/components/work-logs/work-log-form').then(module => ({ default: module.WorkLogForm })));
 
 export default function WorkLogsPage() {
   const [workLogs, setWorkLogs] = useState<WorkLog[]>([]);
@@ -22,7 +24,7 @@ export default function WorkLogsPage() {
   useEffect(() => {
     setWorkLogs(initialWorkLogs);
     setLaborers(initialLaborers);
-     if (window.location.hash === "#add") {
+     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; // Clear hash
     }
@@ -48,7 +50,6 @@ export default function WorkLogsPage() {
   };
 
   const handleFormSubmit = async (workLog: WorkLog) => {
-    // If there's a new pictureFile, handle its preview generation
     if (workLog.pictureFile) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -116,16 +117,27 @@ export default function WorkLogsPage() {
         onDelete={handleDeleteWorkLog}
       />
 
-      <WorkLogForm
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setEditingWorkLog(undefined);
-        }}
-        onSubmit={handleFormSubmit}
-        laborers={laborers}
-        defaultValues={editingWorkLog}
-      />
+      {isFormOpen && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-background/30 backdrop-blur-sm flex items-center justify-center z-[60]">
+            <div className="bg-card p-6 rounded-lg shadow-xl flex items-center space-x-2">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Loading Form...</span>
+            </div>
+          </div>
+        }>
+          <WorkLogForm
+            isOpen={isFormOpen}
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditingWorkLog(undefined);
+            }}
+            onSubmit={handleFormSubmit}
+            laborers={laborers}
+            defaultValues={editingWorkLog}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

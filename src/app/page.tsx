@@ -1,35 +1,28 @@
 
-"use client";
+// No "use client" needed, this is a Server Component by default
 
-import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, DollarSign, ClipboardList, PlusCircle, ArrowRight } from 'lucide-react';
-import { initialLaborers, initialAdvancePayments, initialWorkLogs } from '@/lib/data'; // For counts
+import { initialLaborers, initialAdvancePayments, initialWorkLogs } from '@/lib/data';
 
 export default function DashboardPage() {
-  const [laborerCount, setLaborerCount] = useState(0);
-  const [advanceCount, setAdvanceCount] = useState(0);
-  const [workLogCount, setWorkLogCount] = useState(0);
-
-  useEffect(() => {
-    // In a real app, you'd fetch this data. Here, we use mock data lengths.
-    setLaborerCount(initialLaborers.length);
-    setAdvanceCount(initialAdvancePayments.length);
-    setWorkLogCount(initialWorkLogs.length);
-  }, []);
+  // Data processing is now done on the server during rendering
+  const laborerCount = initialLaborers.length;
+  const advanceCount = initialAdvancePayments.length;
+  const workLogCount = initialWorkLogs.length; // This refers to all work logs from mock data
 
   const summaryCards = [
     { title: "Total Laborers", value: laborerCount, icon: Users, href: "/laborers", color: "text-primary" },
     { title: "Total Advances", value: advanceCount, icon: DollarSign, href: "/advances", color: "text-accent" },
-    { title: "Work Logs Today", value: workLogCount, icon: ClipboardList, href: "/work-logs", color: "text-secondary-foreground" }, // Assuming workLogCount is for today
+    { title: "Work Logs Entries", value: workLogCount, icon: ClipboardList, href: "/work-logs", color: "text-secondary-foreground" }, // Clarified label
   ];
 
   const quickLinks = [
     { title: "Add New Laborer", href: "/laborers#add", icon: PlusCircle },
     { title: "Record Advance", href: "/advances#add", icon: PlusCircle },
-    { title: "Log Daily Work", href: "/work-logs#add", icon: PlusCircle },
+    { title: "Log Daily Work", href: "/daily-entry#add", icon: PlusCircle }, // Corrected from work-logs#add to daily-entry#add based on UI
     { title: "Generate Report", href: "/reports", icon: ArrowRight },
   ];
 
@@ -69,3 +62,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

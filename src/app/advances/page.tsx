@@ -1,15 +1,17 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { AdvanceForm } from '@/components/advances/advance-form';
+import { PlusCircle, Loader2 } from 'lucide-react';
+// import { AdvanceForm } from '@/components/advances/advance-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { AdvancePayment, Laborer } from '@/lib/types';
 import { initialAdvancePayments, initialLaborers } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
+
+const AdvanceForm = lazy(() => import('@/components/advances/advance-form').then(module => ({ default: module.AdvanceForm })));
 
 export default function AdvancesPage() {
   const [advances, setAdvances] = useState<AdvancePayment[]>([]);
@@ -95,16 +97,27 @@ export default function AdvancesPage() {
         onDelete={handleDeleteAdvance}
       />
 
-      <AdvanceForm
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setEditingAdvance(undefined);
-        }}
-        onSubmit={handleFormSubmit}
-        laborers={laborers}
-        defaultValues={editingAdvance}
-      />
+      {isFormOpen && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-background/30 backdrop-blur-sm flex items-center justify-center z-[60]">
+            <div className="bg-card p-6 rounded-lg shadow-xl flex items-center space-x-2">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Loading Form...</span>
+            </div>
+          </div>
+        }>
+          <AdvanceForm
+            isOpen={isFormOpen}
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditingAdvance(undefined);
+            }}
+            onSubmit={handleFormSubmit}
+            laborers={laborers}
+            defaultValues={editingAdvance}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

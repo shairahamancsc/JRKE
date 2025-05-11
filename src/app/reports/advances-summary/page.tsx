@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,9 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { MarkdownDisplay } from '@/components/reports/markdown-display';
+// import { MarkdownDisplay } from '@/components/reports/markdown-display'; // Lazy loaded
 import { summarizeAdvancePaymentsAction } from '@/lib/actions';
 import { useToast } from "@/hooks/use-toast";
+
+const MarkdownDisplay = lazy(() => import('@/components/reports/markdown-display').then(module => ({ default: module.MarkdownDisplay })));
 
 const advanceSummarySchema = z.object({
   laborDetails: z.string().min(10, "Laborer details are required."),
@@ -128,7 +130,16 @@ export default function AdvanceSummaryPage() {
         </Card>
       )}
 
-      {summary && <MarkdownDisplay markdownContent={summary} />}
+      {summary && (
+        <Suspense fallback={
+          <div className="mt-6 max-w-2xl mx-auto p-6 flex items-center justify-center bg-card rounded-lg shadow-lg">
+            <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+            <span>Loading Report...</span>
+          </div>
+        }>
+          <MarkdownDisplay markdownContent={summary} />
+        </Suspense>
+      )}
     </div>
   );
 }

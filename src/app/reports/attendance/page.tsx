@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,9 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { MarkdownDisplay } from '@/components/reports/markdown-display';
+// import { MarkdownDisplay } from '@/components/reports/markdown-display'; // Lazy loaded
 import { generateAttendanceReportAction } from '@/lib/actions';
 import { useToast } from "@/hooks/use-toast";
+
+const MarkdownDisplay = lazy(() => import('@/components/reports/markdown-display').then(module => ({ default: module.MarkdownDisplay })));
 
 const attendanceReportSchema = z.object({
   workLogs: z.string().min(10, "Work logs are required and should be detailed."),
@@ -52,32 +54,32 @@ export default function AttendanceReportPage() {
         if (result.success && result.report) {
           setReport(result.report);
           toast({ title: "Report Generated", description: "Attendance report successfully generated." });
-          reset(); // Reset form after successful submission
+          reset(); 
         } else {
           setError(result.error || "Failed to generate report.");
           toast({ title: "Error", description: result.error || "Failed to generate report.", variant: "destructive" });
         }
+        setIsLoading(false); // Moved here from useEffect
       };
       reader.onerror = () => {
         setError("Failed to read the image file.");
         toast({ title: "Error", description: "Failed to read the image file.", variant: "destructive" });
-        setIsLoading(false);
+        setIsLoading(false); // Moved here from useEffect
       };
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred.";
       setError(errorMessage);
       toast({ title: "Error", description: errorMessage, variant: "destructive" });
-    } finally {
-      // setIsLoading(false) will be called in reader.onload or reader.onerror
+      setIsLoading(false); // Ensure loading stops on synchronous error
     }
   };
   
-  // This useEffect is to ensure setIsLoading(false) is called after file reading completes
-  useEffect(() => {
-    if (report !== null || error !== null) {
-      setIsLoading(false);
-    }
-  }, [report, error]);
+  // useEffect for setIsLoading can be removed as it's handled in onload/onerror and finally for other errors.
+  // useEffect(() => {
+  //   if (report !== null || error !== null) {
+  //     setIsLoading(false);
+  //   }
+  // }, [report, error]);
 
 
   return (
@@ -140,8 +142,16 @@ export default function AttendanceReportPage() {
         </Card>
       )}
 
-      {report && <MarkdownDisplay markdownContent={report} />}
+      {report && (
+        <Suspense fallback={
+          <div className="mt-6 max-w-2xl mx-auto p-6 flex items-center justify-center bg-card rounded-lg shadow-lg">
+            <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+            <span>Loading Report...</span>
+          </div>
+        }>
+          <MarkdownDisplay markdownContent={report} />
+        </Suspense>
+      )}
     </div>
   );
 }
-

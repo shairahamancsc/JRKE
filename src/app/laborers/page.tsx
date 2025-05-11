@@ -1,16 +1,18 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+// import Image from 'next/image'; // Not directly used, AvatarImage handles it
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UserCircle2 } from 'lucide-react';
-import { LaborerForm } from '@/components/laborers/laborer-form';
+import { PlusCircle, UserCircle2, Loader2 } from 'lucide-react';
+// import { LaborerForm } from '@/components/laborers/laborer-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { Laborer } from '@/lib/types';
 import { initialLaborers } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const LaborerForm = lazy(() => import('@/components/laborers/laborer-form').then(module => ({ default: module.LaborerForm })));
 
 export default function LaborersPage() {
   const [laborers, setLaborers] = useState<Laborer[]>([]);
@@ -19,13 +21,11 @@ export default function LaborersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load initial data or fetch from an API
     setLaborers(initialLaborers);
     
-    // Check for #add in URL to open form
-    if (window.location.hash === "#add") {
+    if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
-      window.location.hash = ""; // Clear hash
+      window.location.hash = ""; 
     }
   }, []);
 
@@ -106,15 +106,26 @@ export default function LaborersPage() {
         onDelete={handleDeleteLaborer}
       />
 
-      <LaborerForm
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setEditingLaborer(undefined);
-        }}
-        onSubmit={handleFormSubmit}
-        defaultValues={editingLaborer}
-      />
+      {isFormOpen && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-background/30 backdrop-blur-sm flex items-center justify-center z-[60]">
+            <div className="bg-card p-6 rounded-lg shadow-xl flex items-center space-x-2">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Loading Form...</span>
+            </div>
+          </div>
+        }>
+          <LaborerForm
+            isOpen={isFormOpen}
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditingLaborer(undefined);
+            }}
+            onSubmit={handleFormSubmit}
+            defaultValues={editingLaborer}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

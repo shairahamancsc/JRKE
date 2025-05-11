@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UserCircle2 } from 'lucide-react';
-import { DailyEntryForm } from '@/components/daily-entry/daily-entry-form';
+import { PlusCircle, UserCircle2, Loader2 } from 'lucide-react';
+// import { DailyEntryForm } from '@/components/daily-entry/daily-entry-form'; // Lazy loaded
 import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
 import { DataTable } from '@/components/common/data-table';
 import type { DailyLogEntry, Laborer } from '@/lib/types';
@@ -14,17 +14,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
+const DailyEntryForm = lazy(() => import('@/components/daily-entry/daily-entry-form').then(module => ({ default: module.DailyEntryForm })));
+
 export default function DailyEntryPage() {
   const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>(initialDailyLogEntries);
   const [laborers, setLaborers] = useState<Laborer[]>(initialLaborers);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  // const [editingEntry, setEditingEntry] = useState<DailyLogEntry | undefined>(undefined); // Editing single entry removed for now
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulating data fetching
-    // setDailyEntries(initialDailyLogEntries);
-    // setLaborers(initialLaborers);
      if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; 
@@ -32,14 +30,8 @@ export default function DailyEntryPage() {
   }, []);
 
   const handleAddEntry = () => {
-    // setEditingEntry(undefined); // Not needed for bulk add
     setIsFormOpen(true);
   };
-
-  // const handleEditEntry = (entry: DailyLogEntry) => { // Single entry editing removed for this iteration
-  //   setEditingEntry(entry);
-  //   setIsFormOpen(true);
-  // };
 
   const handleDeleteEntry = (entryToDelete: DailyLogEntry) => {
     setDailyEntries(currentEntries => currentEntries.filter(e => e.id !== entryToDelete.id));
@@ -85,7 +77,6 @@ export default function DailyEntryPage() {
   const columns = [
     { 
       accessorKey: (item: DailyLogEntry) => {
-        // Use item.laborerName and item.laborerPhotoPreview if available from submission
         const name = item.laborerName || getLaborerInfo(item.laborerId).name;
         const photoPreview = item.laborerPhotoPreview || getLaborerInfo(item.laborerId).photoPreview;
         return (
@@ -142,20 +133,28 @@ export default function DailyEntryPage() {
       <DataTable
         columns={columns}
         data={dailyEntries}
-        // onEdit={handleEditEntry} // Single entry edit removed for now
         onDelete={handleDeleteEntry}
       />
 
-      <DailyEntryForm
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          // setEditingEntry(undefined); // Not needed
-        }}
-        onSubmit={handleFormSubmit}
-        laborers={laborers}
-        // defaultValues={editingEntry} // Not passing defaultValues for bulk add
-      />
+      {isFormOpen && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-background/30 backdrop-blur-sm flex items-center justify-center z-[60]">
+            <div className="bg-card p-6 rounded-lg shadow-xl flex items-center space-x-2">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Loading Form...</span>
+            </div>
+          </div>
+        }>
+          <DailyEntryForm
+            isOpen={isFormOpen}
+            onClose={() => {
+              setIsFormOpen(false);
+            }}
+            onSubmit={handleFormSubmit}
+            laborers={laborers}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
