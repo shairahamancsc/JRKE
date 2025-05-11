@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -123,6 +122,7 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
+                      id="date" // Added id to match Label htmlFor
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
@@ -246,4 +246,3 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
 // If not, basic div styling can be used or import shadcn Card.
 // Added shadcn Card and ScrollArea imports.
 import { Card } from '@/components/ui/card';
-

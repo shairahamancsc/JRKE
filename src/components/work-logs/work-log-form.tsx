@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -149,6 +148,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, laborers, defaultValues
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
+                      id="date" // Added id to match Label htmlFor
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
@@ -191,9 +191,10 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, laborers, defaultValues
             <Input id="pictureFile" type="file" accept="image/*" onChange={handleFileChange} className="file:text-primary file:font-semibold"/>
             {picturePreview && (
               <div className="mt-2">
-                <Image src={picturePreview} alt="Picture preview" width={100} height={100} className="rounded-md object-cover" data-ai-hint="construction worker" />
+                <Image src={picturePreview} alt="Picture preview" width={100} height={100} className="rounded-md object-cover" data-ai-hint="construction site" />
               </div>
             )}
+            {errors.pictureFile && <p className="text-xs text-destructive mt-1">{errors.pictureFile.message}</p>}
           </div>
 
           <DialogFooter>

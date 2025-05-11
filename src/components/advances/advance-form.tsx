@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -116,6 +115,7 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
+                      id="date" // Added id to match Label htmlFor
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
