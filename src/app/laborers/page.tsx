@@ -2,13 +2,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, UserCircle2 } from 'lucide-react';
 import { LaborerForm } from '@/components/laborers/laborer-form';
 import { DataTable } from '@/components/common/data-table';
 import type { Laborer } from '@/lib/types';
 import { initialLaborers } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function LaborersPage() {
   const [laborers, setLaborers] = useState<Laborer[]>([]);
@@ -46,19 +48,44 @@ export default function LaborersPage() {
     });
   };
 
-  const handleFormSubmit = (laborer: Laborer) => {
-    if (editingLaborer) {
-      setLaborers(laborers.map(l => l.id === laborer.id ? laborer : l));
-      toast({ title: "Laborer Updated", description: `${laborer.name}'s details have been updated.` });
+  const handleFormSubmit = async (laborerData: Laborer) => {
+    if (laborerData.photoFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newLaborer = { ...laborerData, photoPreview: reader.result as string };
+        saveLaborer(newLaborer);
+      };
+      reader.readAsDataURL(laborerData.photoFile);
     } else {
-      setLaborers([laborer, ...laborers]);
-      toast({ title: "Laborer Added", description: `${laborer.name} has been added.` });
+      saveLaborer(laborerData);
+    }
+  };
+
+  const saveLaborer = (laborerToSave: Laborer) => {
+    if (editingLaborer) {
+      setLaborers(laborers.map(l => l.id === laborerToSave.id ? laborerToSave : l));
+      toast({ title: "Laborer Updated", description: `${laborerToSave.name}'s details have been updated.` });
+    } else {
+      setLaborers([laborerToSave, ...laborers]);
+      toast({ title: "Laborer Added", description: `${laborerToSave.name} has been added.` });
     }
     setIsFormOpen(false);
     setEditingLaborer(undefined);
   };
 
   const columns = [
+    { 
+      accessorKey: 'photoPreview' as keyof Laborer, 
+      header: 'Photo',
+      cell: (item: Laborer) => (
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={item.photoPreview} alt={item.name} data-ai-hint="person" />
+          <AvatarFallback>
+            <UserCircle2 className="h-6 w-6 text-muted-foreground" />
+          </AvatarFallback>
+        </Avatar>
+      )
+    },
     { accessorKey: 'name' as keyof Laborer, header: 'Name' },
     { accessorKey: 'details' as keyof Laborer, header: 'Details' },
   ];

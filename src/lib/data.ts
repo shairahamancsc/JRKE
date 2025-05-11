@@ -2,9 +2,9 @@
 import type { Laborer, AdvancePayment, WorkLog } from './types';
 
 export const initialLaborers: Laborer[] = [
-  { id: '1', name: 'John Doe', details: 'Skilled Carpenter, 5 years experience' },
-  { id: '2', name: 'Jane Smith', details: 'General Laborer, reliable' },
-  { id: '3', name: 'Mike Johnson', details: 'Electrician, licensed' },
+  { id: '1', name: 'John Doe', details: 'Skilled Carpenter, 5 years experience', photoPreview: 'https://picsum.photos/seed/laborer1/100/100' },
+  { id: '2', name: 'Jane Smith', details: 'General Laborer, reliable', photoPreview: 'https://picsum.photos/seed/laborer2/100/100' },
+  { id: '3', name: 'Mike Johnson', details: 'Electrician, licensed', photoPreview: 'https://picsum.photos/seed/laborer3/100/100' },
 ];
 
 export const initialAdvancePayments: AdvancePayment[] = [

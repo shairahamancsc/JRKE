@@ -3,6 +3,8 @@ export interface Laborer {
   id: string;
   name: string;
   details: string; // e.g., contact, trade, skill level
+  photoPreview?: string; // Base64 or URL for preview
+  photoFile?: File; // To hold the actual file for upload
 }
 
 export interface AdvancePayment {
