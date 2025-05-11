@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, DollarSign, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck } from 'lucide-react';
+import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck } from 'lucide-react'; // Changed DollarSign to IndianRupee
 import { initialLaborers, initialAdvancePayments, initialWorkLogs } from '@/lib/data';
 
 export default function DashboardPage() {
@@ -15,7 +15,7 @@ export default function DashboardPage() {
 
   const summaryCards = [
     { title: "Total Laborers", value: laborerCount, icon: Users, href: "/laborers", color: "text-primary" },
-    { title: "Total Advances", value: advanceCount, icon: DollarSign, href: "/advances", color: "text-accent" },
+    { title: "Total Advances", value: advanceCount, icon: IndianRupee, href: "/advances", color: "text-accent" }, // Changed DollarSign to IndianRupee
     { title: "Work Logs Entries", value: workLogCount, icon: ClipboardList, href: "/work-logs", color: "text-secondary-foreground" }, // Clarified label
   ];
 

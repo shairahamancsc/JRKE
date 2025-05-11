@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, DollarSign, ArrowRight, ClipboardList } from 'lucide-react';
+import { FileText, IndianRupee, ArrowRight, ClipboardList } from 'lucide-react';
 
 export default function ReportsPage() {
   const reportTypes = [
@@ -16,7 +16,7 @@ export default function ReportsPage() {
       title: "Advance Payments Summary",
       description: "Query and get an AI-generated summary of total advances paid to labor.",
       href: "/reports/advances-summary",
-      icon: DollarSign,
+      icon: IndianRupee, // Changed from DollarSign
     },
   ];
 
@@ -52,3 +52,4 @@ export default function ReportsPage() {
     </div>
   );
 }
+
