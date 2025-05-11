@@ -176,7 +176,7 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
                             <RadioGroup
                               onValueChange={controllerField.onChange}
                               defaultValue={controllerField.value}
-                              className="flex space-x-4 mt-1"
+                              className="flex flex-wrap gap-x-4 gap-y-2 mt-1"
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="present" id={`present-${field.id}`} />
@@ -246,3 +246,4 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
 // If not, basic div styling can be used or import shadcn Card.
 // Added shadcn Card and ScrollArea imports.
 import { Card } from '@/components/ui/card';
+
