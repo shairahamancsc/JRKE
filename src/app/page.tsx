@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, DollarSign, ClipboardList, PlusCircle, ArrowRight } from 'lucide-react';
+import { Users, DollarSign, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck } from 'lucide-react';
 import { initialLaborers, initialAdvancePayments, initialWorkLogs } from '@/lib/data';
 
 export default function DashboardPage() {
@@ -22,7 +22,7 @@ export default function DashboardPage() {
   const quickLinks = [
     { title: "Add New Laborer", href: "/laborers#add", icon: PlusCircle },
     { title: "Record Advance", href: "/advances#add", icon: PlusCircle },
-    { title: "Log Daily Work", href: "/daily-entry#add", icon: PlusCircle }, // Corrected from work-logs#add to daily-entry#add based on UI
+    { title: "Daily Labor Entries", href: "/daily-entry#add", icon: ClipboardCheck }, 
     { title: "Generate Report", href: "/reports", icon: ArrowRight },
   ];
 
