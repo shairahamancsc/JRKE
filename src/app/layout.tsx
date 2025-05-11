@@ -49,7 +49,7 @@ export default function RootLayout({
                     The default sr-only text in SidebarTrigger is "Toggle Sidebar".
                 */}
               </header>
-              <main className="flex-1 p-4 sm:p-6 animate-slide-in-up">
+              <main className="flex-1 p-4 sm:p-6 animate-slide-in-up min-w-0">
                 {children}
               </main>
             </SidebarInset>
@@ -60,3 +60,4 @@ export default function RootLayout({
     </html>
   );
 }
+
