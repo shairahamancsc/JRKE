@@ -54,7 +54,7 @@ export function DataTable<T extends { id: string }>({
             data.map((item) => (
               <TableRow key={item.id}>
                 {columns.map((column, index) => (
-                  <TableCell key={index}>
+                  <TableCell key={index} className="whitespace-normal break-words">
                     {column.cell
                       ? column.cell(item)
                       : typeof column.accessorKey === 'function'
@@ -63,7 +63,7 @@ export function DataTable<T extends { id: string }>({
                   </TableCell>
                 ))}
                 {(onEdit || onDelete) && (
-                  <TableCell className="space-x-2">
+                  <TableCell className="space-x-2 whitespace-nowrap"> {/* Added whitespace-nowrap for action buttons container */}
                     {onEdit && (
                       <Button variant="outline" size="icon" onClick={() => onEdit(item)} aria-label="Edit">
                         <Edit className="h-4 w-4" />
@@ -84,3 +84,4 @@ export function DataTable<T extends { id: string }>({
     </div>
   );
 }
+
