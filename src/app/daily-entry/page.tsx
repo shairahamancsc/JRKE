@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DAILY_ENTRIES_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
+import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
 
 const DailyEntryForm = lazy(() => import('@/components/daily-entry/daily-entry-form').then(module => ({ default: module.DailyEntryForm })));
 
@@ -23,33 +24,27 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 };
 
 export default function DailyEntryPage() {
-  const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
-  const [labours, setLabours] = useState<Labour[]>([]);
+  const [dailyEntries, setDailyEntries] = useDebouncedLocalStorage<DailyLogEntry[]>(
+    DAILY_ENTRIES_STORAGE_KEY,
+    initialDailyLogEntries
+  );
+  const [labours, setLabours] = useState<Labour[]>([]); // Labours are read, not managed by this page's debounced hook
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedDailyEntries = localStorage.getItem(DAILY_ENTRIES_STORAGE_KEY);
-      if (storedDailyEntries) {
-        setDailyEntries(JSON.parse(storedDailyEntries));
-      } else {
-        setDailyEntries(initialDailyLogEntries); 
-      }
-    } catch (error) {
-      console.error("Error loading daily entries from localStorage:", error);
-      setDailyEntries(initialDailyLogEntries);
-    }
-
+    // Load labours from localStorage
     try {
       const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
+        localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
         setLabours(initialLabours);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for daily entry page:", error);
+      localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
       setLabours(initialLabours);
     }
     
@@ -58,19 +53,6 @@ export default function DailyEntryPage() {
       window.location.hash = ""; 
     }
   }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(DAILY_ENTRIES_STORAGE_KEY, JSON.stringify(dailyEntries));
-    } catch (error) {
-      console.error("Error saving daily entries to localStorage:", error);
-      toast({
-        title: "Storage Error",
-        description: "Could not save daily log data. Your browser storage might be full or disabled.",
-        variant: "destructive",
-      });
-    }
-  }, [dailyEntries, toast]);
 
   const handleAddEntry = () => {
     if (labours.length === 0) {
@@ -128,7 +110,7 @@ export default function DailyEntryPage() {
     };
   };
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { 
       accessorKey: (item: DailyLogEntry) => {
         const name = item.labourName || getLabourInfo(item.labourId).name;
@@ -187,7 +169,8 @@ export default function DailyEntryPage() {
     { accessorKey: 'workLocation' as keyof DailyLogEntry, header: 'Work Location',
       cell: (item: DailyLogEntry) => item.workLocation || '-'
     },
-  ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [labours]); // Dependency on labours as getLabourInfo uses it
 
   return (
     <div className="container mx-auto py-8">

@@ -1,12 +1,12 @@
 
-"use client"; // Make this a Client Component to use useEffect and localStorage
+"use client"; 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck, CalendarIcon, UserCircle2 } from 'lucide-react';
-import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data'; // Keep for fallback
+import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data'; 
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
 import type { Labour, AdvancePayment, WorkLog, DailyLogEntry } from '@/lib/types';
@@ -45,7 +45,6 @@ export default function DashboardPage() {
 
     } catch (error) {
       console.error("Error loading dashboard data from localStorage:", error);
-      // Fallback to initial data counts in case of error
       setLabourCount(initialLabours.length);
       setAdvanceCount(initialAdvancePayments.length);
       setWorkLogCount(initialWorkLogs.length);
@@ -72,18 +71,18 @@ export default function DashboardPage() {
   }, [searchDate, allDailyEntries]);
 
 
-  const summaryCards = [
+  const summaryCards = useMemo(() => [
     { title: "Total Labours", value: labourCount, icon: Users, href: "/labours", color: "text-primary" },
     { title: "Total Advances", value: advanceCount, icon: IndianRupee, href: "/advances", color: "text-accent" },
     { title: "Work Logs Entries", value: workLogCount, icon: ClipboardList, href: "/work-logs", color: "text-secondary-foreground" },
-  ];
+  ], [labourCount, advanceCount, workLogCount]);
 
-  const quickLinks = [
+  const quickLinks = useMemo(() => [
     { title: "Add New Labour", href: "/labours#add", icon: PlusCircle },
     { title: "Record Advance", href: "/advances#add", icon: PlusCircle },
     { title: "Daily Labour Entries", href: "/daily-entry#add", icon: ClipboardCheck }, 
     { title: "Generate Report", href: "/reports", icon: ArrowRight },
-  ];
+  ], []);
 
   return (
     <div className="container mx-auto py-8">

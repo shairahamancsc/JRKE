@@ -5,69 +5,48 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
-// import { WorkLogForm } from '@/components/work-logs/work-log-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { WorkLog, Labour } from '@/lib/types';
 import { initialWorkLogs, initialLabours } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { WORK_LOGS_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
+import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
 
 const WorkLogForm = lazy(() => import('@/components/work-logs/work-log-form').then(module => ({ default: module.WorkLogForm })));
 
 export default function WorkLogsPage() {
-  const [workLogs, setWorkLogs] = useState<WorkLog[]>([]);
-  const [labours, setLabours] = useState<Labour[]>([]);
+  const [workLogs, setWorkLogs] = useDebouncedLocalStorage<WorkLog[]>(
+    WORK_LOGS_STORAGE_KEY,
+    initialWorkLogs
+  );
+  const [labours, setLabours] = useState<Labour[]>([]); // Labours are read, not managed by this page's debounced hook
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingWorkLog, setEditingWorkLog] = useState<WorkLog | undefined>(undefined);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load work logs from LocalStorage
-    try {
-      const storedWorkLogs = localStorage.getItem(WORK_LOGS_STORAGE_KEY);
-      if (storedWorkLogs) {
-        setWorkLogs(JSON.parse(storedWorkLogs));
-      } else {
-        setWorkLogs(initialWorkLogs);
-      }
-    } catch (error) {
-      console.error("Error loading work logs from localStorage:", error);
-      setWorkLogs(initialWorkLogs);
-    }
-
     // Load labours from LocalStorage (read-only)
     try {
       const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
+        localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
         setLabours(initialLabours);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for work logs page:", error);
+      localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
       setLabours(initialLabours);
     }
 
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
-      window.location.hash = ""; // Clear hash
+      window.location.hash = ""; 
     }
   }, []);
 
-  // Save work logs to LocalStorage whenever the state changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(WORK_LOGS_STORAGE_KEY, JSON.stringify(workLogs));
-    } catch (error) {
-      console.error("Error saving work logs to localStorage:", error);
-      toast({
-        title: "Storage Error",
-        description: "Could not save work log data. Your browser storage might be full or disabled.",
-        variant: "destructive",
-      });
-    }
-  }, [workLogs, toast]);
 
   const handleAddWorkLog = () => {
     setEditingWorkLog(undefined);
@@ -88,39 +67,26 @@ export default function WorkLogsPage() {
     });
   };
 
-  const handleFormSubmit = async (workLogData: WorkLog) => { // Renamed workLog to workLogData
-    // If pictureFile exists, it means a new file was selected or an existing one was kept.
-    // The WorkLogForm already handles preview generation.
-    // We just need to ensure the final object saved to state has the correct picturePreview.
-    // If pictureFile is undefined, it means no new file was selected, and we should keep the existing preview if editing.
-    
-    let finalWorkLog = { ...workLogData }; // Use workLogData
+  const handleFormSubmit = async (workLogData: WorkLog) => { 
+    let finalWorkLog = { ...workLogData }; 
 
-    if (workLogData.pictureFile) { // Check workLogData.pictureFile
-      // A new file was selected or an existing one was re-confirmed.
-      // The preview is already set by the form's handleFileChange.
-      // So, workLogData.picturePreview should be up-to-date.
+    if (workLogData.pictureFile) { 
+      // Preview is set by form
     } else if (editingWorkLog && !workLogData.pictureFile) {
-      // No new file selected during edit, retain the old preview
       finalWorkLog.picturePreview = editingWorkLog.picturePreview;
     }
-    // If it's a new entry and no pictureFile, picturePreview will be undefined, which is correct.
-
     saveWorkLog(finalWorkLog);
   };
   
   const saveWorkLog = (workLogToSave: WorkLog) => {
-    // Remove File object before saving to state, as it's not serializable for LocalStorage
-    // and preview is already handled.
     const { pictureFile, ...restOfWorkLog } = workLogToSave;
     const serializableWorkLog = { ...restOfWorkLog };
-
 
     if (editingWorkLog) {
       setWorkLogs(prevWorkLogs => prevWorkLogs.map(wl => wl.id === serializableWorkLog.id ? serializableWorkLog : wl));
       toast({ title: "Work Log Updated", description: `Work log for ${getLabourName(serializableWorkLog.labourId)} has been updated.` });
     } else {
-      setWorkLogs(prevWorkLogs => [serializableWorkLog, ...prevWorkLogs]);
+      setWorkLogs(prevWorkLogs => [serializableWorkLog, ...prevWorkLogs].sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime()));
       toast({ title: "Work Log Added", description: `New work log for ${getLabourName(serializableWorkLog.labourId)} has been added.` });
     }
     setIsFormOpen(false);
@@ -131,7 +97,7 @@ export default function WorkLogsPage() {
     return labours.find(l => l.id === labourId)?.name || 'Unknown Labour';
   };
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { 
       accessorKey: (item: WorkLog) => getLabourName(item.labourId), 
       header: 'Labour' 
@@ -152,7 +118,8 @@ export default function WorkLogsPage() {
         <span className="text-xs text-muted-foreground">No image</span>
       )
     }
-  ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [labours]); // Dependency on labours as getLabourName uses it
 
   return (
     <div className="container mx-auto py-8">
@@ -189,7 +156,7 @@ export default function WorkLogsPage() {
               setEditingWorkLog(undefined);
             }}
             onSubmit={handleFormSubmit}
-            labours={labours} // Pass loaded labours
+            labours={labours} 
             defaultValues={editingWorkLog}
           />
         </Suspense>

@@ -2,10 +2,8 @@
 "use client";
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-// import Image from 'next/image'; // Not directly used, AvatarImage handles it
 import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2, Loader2, FileText, Phone, Smartphone } from 'lucide-react';
-// import { LabourForm } from '@/components/labours/labour-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { Labour } from '@/lib/types';
 import { initialLabours } from '@/lib/data';
@@ -13,67 +11,26 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
+import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
 
 const LabourForm = lazy(() => import('@/components/labours/labour-form').then(module => ({ default: module.LabourForm })));
 
 export default function LaboursPage() {
-  const [labours, setLabours] = useState<Labour[]>([]);
+  const [labours, setLabours] = useDebouncedLocalStorage<Labour[]>(
+    LABOURS_STORAGE_KEY,
+    initialLabours
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingLabour, setEditingLabour] = useState<Labour | undefined>(undefined);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load labours from LocalStorage or use initialLabours
-    try {
-      const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
-      if (storedLabours) {
-        setLabours(JSON.parse(storedLabours));
-      } else {
-        setLabours(initialLabours.map(l => ({
-          ...l,
-          phoneNo: l.phoneNo ?? undefined,
-          emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
-          aadhaarNo: l.aadhaarNo ?? undefined,
-          panNo: l.panNo ?? undefined,
-          aadhaarPreview: l.aadhaarPreview ?? undefined,
-          panPreview: l.panPreview ?? undefined,
-          licensePreview: l.licensePreview ?? undefined,
-        })));
-      }
-    } catch (error) {
-      console.error("Error loading labours from localStorage:", error);
-      // Fallback to initial data in case of error
-       setLabours(initialLabours.map(l => ({
-        ...l,
-        phoneNo: l.phoneNo ?? undefined,
-        emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
-        aadhaarNo: l.aadhaarNo ?? undefined,
-        panNo: l.panNo ?? undefined,
-        aadhaarPreview: l.aadhaarPreview ?? undefined,
-        panPreview: l.panPreview ?? undefined,
-        licensePreview: l.licensePreview ?? undefined,
-      })));
-    }
-    
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; 
     }
   }, []);
 
-  // Save labours to LocalStorage whenever the state changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(labours));
-    } catch (error) {
-      console.error("Error saving labours to localStorage:", error);
-      toast({
-        title: "Storage Error",
-        description: "Could not save labour data. Your browser storage might be full or disabled.",
-        variant: "destructive",
-      });
-    }
-  }, [labours, toast]);
 
   const handleAddLabour = () => {
     setEditingLabour(undefined);
@@ -105,7 +62,7 @@ export default function LaboursPage() {
         photoPreview: photoFile ? labourToSave.photoPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.photoPreview : labourToSave.photoPreview),
         aadhaarPreview: aadhaarFile ? labourToSave.aadhaarPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.aadhaarPreview : labourToSave.aadhaarPreview),
         panPreview: panFile ? labourToSave.panPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.panPreview : labourToSave.panPreview),
-        licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.licensePreview : labourToSave.licensePreview),
+        licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.licensePreview : labourToSave.licensePreview),
     };
 
     if (editingLabour) {
@@ -119,7 +76,7 @@ export default function LaboursPage() {
     setEditingLabour(undefined);
   };
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { 
       accessorKey: 'photoPreview' as keyof Labour, 
       header: 'Photo',
@@ -171,7 +128,7 @@ export default function LaboursPage() {
         </div>
       )
     }
-  ];
+  ], []);
 
   return (
     <div className="container mx-auto py-8">

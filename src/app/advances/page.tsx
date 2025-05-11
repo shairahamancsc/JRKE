@@ -4,7 +4,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
-// import { AdvanceForm } from '@/components/advances/advance-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { AdvancePayment, Labour, PaymentMethod } from '@/lib/types';
 import { initialAdvancePayments, initialLabours } from '@/lib/data';
@@ -12,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { ADVANCES_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
 import { Badge } from '@/components/ui/badge';
+import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
 
 const AdvanceForm = lazy(() => import('@/components/advances/advance-form').then(module => ({ default: module.AdvanceForm })));
 
@@ -22,34 +22,29 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 };
 
 export default function AdvancesPage() {
-  const [advances, setAdvances] = useState<AdvancePayment[]>([]);
-  const [labours, setLabours] = useState<Labour[]>([]);
+  const [advances, setAdvances] = useDebouncedLocalStorage<AdvancePayment[]>(
+    ADVANCES_STORAGE_KEY,
+    initialAdvancePayments
+  );
+  const [labours, setLabours] = useState<Labour[]>([]); // Labours are read, not managed by this page's debounced hook
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAdvance, setEditingAdvance] = useState<AdvancePayment | undefined>(undefined);
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedAdvances = localStorage.getItem(ADVANCES_STORAGE_KEY);
-      if (storedAdvances) {
-        setAdvances(JSON.parse(storedAdvances));
-      } else {
-        setAdvances(initialAdvancePayments);
-      }
-    } catch (error) {
-      console.error("Error loading advances from localStorage:", error);
-      setAdvances(initialAdvancePayments);
-    }
-
+    // Load labours from localStorage
     try {
       const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
+        // Initialize labours in localStorage if not present
+        localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
         setLabours(initialLabours);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for advances page:", error);
+      localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
       setLabours(initialLabours);
     }
 
@@ -59,18 +54,6 @@ export default function AdvancesPage() {
     }
   }, []);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(ADVANCES_STORAGE_KEY, JSON.stringify(advances));
-    } catch (error) {
-      console.error("Error saving advances to localStorage:", error);
-      toast({
-        title: "Storage Error",
-        description: "Could not save advance payment data. Your browser storage might be full or disabled.",
-        variant: "destructive",
-      });
-    }
-  }, [advances, toast]);
 
   const handleAddAdvance = () => {
     setEditingAdvance(undefined);
@@ -107,7 +90,7 @@ export default function AdvancesPage() {
     return labours.find(l => l.id === labourId)?.name || 'Unknown Labour';
   };
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { 
       accessorKey: (item: AdvancePayment) => getLabourName(item.labourId), 
       header: 'Labour' 
@@ -136,7 +119,8 @@ export default function AdvancesPage() {
       header: 'Remarks',
       cell: (item: AdvancePayment) => item.remarks || '-'
     },
-  ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [labours]); // Dependency on labours because getLabourName uses it
 
   return (
     <div className="container mx-auto py-8">
