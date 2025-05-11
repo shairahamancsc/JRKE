@@ -10,6 +10,7 @@ import type { AdvancePayment, Laborer } from '@/lib/types';
 import { initialAdvancePayments, initialLaborers } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
+import { ADVANCES_STORAGE_KEY, LABORERS_STORAGE_KEY } from '@/lib/storageKeys';
 
 const AdvanceForm = lazy(() => import('@/components/advances/advance-form').then(module => ({ default: module.AdvanceForm })));
 
@@ -21,13 +22,51 @@ export default function AdvancesPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setAdvances(initialAdvancePayments);
-    setLaborers(initialLaborers);
-     if (typeof window !== "undefined" && window.location.hash === "#add") {
+    // Load advances from LocalStorage
+    try {
+      const storedAdvances = localStorage.getItem(ADVANCES_STORAGE_KEY);
+      if (storedAdvances) {
+        setAdvances(JSON.parse(storedAdvances));
+      } else {
+        setAdvances(initialAdvancePayments);
+      }
+    } catch (error) {
+      console.error("Error loading advances from localStorage:", error);
+      setAdvances(initialAdvancePayments);
+    }
+
+    // Load laborers from LocalStorage (read-only for this page)
+    try {
+      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
+      if (storedLaborers) {
+        setLaborers(JSON.parse(storedLaborers));
+      } else {
+        setLaborers(initialLaborers);
+      }
+    } catch (error) {
+      console.error("Error loading laborers from localStorage for advances page:", error);
+      setLaborers(initialLaborers);
+    }
+
+    if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; // Clear hash
     }
   }, []);
+
+  // Save advances to LocalStorage whenever the state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(ADVANCES_STORAGE_KEY, JSON.stringify(advances));
+    } catch (error) {
+      console.error("Error saving advances to localStorage:", error);
+      toast({
+        title: "Storage Error",
+        description: "Could not save advance payment data. Your browser storage might be full or disabled.",
+        variant: "destructive",
+      });
+    }
+  }, [advances, toast]);
 
   const handleAddAdvance = () => {
     setEditingAdvance(undefined);
@@ -40,7 +79,7 @@ export default function AdvancesPage() {
   };
 
   const handleDeleteAdvance = (advanceToDelete: AdvancePayment) => {
-    setAdvances(advances.filter(a => a.id !== advanceToDelete.id));
+    setAdvances(prevAdvances => prevAdvances.filter(a => a.id !== advanceToDelete.id));
     toast({
       title: "Advance Deleted",
       description: `Advance of ${advanceToDelete.amount} for ${getLaborerName(advanceToDelete.laborerId)} has been removed.`,
@@ -50,10 +89,10 @@ export default function AdvancesPage() {
 
   const handleFormSubmit = (advance: AdvancePayment) => {
     if (editingAdvance) {
-      setAdvances(advances.map(a => a.id === advance.id ? advance : a));
+      setAdvances(prevAdvances => prevAdvances.map(a => a.id === advance.id ? advance : a));
       toast({ title: "Advance Updated", description: `Advance for ${getLaborerName(advance.laborerId)} has been updated.` });
     } else {
-      setAdvances([advance, ...advances]);
+      setAdvances(prevAdvances => [advance, ...prevAdvances]);
       toast({ title: "Advance Added", description: `Advance of ${advance.amount} recorded for ${getLaborerName(advance.laborerId)}.` });
     }
     setIsFormOpen(false);
@@ -116,7 +155,7 @@ export default function AdvancesPage() {
               setEditingAdvance(undefined);
             }}
             onSubmit={handleFormSubmit}
-            laborers={laborers}
+            laborers={laborers} // Pass the loaded laborers to the form
             defaultValues={editingAdvance}
           />
         </Suspense>

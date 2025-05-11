@@ -12,6 +12,7 @@ import { initialLaborers } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { LABORERS_STORAGE_KEY } from '@/lib/storageKeys';
 
 const LaborerForm = lazy(() => import('@/components/laborers/laborer-form').then(module => ({ default: module.LaborerForm })));
 
@@ -22,23 +23,57 @@ export default function LaborersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load initial laborers, ensuring new fields are present (even if undefined)
-    setLaborers(initialLaborers.map(l => ({
-      ...l,
-      phoneNo: l.phoneNo ?? undefined,
-      emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
-      aadhaarNo: l.aadhaarNo ?? undefined,
-      panNo: l.panNo ?? undefined,
-      aadhaarPreview: l.aadhaarPreview ?? undefined,
-      panPreview: l.panPreview ?? undefined,
-      licensePreview: l.licensePreview ?? undefined,
-    })));
+    // Load laborers from LocalStorage or use initialLaborers
+    try {
+      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
+      if (storedLaborers) {
+        setLaborers(JSON.parse(storedLaborers));
+      } else {
+        setLaborers(initialLaborers.map(l => ({
+          ...l,
+          phoneNo: l.phoneNo ?? undefined,
+          emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
+          aadhaarNo: l.aadhaarNo ?? undefined,
+          panNo: l.panNo ?? undefined,
+          aadhaarPreview: l.aadhaarPreview ?? undefined,
+          panPreview: l.panPreview ?? undefined,
+          licensePreview: l.licensePreview ?? undefined,
+        })));
+      }
+    } catch (error) {
+      console.error("Error loading laborers from localStorage:", error);
+      // Fallback to initial data in case of error
+       setLaborers(initialLaborers.map(l => ({
+        ...l,
+        phoneNo: l.phoneNo ?? undefined,
+        emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
+        aadhaarNo: l.aadhaarNo ?? undefined,
+        panNo: l.panNo ?? undefined,
+        aadhaarPreview: l.aadhaarPreview ?? undefined,
+        panPreview: l.panPreview ?? undefined,
+        licensePreview: l.licensePreview ?? undefined,
+      })));
+    }
     
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; 
     }
   }, []);
+
+  // Save laborers to LocalStorage whenever the state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(LABORERS_STORAGE_KEY, JSON.stringify(laborers));
+    } catch (error) {
+      console.error("Error saving laborers to localStorage:", error);
+      toast({
+        title: "Storage Error",
+        description: "Could not save laborer data. Your browser storage might be full or disabled.",
+        variant: "destructive",
+      });
+    }
+  }, [laborers, toast]);
 
   const handleAddLaborer = () => {
     setEditingLaborer(undefined);
@@ -51,7 +86,7 @@ export default function LaborersPage() {
   };
 
   const handleDeleteLaborer = (laborerToDelete: Laborer) => {
-    setLaborers(laborers.filter(l => l.id !== laborerToDelete.id));
+    setLaborers(prevLaborers => prevLaborers.filter(l => l.id !== laborerToDelete.id));
     toast({
       title: "Laborer Deleted",
       description: `${laborerToDelete.name} has been removed.`,
@@ -59,31 +94,25 @@ export default function LaborersPage() {
     });
   };
 
-  // LaborerForm now handles file reading and preview generation
-  // So, handleFormSubmit directly calls saveLaborer with the processed Laborer object
   const handleFormSubmit = (laborerData: Laborer) => {
     saveLaborer(laborerData);
   };
 
   const saveLaborer = (laborerToSave: Laborer) => {
-    // Remove File objects before saving to state, as they are not serializable
-    // and previews are already generated.
     const { photoFile, aadhaarFile, panFile, licenseFile, ...restOfLaborer } = laborerToSave;
     const finalLaborerData: Laborer = {
         ...restOfLaborer,
-        // Ensure previews are undefined if their corresponding files were not there/cleared
         photoPreview: photoFile ? laborerToSave.photoPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.photoPreview : laborerToSave.photoPreview),
         aadhaarPreview: aadhaarFile ? laborerToSave.aadhaarPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.aadhaarPreview : laborerToSave.aadhaarPreview),
         panPreview: panFile ? laborerToSave.panPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.panPreview : laborerToSave.panPreview),
         licensePreview: licenseFile ? laborerToSave.licensePreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.licensePreview : laborerToSave.licensePreview),
     };
 
-
     if (editingLaborer) {
-      setLaborers(laborers.map(l => l.id === finalLaborerData.id ? finalLaborerData : l));
+      setLaborers(prevLaborers => prevLaborers.map(l => l.id === finalLaborerData.id ? finalLaborerData : l));
       toast({ title: "Laborer Updated", description: `${finalLaborerData.name}'s details have been updated.` });
     } else {
-      setLaborers([finalLaborerData, ...laborers]);
+      setLaborers(prevLaborers => [finalLaborerData, ...prevLaborers]);
       toast({ title: "Laborer Added", description: `${finalLaborerData.name} has been added.` });
     }
     setIsFormOpen(false);

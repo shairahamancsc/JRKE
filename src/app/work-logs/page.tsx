@@ -11,6 +11,7 @@ import type { WorkLog, Laborer } from '@/lib/types';
 import { initialWorkLogs, initialLaborers } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
+import { WORK_LOGS_STORAGE_KEY, LABORERS_STORAGE_KEY } from '@/lib/storageKeys';
 
 const WorkLogForm = lazy(() => import('@/components/work-logs/work-log-form').then(module => ({ default: module.WorkLogForm })));
 
@@ -22,13 +23,51 @@ export default function WorkLogsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setWorkLogs(initialWorkLogs);
-    setLaborers(initialLaborers);
-     if (typeof window !== "undefined" && window.location.hash === "#add") {
+    // Load work logs from LocalStorage
+    try {
+      const storedWorkLogs = localStorage.getItem(WORK_LOGS_STORAGE_KEY);
+      if (storedWorkLogs) {
+        setWorkLogs(JSON.parse(storedWorkLogs));
+      } else {
+        setWorkLogs(initialWorkLogs);
+      }
+    } catch (error) {
+      console.error("Error loading work logs from localStorage:", error);
+      setWorkLogs(initialWorkLogs);
+    }
+
+    // Load laborers from LocalStorage (read-only)
+    try {
+      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
+      if (storedLaborers) {
+        setLaborers(JSON.parse(storedLaborers));
+      } else {
+        setLaborers(initialLaborers);
+      }
+    } catch (error) {
+      console.error("Error loading laborers from localStorage for work logs page:", error);
+      setLaborers(initialLaborers);
+    }
+
+    if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; // Clear hash
     }
   }, []);
+
+  // Save work logs to LocalStorage whenever the state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(WORK_LOGS_STORAGE_KEY, JSON.stringify(workLogs));
+    } catch (error) {
+      console.error("Error saving work logs to localStorage:", error);
+      toast({
+        title: "Storage Error",
+        description: "Could not save work log data. Your browser storage might be full or disabled.",
+        variant: "destructive",
+      });
+    }
+  }, [workLogs, toast]);
 
   const handleAddWorkLog = () => {
     setEditingWorkLog(undefined);
@@ -41,34 +80,48 @@ export default function WorkLogsPage() {
   };
 
   const handleDeleteWorkLog = (workLogToDelete: WorkLog) => {
-    setWorkLogs(workLogs.filter(wl => wl.id !== workLogToDelete.id));
-     toast({
+    setWorkLogs(prevWorkLogs => prevWorkLogs.filter(wl => wl.id !== workLogToDelete.id));
+    toast({
       title: "Work Log Deleted",
       description: `Work log for ${getLaborerName(workLogToDelete.laborerId)} on ${format(parseISO(workLogToDelete.date), 'PPP')} has been removed.`,
       variant: "destructive",
     });
   };
 
-  const handleFormSubmit = async (workLog: WorkLog) => {
-    if (workLog.pictureFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newWorkLog = { ...workLog, picturePreview: reader.result as string };
-        saveWorkLog(newWorkLog);
-      };
-      reader.readAsDataURL(workLog.pictureFile);
-    } else {
-      saveWorkLog(workLog);
+  const handleFormSubmit = async (workLogData: WorkLog) => { // Renamed workLog to workLogData
+    // If pictureFile exists, it means a new file was selected or an existing one was kept.
+    // The WorkLogForm already handles preview generation.
+    // We just need to ensure the final object saved to state has the correct picturePreview.
+    // If pictureFile is undefined, it means no new file was selected, and we should keep the existing preview if editing.
+    
+    let finalWorkLog = { ...workLogData }; // Use workLogData
+
+    if (workLogData.pictureFile) { // Check workLogData.pictureFile
+      // A new file was selected or an existing one was re-confirmed.
+      // The preview is already set by the form's handleFileChange.
+      // So, workLogData.picturePreview should be up-to-date.
+    } else if (editingWorkLog && !workLogData.pictureFile) {
+      // No new file selected during edit, retain the old preview
+      finalWorkLog.picturePreview = editingWorkLog.picturePreview;
     }
+    // If it's a new entry and no pictureFile, picturePreview will be undefined, which is correct.
+
+    saveWorkLog(finalWorkLog);
   };
   
   const saveWorkLog = (workLogToSave: WorkLog) => {
+    // Remove File object before saving to state, as it's not serializable for LocalStorage
+    // and preview is already handled.
+    const { pictureFile, ...restOfWorkLog } = workLogToSave;
+    const serializableWorkLog = { ...restOfWorkLog };
+
+
     if (editingWorkLog) {
-      setWorkLogs(workLogs.map(wl => wl.id === workLogToSave.id ? workLogToSave : wl));
-      toast({ title: "Work Log Updated", description: `Work log for ${getLaborerName(workLogToSave.laborerId)} has been updated.` });
+      setWorkLogs(prevWorkLogs => prevWorkLogs.map(wl => wl.id === serializableWorkLog.id ? serializableWorkLog : wl));
+      toast({ title: "Work Log Updated", description: `Work log for ${getLaborerName(serializableWorkLog.laborerId)} has been updated.` });
     } else {
-      setWorkLogs([workLogToSave, ...workLogs]);
-      toast({ title: "Work Log Added", description: `New work log for ${getLaborerName(workLogToSave.laborerId)} has been added.` });
+      setWorkLogs(prevWorkLogs => [serializableWorkLog, ...prevWorkLogs]);
+      toast({ title: "Work Log Added", description: `New work log for ${getLaborerName(serializableWorkLog.laborerId)} has been added.` });
     }
     setIsFormOpen(false);
     setEditingWorkLog(undefined);
@@ -136,7 +189,7 @@ export default function WorkLogsPage() {
               setEditingWorkLog(undefined);
             }}
             onSubmit={handleFormSubmit}
-            laborers={laborers}
+            laborers={laborers} // Pass loaded laborers
             defaultValues={editingWorkLog}
           />
         </Suspense>
