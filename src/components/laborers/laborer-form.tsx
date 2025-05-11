@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCircle2 } from "lucide-react";
+import { UserCircle2, FileUp, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,11 @@ const laborerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   details: z.string().min(1, "Details are required"),
   photoFile: z.instanceof(File).optional(),
+  aadhaarNo: z.string().optional().or(z.literal('')),
+  panNo: z.string().optional().or(z.literal('')),
+  aadhaarFile: z.instanceof(File).optional(),
+  panFile: z.instanceof(File).optional(),
+  licenseFile: z.instanceof(File).optional(),
 });
 
 type LaborerFormData = z.infer<typeof laborerSchema>;
@@ -39,6 +44,9 @@ interface LaborerFormProps {
 
 export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: LaborerFormProps) {
   const [photoPreview, setPhotoPreview] = useState<string | undefined>(defaultValues?.photoPreview);
+  const [aadhaarPreview, setAadhaarPreview] = useState<string | undefined>(defaultValues?.aadhaarPreview);
+  const [panPreview, setPanPreview] = useState<string | undefined>(defaultValues?.panPreview);
+  const [licensePreview, setLicensePreview] = useState<string | undefined>(defaultValues?.licensePreview);
   
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<LaborerFormData>({
     resolver: zodResolver(laborerSchema),
@@ -46,36 +54,50 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
       name: defaultValues?.name || '',
       details: defaultValues?.details || '',
       photoFile: undefined,
+      aadhaarNo: defaultValues?.aadhaarNo || '',
+      panNo: defaultValues?.panNo || '',
+      aadhaarFile: undefined,
+      panFile: undefined,
+      licenseFile: undefined,
     },
   });
 
   React.useEffect(() => {
-    if (defaultValues) {
+    if (isOpen) { // Ensure reset only happens when dialog opens or defaultValues change
       reset({ 
-        name: defaultValues.name, 
-        details: defaultValues.details,
-        photoFile: undefined, // File objects cannot be reliably set in defaultValues
+        name: defaultValues?.name || '', 
+        details: defaultValues?.details || '',
+        photoFile: undefined,
+        aadhaarNo: defaultValues?.aadhaarNo || '',
+        panNo: defaultValues?.panNo || '',
+        aadhaarFile: undefined,
+        panFile: undefined,
+        licenseFile: undefined,
       });
-      setPhotoPreview(defaultValues.photoPreview);
-    } else {
-      reset({ name: '', details: '', photoFile: undefined });
-      setPhotoPreview(undefined);
+      setPhotoPreview(defaultValues?.photoPreview);
+      setAadhaarPreview(defaultValues?.aadhaarPreview);
+      setPanPreview(defaultValues?.panPreview);
+      setLicensePreview(defaultValues?.licensePreview);
     }
   }, [defaultValues, reset, isOpen]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    setPreview: React.Dispatch<React.SetStateAction<string | undefined>>,
+    fileField: keyof LaborerFormData,
+    defaultPreview?: string
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setValue('photoFile', file);
+      setValue(fileField, file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
+        setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     } else {
-      setValue('photoFile', undefined);
-      // If defaultValues had a preview, keep it if user cancels file selection
-      setPhotoPreview(defaultValues?.photoPreview); 
+      setValue(fileField, undefined);
+      setPreview(defaultPreview); 
     }
   };
 
@@ -85,24 +107,39 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
       name: data.name,
       details: data.details,
       photoFile: data.photoFile,
-      photoPreview: data.photoFile ? photoPreview : defaultValues?.photoPreview, // Keep existing preview if no new file
+      photoPreview: data.photoFile ? photoPreview : defaultValues?.photoPreview,
+      aadhaarNo: data.aadhaarNo,
+      panNo: data.panNo,
+      aadhaarFile: data.aadhaarFile,
+      aadhaarPreview: data.aadhaarFile ? aadhaarPreview : defaultValues?.aadhaarPreview,
+      panFile: data.panFile,
+      panPreview: data.panFile ? panPreview : defaultValues?.panPreview,
+      licenseFile: data.licenseFile,
+      licensePreview: data.licenseFile ? licensePreview : defaultValues?.licensePreview,
     });
     onClose();
   };
+  
+  const renderPreview = (previewUrl: string | undefined, altText: string, dataAiHint: string) => {
+    if (!previewUrl) return null;
+    if (previewUrl.startsWith('data:application/pdf')) {
+      return <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center"><Eye className="mr-1 h-4 w-4" /> View PDF</a>;
+    }
+    return <Image src={previewUrl} alt={altText} width={100} height={60} className="rounded-md object-contain border" data-ai-hint={dataAiHint} />;
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) {
         onClose();
-        // Reset preview to default when closing if not submitting
-        setPhotoPreview(defaultValues?.photoPreview);
       }
     }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Edit Laborer' : 'Add New Laborer'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[75vh] pr-3">
           <div className="flex flex-col items-center space-y-2">
             <Avatar className="h-24 w-24">
               <AvatarImage src={photoPreview} alt={defaultValues?.name || "Laborer photo"} data-ai-hint="person portrait" />
@@ -110,14 +147,14 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
                 <UserCircle2 className="h-16 w-16 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
-            <Label htmlFor="photoFile" className="text-sm font-medium text-primary hover:underline cursor-pointer">
-              {photoPreview ? "Change Photo" : "Upload Photo"}
+            <Label htmlFor="photoFile" className="text-sm font-medium text-primary hover:underline cursor-pointer flex items-center gap-1">
+              <FileUp className="h-4 w-4" /> {photoPreview ? "Change Photo" : "Upload Photo"}
             </Label>
             <Input 
               id="photoFile" 
               type="file" 
               accept="image/*" 
-              onChange={handleFileChange} 
+              onChange={(e) => handleFileChange(e, setPhotoPreview, 'photoFile', defaultValues?.photoPreview)} 
               className="hidden"
             />
              {errors.photoFile && <p className="text-xs text-destructive mt-1">{errors.photoFile.message}</p>}
@@ -133,6 +170,57 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
             <Textarea id="details" {...register('details')} className={errors.details ? 'border-destructive' : ''} />
             {errors.details && <p className="text-xs text-destructive mt-1">{errors.details.message}</p>}
           </div>
+
+          <div>
+            <Label htmlFor="aadhaarNo">Aadhaar No.</Label>
+            <Input id="aadhaarNo" {...register('aadhaarNo')} className={errors.aadhaarNo ? 'border-destructive' : ''} placeholder="Enter 12-digit Aadhaar number"/>
+            {errors.aadhaarNo && <p className="text-xs text-destructive mt-1">{errors.aadhaarNo.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="panNo">PAN No.</Label>
+            <Input id="panNo" {...register('panNo')} className={errors.panNo ? 'border-destructive' : ''} placeholder="Enter 10-character PAN number"/>
+            {errors.panNo && <p className="text-xs text-destructive mt-1">{errors.panNo.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="aadhaarFile">Aadhaar Card</Label>
+            {aadhaarPreview && <div className="mt-1 mb-2">{renderPreview(aadhaarPreview, "Aadhaar Card Preview", "document id")}</div>}
+            <Input 
+              id="aadhaarFile" 
+              type="file" 
+              accept="image/*,application/pdf" 
+              onChange={(e) => handleFileChange(e, setAadhaarPreview, 'aadhaarFile', defaultValues?.aadhaarPreview)}
+              className="file:text-primary file:font-semibold"
+            />
+            {errors.aadhaarFile && <p className="text-xs text-destructive mt-1">{errors.aadhaarFile.message}</p>}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="panFile">PAN Card</Label>
+             {panPreview && <div className="mt-1 mb-2">{renderPreview(panPreview, "PAN Card Preview", "document id")}</div>}
+            <Input 
+              id="panFile" 
+              type="file" 
+              accept="image/*,application/pdf" 
+              onChange={(e) => handleFileChange(e, setPanPreview, 'panFile', defaultValues?.panPreview)}
+              className="file:text-primary file:font-semibold"
+            />
+            {errors.panFile && <p className="text-xs text-destructive mt-1">{errors.panFile.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="licenseFile">Driving License (Optional)</Label>
+            {licensePreview && <div className="mt-1 mb-2">{renderPreview(licensePreview, "Driving License Preview", "document id")}</div>}
+            <Input 
+              id="licenseFile" 
+              type="file" 
+              accept="image/*,application/pdf" 
+              onChange={(e) => handleFileChange(e, setLicensePreview, 'licenseFile', defaultValues?.licensePreview)}
+              className="file:text-primary file:font-semibold"
+            />
+            {errors.licenseFile && <p className="text-xs text-destructive mt-1">{errors.licenseFile.message}</p>}
+          </div>
+
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="outline">Cancel</Button>

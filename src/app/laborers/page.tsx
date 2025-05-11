@@ -4,13 +4,14 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 // import Image from 'next/image'; // Not directly used, AvatarImage handles it
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UserCircle2, Loader2 } from 'lucide-react';
+import { PlusCircle, UserCircle2, Loader2, FileText } from 'lucide-react';
 // import { LaborerForm } from '@/components/laborers/laborer-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { Laborer } from '@/lib/types';
 import { initialLaborers } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const LaborerForm = lazy(() => import('@/components/laborers/laborer-form').then(module => ({ default: module.LaborerForm })));
 
@@ -21,7 +22,15 @@ export default function LaborersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setLaborers(initialLaborers);
+    // Load initial laborers, ensuring new fields are present (even if undefined)
+    setLaborers(initialLaborers.map(l => ({
+      ...l,
+      aadhaarNo: l.aadhaarNo ?? undefined,
+      panNo: l.panNo ?? undefined,
+      aadhaarPreview: l.aadhaarPreview ?? undefined,
+      panPreview: l.panPreview ?? undefined,
+      licensePreview: l.licensePreview ?? undefined,
+    })));
     
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
@@ -48,26 +57,32 @@ export default function LaborersPage() {
     });
   };
 
-  const handleFormSubmit = async (laborerData: Laborer) => {
-    if (laborerData.photoFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newLaborer = { ...laborerData, photoPreview: reader.result as string };
-        saveLaborer(newLaborer);
-      };
-      reader.readAsDataURL(laborerData.photoFile);
-    } else {
-      saveLaborer(laborerData);
-    }
+  // LaborerForm now handles file reading and preview generation
+  // So, handleFormSubmit directly calls saveLaborer with the processed Laborer object
+  const handleFormSubmit = (laborerData: Laborer) => {
+    saveLaborer(laborerData);
   };
 
   const saveLaborer = (laborerToSave: Laborer) => {
+    // Remove File objects before saving to state, as they are not serializable
+    // and previews are already generated.
+    const { photoFile, aadhaarFile, panFile, licenseFile, ...restOfLaborer } = laborerToSave;
+    const finalLaborerData: Laborer = {
+        ...restOfLaborer,
+        // Ensure previews are undefined if their corresponding files were not there/cleared
+        photoPreview: photoFile ? laborerToSave.photoPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.photoPreview : laborerToSave.photoPreview),
+        aadhaarPreview: aadhaarFile ? laborerToSave.aadhaarPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.aadhaarPreview : laborerToSave.aadhaarPreview),
+        panPreview: panFile ? laborerToSave.panPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.panPreview : laborerToSave.panPreview),
+        licensePreview: licenseFile ? laborerToSave.licensePreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.licensePreview : laborerToSave.licensePreview),
+    };
+
+
     if (editingLaborer) {
-      setLaborers(laborers.map(l => l.id === laborerToSave.id ? laborerToSave : l));
-      toast({ title: "Laborer Updated", description: `${laborerToSave.name}'s details have been updated.` });
+      setLaborers(laborers.map(l => l.id === finalLaborerData.id ? finalLaborerData : l));
+      toast({ title: "Laborer Updated", description: `${finalLaborerData.name}'s details have been updated.` });
     } else {
-      setLaborers([laborerToSave, ...laborers]);
-      toast({ title: "Laborer Added", description: `${laborerToSave.name} has been added.` });
+      setLaborers([finalLaborerData, ...laborers]);
+      toast({ title: "Laborer Added", description: `${finalLaborerData.name} has been added.` });
     }
     setIsFormOpen(false);
     setEditingLaborer(undefined);
@@ -88,6 +103,33 @@ export default function LaborersPage() {
     },
     { accessorKey: 'name' as keyof Laborer, header: 'Name' },
     { accessorKey: 'details' as keyof Laborer, header: 'Details' },
+    { accessorKey: 'aadhaarNo' as keyof Laborer, header: 'Aadhaar No.', cell: (item: Laborer) => item.aadhaarNo || '-' },
+    { accessorKey: 'panNo' as keyof Laborer, header: 'PAN No.', cell: (item: Laborer) => item.panNo || '-' },
+    {
+      header: 'Docs',
+      cell: (item: Laborer) => (
+        <div className="flex space-x-1">
+          {[
+            { preview: item.aadhaarPreview, name: "Aadhaar" },
+            { preview: item.panPreview, name: "PAN" },
+            { preview: item.licensePreview, name: "License" },
+          ].map(doc => doc.preview && (
+            <TooltipProvider key={doc.name} delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-default">
+                    <FileText className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{doc.name} uploaded</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
+        </div>
+      )
+    }
   ];
 
   return (
