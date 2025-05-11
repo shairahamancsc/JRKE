@@ -1,8 +1,7 @@
-
 "use client";
 
-import React, { useState, lazy, Suspense } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -11,13 +10,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertTriangle } from 'lucide-react';
-// import { MarkdownDisplay } from '@/components/reports/markdown-display'; // Lazy loaded
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { summarizeAdvancePaymentsAction } from '@/lib/actions';
 import { useToast } from "@/hooks/use-toast";
+import type { Laborer, AdvancePayment } from '@/lib/types';
+import { initialLaborers, initialAdvancePayments } from '@/lib/data';
+import { format, parseISO } from 'date-fns';
 
 const MarkdownDisplay = lazy(() => import('@/components/reports/markdown-display').then(module => ({ default: module.MarkdownDisplay })));
 
 const advanceSummarySchema = z.object({
+  selectedLaborerId: z.string().optional(), // Optional: user might want to summarize for all or custom input
   laborDetails: z.string().min(10, "Laborer details are required."),
   advancePayments: z.string().min(10, "Advance payment records are required."),
   query: z.string().min(5, "Query is too short."),
@@ -29,11 +32,48 @@ export default function AdvanceSummaryPage() {
   const [summary, setSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [laborers, setLaborers] = useState<Laborer[]>([]);
+  const [advances, setAdvances] = useState<AdvancePayment[]>([]);
   const { toast } = useToast();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<AdvanceSummaryFormData>({
+  const { register, handleSubmit, reset, control, watch, setValue, formState: { errors } } = useForm<AdvanceSummaryFormData>({
     resolver: zodResolver(advanceSummarySchema),
+    defaultValues: {
+      laborDetails: '',
+      advancePayments: '',
+      query: '',
+    }
   });
+
+  const selectedLaborerId = watch('selectedLaborerId');
+
+  useEffect(() => {
+    setLaborers(initialLaborers);
+    setAdvances(initialAdvancePayments);
+  }, []);
+
+  useEffect(() => {
+    if (selectedLaborerId) {
+      const selectedLaborer = laborers.find(l => l.id === selectedLaborerId);
+      if (selectedLaborer) {
+        setValue('laborDetails', `Laborer Name: ${selectedLaborer.name}\nDetails: ${selectedLaborer.details}`);
+        
+        const laborerAdvances = advances
+          .filter(a => a.laborerId === selectedLaborerId)
+          .map(a => `Date: ${format(parseISO(a.date), 'PPP')}, Amount: ₹${a.amount.toFixed(2)}`)
+          .join('\n');
+        
+        setValue('advancePayments', laborerAdvances || 'No advance payments found for this laborer.');
+        setValue('query', `Summarize advances for ${selectedLaborer.name}.`);
+      }
+    } else {
+      // Optionally clear fields or set to a default state if no laborer is selected
+      // For now, we let manual input override if selectedLaborerId is cleared.
+      // setValue('laborDetails', '');
+      // setValue('advancePayments', '');
+      // setValue('query', 'Summarize all advances.');
+    }
+  }, [selectedLaborerId, laborers, advances, setValue]);
 
   const handleFormSubmit: SubmitHandler<AdvanceSummaryFormData> = async (data) => {
     setIsLoading(true);
@@ -41,11 +81,13 @@ export default function AdvanceSummaryPage() {
     setSummary(null);
 
     try {
-      const result = await summarizeAdvancePaymentsAction(data);
+      // We only use laborDetails, advancePayments, and query for the action, selectedLaborerId is for pre-filling
+      const { selectedLaborerId, ...actionData } = data;
+      const result = await summarizeAdvancePaymentsAction(actionData);
       if (result.success && result.summary) {
         setSummary(result.summary);
         toast({ title: "Summary Generated", description: "Advance payments summary successfully generated." });
-        reset(); // Reset form
+        // reset(); // Reset form, consider if user wants to keep pre-filled data for new query
       } else {
         setError(result.error || "Failed to generate summary.");
         toast({ title: "Error", description: result.error || "Failed to generate summary.", variant: "destructive" });
@@ -65,18 +107,41 @@ export default function AdvanceSummaryPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-foreground">Summarize Advance Payments</CardTitle>
           <CardDescription>
-            Provide labor details, advance payment records, and a specific query to get an AI-generated summary.
+            Optionally select a laborer to pre-fill details, or manually enter information. Then, provide a specific query to get an AI-generated summary.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+            <div>
+              <Label htmlFor="selectedLaborerId">Select Laborer (Optional)</Label>
+              <Controller
+                name="selectedLaborerId"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <SelectTrigger id="selectedLaborerId">
+                      <SelectValue placeholder="Select a laborer to pre-fill details" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">-- None (Manual Input) --</SelectItem>
+                      {laborers.map(laborer => (
+                        <SelectItem key={laborer.id} value={laborer.id}>
+                          {laborer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
             <div>
               <Label htmlFor="laborDetails" className="font-semibold">Laborer Details</Label>
               <Textarea
                 id="laborDetails"
                 {...register('laborDetails')}
                 rows={5}
-                placeholder="Enter details of laborers, including names, roles, etc."
+                placeholder="Enter details of laborers, including names, roles, etc. This will be pre-filled if a laborer is selected."
                 className={`mt-1 ${errors.laborDetails ? 'border-destructive' : ''}`}
               />
               {errors.laborDetails && <p className="text-xs text-destructive mt-1">{errors.laborDetails.message}</p>}
@@ -88,7 +153,7 @@ export default function AdvanceSummaryPage() {
                 id="advancePayments"
                 {...register('advancePayments')}
                 rows={8}
-                placeholder="Enter a list of advance payments, including laborer name, date, and amount for each."
+                placeholder="Enter a list of advance payments, including laborer name, date, and amount for each. This will be pre-filled if a laborer is selected."
                 className={`mt-1 ${errors.advancePayments ? 'border-destructive' : ''}`}
               />
               {errors.advancePayments && <p className="text-xs text-destructive mt-1">{errors.advancePayments.message}</p>}
