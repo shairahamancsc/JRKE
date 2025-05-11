@@ -5,11 +5,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck, CalendarIcon, UserCircle2 } from 'lucide-react';
+import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck, CalendarIcon, UserCircle2, Briefcase, Landmark, Info } from 'lucide-react';
 import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data'; 
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
-import type { Labour, AdvancePayment, WorkLog, DailyLogEntry } from '@/lib/types';
+import type { Labour, AdvancePayment, WorkLog, DailyLogEntry, PaymentMethod } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+
+const paymentMethodLabels: Record<PaymentMethod, string> = {
+  cash: 'Cash',
+  phonepe: 'PhonePe',
+  account: 'Account Pay',
+};
 
 export default function DashboardPage() {
   const [labourCount, setLabourCount] = useState(0);
@@ -181,8 +187,8 @@ export default function DashboardPage() {
               ) : filteredEntries.length > 0 ? (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 rounded-md border p-4 bg-background/50">
                   {filteredEntries.map((entry) => (
-                    <Card key={entry.id} className="p-3 bg-card shadow-sm">
-                      <div className="flex items-center justify-between gap-2">
+                    <Card key={entry.id} className="p-4 bg-card shadow-sm"> {/* Increased padding */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
                         <div className="flex items-center gap-3 flex-grow min-w-0">
                           <Avatar className="h-10 w-10 flex-shrink-0">
                             <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face" />
@@ -192,11 +198,6 @@ export default function DashboardPage() {
                           </Avatar>
                           <div className="flex-grow min-w-0">
                             <p className="font-medium text-sm truncate" title={entry.labourName || 'Unknown Labour'}>{entry.labourName || 'Unknown Labour'}</p>
-                            {entry.attendanceStatus === 'present' && entry.workLocation && (
-                              <p className="text-xs text-muted-foreground truncate" title={entry.workLocation}>
-                                Location: {entry.workLocation}
-                              </p>
-                            )}
                           </div>
                         </div>
                         <Badge
@@ -208,6 +209,39 @@ export default function DashboardPage() {
                           {entry.attendanceStatus.charAt(0).toUpperCase() + entry.attendanceStatus.slice(1)}
                         </Badge>
                       </div>
+                      
+                      {((entry.attendanceStatus === 'present' && entry.workLocation) || (entry.advanceAmount && entry.advanceAmount > 0)) && (
+                        <div className="mt-2 pt-2 border-t border-border/50 text-xs space-y-1">
+                          {entry.attendanceStatus === 'present' && entry.workLocation && (
+                            <div className="flex items-start gap-1.5">
+                              <Briefcase className="h-3.5 w-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                              <p className="text-muted-foreground"><span className="font-medium text-foreground/90">Work:</span> {entry.workLocation}</p>
+                            </div>
+                          )}
+                          {entry.advanceAmount && entry.advanceAmount > 0 && (
+                            <>
+                              <div className="flex items-start gap-1.5">
+                                <IndianRupee className="h-3.5 w-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                <p className="text-muted-foreground">
+                                  <span className="font-medium text-foreground/90">Advance:</span> ₹{entry.advanceAmount.toFixed(2)}
+                                  {entry.advancePaymentMethod && (
+                                    <>
+                                      <Landmark className="inline h-3 w-3 ml-2 mr-0.5 text-muted-foreground" />
+                                      {paymentMethodLabels[entry.advancePaymentMethod] || entry.advancePaymentMethod}
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                              {entry.advanceRemarks && (
+                                <div className="flex items-start gap-1.5">
+                                  <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                  <p className="text-muted-foreground"><span className="font-medium text-foreground/90">Remarks:</span> {entry.advanceRemarks}</p>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </Card>
                   ))}
                 </div>
@@ -222,3 +256,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
