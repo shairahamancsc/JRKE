@@ -1,0 +1,131 @@
+
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import { WorkLogForm } from '@/components/work-logs/work-log-form';
+import { DataTable } from '@/components/common/data-table';
+import type { WorkLog, Laborer } from '@/lib/types';
+import { initialWorkLogs, initialLaborers } from '@/lib/data';
+import { format, parseISO } from 'date-fns';
+import { useToast } from "@/hooks/use-toast";
+
+export default function WorkLogsPage() {
+  const [workLogs, setWorkLogs] = useState<WorkLog[]>([]);
+  const [laborers, setLaborers] = useState<Laborer[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingWorkLog, setEditingWorkLog] = useState<WorkLog | undefined>(undefined);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setWorkLogs(initialWorkLogs);
+    setLaborers(initialLaborers);
+     if (window.location.hash === "#add") {
+      setIsFormOpen(true);
+      window.location.hash = ""; // Clear hash
+    }
+  }, []);
+
+  const handleAddWorkLog = () => {
+    setEditingWorkLog(undefined);
+    setIsFormOpen(true);
+  };
+
+  const handleEditWorkLog = (workLog: WorkLog) => {
+    setEditingWorkLog(workLog);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteWorkLog = (workLogToDelete: WorkLog) => {
+    setWorkLogs(workLogs.filter(wl => wl.id !== workLogToDelete.id));
+     toast({
+      title: "Work Log Deleted",
+      description: `Work log for ${getLaborerName(workLogToDelete.laborerId)} on ${format(parseISO(workLogToDelete.date), 'PPP')} has been removed.`,
+      variant: "destructive",
+    });
+  };
+
+  const handleFormSubmit = async (workLog: WorkLog) => {
+    // If there's a new pictureFile, handle its preview generation
+    if (workLog.pictureFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newWorkLog = { ...workLog, picturePreview: reader.result as string };
+        saveWorkLog(newWorkLog);
+      };
+      reader.readAsDataURL(workLog.pictureFile);
+    } else {
+      saveWorkLog(workLog);
+    }
+  };
+  
+  const saveWorkLog = (workLogToSave: WorkLog) => {
+    if (editingWorkLog) {
+      setWorkLogs(workLogs.map(wl => wl.id === workLogToSave.id ? workLogToSave : wl));
+      toast({ title: "Work Log Updated", description: `Work log for ${getLaborerName(workLogToSave.laborerId)} has been updated.` });
+    } else {
+      setWorkLogs([workLogToSave, ...workLogs]);
+      toast({ title: "Work Log Added", description: `New work log for ${getLaborerName(workLogToSave.laborerId)} has been added.` });
+    }
+    setIsFormOpen(false);
+    setEditingWorkLog(undefined);
+  }
+  
+  const getLaborerName = (laborerId: string) => {
+    return laborers.find(l => l.id === laborerId)?.name || 'Unknown Laborer';
+  };
+
+  const columns = [
+    { 
+      accessorKey: (item: WorkLog) => getLaborerName(item.laborerId), 
+      header: 'Laborer' 
+    },
+    { 
+      accessorKey: 'date' as keyof WorkLog, 
+      header: 'Date',
+      cell: (item: WorkLog) => format(parseISO(item.date), 'PPP')
+    },
+    { accessorKey: 'location' as keyof WorkLog, header: 'Location' },
+    { accessorKey: 'workType' as keyof WorkLog, header: 'Work Type' },
+    {
+      accessorKey: 'picturePreview' as keyof WorkLog,
+      header: 'Picture',
+      cell: (item: WorkLog) => item.picturePreview ? (
+        <Image src={item.picturePreview} alt="Work log proof" width={60} height={60} className="rounded object-cover" data-ai-hint="work site" />
+      ) : (
+        <span className="text-xs text-muted-foreground">No image</span>
+      )
+    }
+  ];
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-foreground">Daily Work Logs</h1>
+        <Button onClick={handleAddWorkLog} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <PlusCircle className="mr-2 h-5 w-5" /> Add Work Log
+        </Button>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={workLogs}
+        onEdit={handleEditWorkLog}
+        onDelete={handleDeleteWorkLog}
+      />
+
+      <WorkLogForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingWorkLog(undefined);
+        }}
+        onSubmit={handleFormSubmit}
+        laborers={laborers}
+        defaultValues={editingWorkLog}
+      />
+    </div>
+  );
+}
