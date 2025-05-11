@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -103,7 +104,7 @@ export function MainSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
         <div className="group-data-[collapsible=icon]:hidden">
-          <span className="text-xs text-sidebar-foreground/70">© {new Date().getFullYear()} Jrk Inc.</span>
+          <span className="text-xs text-sidebar-foreground/70">© {new Date().getFullYear()} Jrk Enterprises.</span>
         </div>
       </SidebarFooter>
     </Sidebar>
