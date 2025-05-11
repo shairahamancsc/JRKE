@@ -1,16 +1,15 @@
-
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Users,
-  DollarSign,
+  IndianRupee, // Corrected from DollarSign based on previous changes
   ClipboardList,
   FileText,
   LayoutDashboard,
   Building,
-  ClipboardCheck, // Added for Daily Entry
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -23,32 +22,37 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarFooter,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"; // Assuming this is the correct import path based on existing sidebar
-import { Button } from "@/components/ui/button";
+  useSidebar, // Import useSidebar hook
+} from "@/components/ui/sidebar";
+import { SheetTitle } from "@/components/ui/sheet"; // Import SheetTitle for mobile accessibility
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/laborers", label: "Laborers", icon: Users },
-  { href: "/advances", label: "Advances", icon: DollarSign },
+  { href: "/advances", label: "Advances", icon: IndianRupee },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
-  { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck }, // New Daily Entry link
+  { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
   {
     label: "Reports",
     icon: FileText,
     subItems: [
       { href: "/reports/attendance", label: "Attendance Report", icon: ClipboardList },
-      { href: "/reports/advances-summary", label: "Advance Summary", icon: DollarSign },
+      { href: "/reports/advances-summary", label: "Advance Summary", icon: IndianRupee },
     ],
   },
 ];
 
 export function MainSidebar() {
   const pathname = usePathname();
+  const { isMobile } = useSidebar(); // Use the hook to detect mobile context
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="p-4">
+        {/* Add a visually hidden SheetTitle for accessibility when in mobile sheet view */}
+        {isMobile && (
+          <SheetTitle className="sr-only">Main Navigation Menu</SheetTitle>
+        )}
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
           <Building className="h-7 w-7 text-sidebar-primary" />
           <span className="group-data-[collapsible=icon]:hidden">Jrk Labor Mgmt</span>
@@ -98,8 +102,6 @@ export function MainSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
-        {/* You can add a user profile or settings button here */}
-        {/* For now, a simple trigger to demonstrate toggle */}
         <div className="group-data-[collapsible=icon]:hidden">
           <span className="text-xs text-sidebar-foreground/70">© {new Date().getFullYear()} Jrk Inc.</span>
         </div>
