@@ -262,10 +262,10 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, labours }: DailyEntr
                           className={errors.entries?.[index]?.advanceAmount ? 'border-destructive' : ''}
                           placeholder="e.g., 100.00"
                           onChange={(e) => {
-                            control.setValue(`entries.${index}.advanceAmount`, e.target.value === '' ? '' : parseFloat(e.target.value), { shouldValidate: true });
+                            setValue(`entries.${index}.advanceAmount`, e.target.value === '' ? '' : parseFloat(e.target.value), { shouldValidate: true });
                             if (e.target.value === '' || parseFloat(e.target.value) <= 0) {
-                                control.setValue(`entries.${index}.advancePaymentMethod`, undefined);
-                                control.setValue(`entries.${index}.advanceRemarks`, '');
+                                setValue(`entries.${index}.advancePaymentMethod`, undefined);
+                                setValue(`entries.${index}.advanceRemarks`, '');
                             }
                           }}
                         />
@@ -339,3 +339,4 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, labours }: DailyEntr
     </Dialog>
   );
 }
+
