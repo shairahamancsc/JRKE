@@ -44,8 +44,8 @@ export const initialLaborers: Laborer[] = [
 ];
 
 export const initialAdvancePayments: AdvancePayment[] = [
-  { id: 'adv1', laborerId: '1', date: new Date(2023, 0, 15).toISOString(), amount: 200 },
-  { id: 'adv2', laborerId: '2', date: new Date(2023, 0, 20).toISOString(), amount: 150 },
+  { id: 'adv1', laborerId: '1', date: new Date(2023, 0, 15).toISOString(), amount: 200, paymentMethod: 'cash', remarks: 'Urgent medical need' },
+  { id: 'adv2', laborerId: '2', date: new Date(2023, 0, 20).toISOString(), amount: 150, paymentMethod: 'phonepe', remarks: 'Family emergency' },
 ];
 
 export const initialWorkLogs: WorkLog[] = [
@@ -75,6 +75,9 @@ export const initialDailyLogEntries: DailyLogEntry[] = [
   //   date: new Date().toISOString(),
   //   attendanceStatus: 'present',
   //   advanceAmount: 50,
+  //   advancePaymentMethod: 'cash',
+  //   advanceRemarks: 'For lunch',
   //   workLocation: 'Main Courtyard, Phase 2',
   // },
 ];
+

@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarIcon, UserCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -25,23 +26,30 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import type { DailyLogEntry, Laborer } from '@/lib/types';
+import type { DailyLogEntry, Laborer, PaymentMethod } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 
+const paymentMethodsList: { value: PaymentMethod; label: string }[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'phonepe', label: 'PhonePe' },
+  { value: 'account', label: 'Account Pay' },
+];
+
 const individualLaborerDailyEntrySchema = z.object({
   laborerId: z.string(),
-  laborerName: z.string(), // For display
-  laborerPhotoPreview: z.string().optional(), // For display
+  laborerName: z.string(), 
+  laborerPhotoPreview: z.string().optional(), 
   attendanceStatus: z.enum(['present', 'absent'], { required_error: "Attendance status is required" }),
-  advanceAmount: z.coerce.number().min(0.01, "Advance must be a positive amount if entered.").optional().or(z.literal('')),
-  // workLocation is removed from here
+  advanceAmount: z.coerce.number().min(0, "Advance must be a non-negative amount.").optional().or(z.literal('')),
+  advancePaymentMethod: z.enum(['phonepe', 'account', 'cash']).optional(),
+  advanceRemarks: z.string().optional(),
 });
 
 const bulkDailyLogEntriesSchema = z.object({
   date: z.date({ required_error: "Date is required" }),
-  workLocation: z.string().optional(), // Global work location
+  workLocation: z.string().optional(), 
   entries: z.array(individualLaborerDailyEntrySchema),
 }).refine(data => {
   const anyPresent = data.entries.some(entry => entry.attendanceStatus === 'present');
@@ -52,7 +60,23 @@ const bulkDailyLogEntriesSchema = z.object({
 }, {
   message: "Work location is required if at least one laborer is present.",
   path: ["workLocation"], 
+}).refine(data => {
+    for (const entry of data.entries) {
+        if (entry.advanceAmount && Number(entry.advanceAmount) > 0 && !entry.advancePaymentMethod) {
+            // This custom pathing is a bit tricky with useFieldArray, focusing on a general error for now.
+            // For specific field error, you might need more complex logic or a different validation approach.
+            return false; 
+        }
+    }
+    return true;
+}, {
+    message: "Payment method is required if advance amount is greater than 0.",
+    // Path ideally would be `entries.${index}.advancePaymentMethod`, but Zod's refine path doesn't easily support dynamic indices.
+    // A general error or per-field validation might be more practical here.
+    // For simplicity, showing a general error at the 'entries' level.
+    path: ["entries"], 
 });
+
 
 export type BulkDailyLogEntriesFormData = z.infer<typeof bulkDailyLogEntriesSchema>;
 
@@ -94,6 +118,8 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
           laborerPhotoPreview: laborer.photoPreview,
           attendanceStatus: 'present',
           advanceAmount: undefined,
+          advancePaymentMethod: undefined,
+          advanceRemarks: '',
         })),
       });
     }
@@ -105,13 +131,15 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
       entries: data.entries.map(entry => ({
         ...entry,
         advanceAmount: entry.advanceAmount === '' ? undefined : Number(entry.advanceAmount),
+        advancePaymentMethod: (entry.advanceAmount && Number(entry.advanceAmount) > 0) ? entry.advancePaymentMethod : undefined,
+        advanceRemarks: (entry.advanceAmount && Number(entry.advanceAmount) > 0) ? entry.advanceRemarks : undefined,
       })),
     };
     onSubmit(processedData);
     onClose();
   };
   
-  const watchedEntryAttendanceStatus = watch('entries');
+  const watchedEntryValues = watch('entries');
 
 
   return (
@@ -177,7 +205,10 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
           <ScrollArea className="h-[45vh] pr-3 border rounded-md">
             <div className="space-y-6 p-4">
               {fields.map((field, index) => {
-                const currentAttendanceStatus = watchedEntryAttendanceStatus?.[index]?.attendanceStatus;
+                const currentAttendanceStatus = watchedEntryValues?.[index]?.attendanceStatus;
+                const currentAdvanceAmount = watchedEntryValues?.[index]?.advanceAmount;
+                const showAdvanceDetails = currentAdvanceAmount && Number(currentAdvanceAmount) > 0;
+
                 return (
                   <Card key={field.id} className="p-4 shadow-sm bg-card">
                     <div className="flex items-center mb-3">
@@ -200,7 +231,6 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
                             <RadioGroup
                               onValueChange={(value) => {
                                 controllerField.onChange(value);
-                                // Trigger re-evaluation of isAnyLaborerPresent
                                 const updatedEntries = [...watchedEntries];
                                 updatedEntries[index] = { ...updatedEntries[index], attendanceStatus: value as 'present' | 'absent' };
                                 setValue('entries', updatedEntries, { shouldValidate: true });
@@ -223,7 +253,7 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
                       </div>
                       
                       <div>
-                        <Label htmlFor={`advanceAmount-${field.id}`} className="text-sm font-medium">Advance Amount (Optional)</Label>
+                        <Label htmlFor={`advanceAmount-${field.id}`} className="text-sm font-medium">Advance Amount (₹) (Optional)</Label>
                         <Input 
                           id={`advanceAmount-${field.id}`}
                           type="number" 
@@ -231,9 +261,59 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
                           {...control.register(`entries.${index}.advanceAmount`)}
                           className={errors.entries?.[index]?.advanceAmount ? 'border-destructive' : ''}
                           placeholder="e.g., 100.00"
+                          onChange={(e) => {
+                            control.setValue(`entries.${index}.advanceAmount`, e.target.value === '' ? '' : parseFloat(e.target.value), { shouldValidate: true });
+                            if (e.target.value === '' || parseFloat(e.target.value) <= 0) {
+                                control.setValue(`entries.${index}.advancePaymentMethod`, undefined);
+                                control.setValue(`entries.${index}.advanceRemarks`, '');
+                            }
+                          }}
                         />
                         {errors.entries?.[index]?.advanceAmount && <p className="text-xs text-destructive mt-1">{errors.entries?.[index]?.advanceAmount?.message}</p>}
                       </div>
+
+                      {showAdvanceDetails && (
+                        <>
+                          <div>
+                            <Label htmlFor={`advancePaymentMethod-${field.id}`} className="text-sm font-medium">Advance Payment Method</Label>
+                            <Controller
+                              name={`entries.${index}.advancePaymentMethod`}
+                              control={control}
+                              render={({ field: controllerField }) => (
+                                <Select 
+                                  onValueChange={controllerField.onChange} 
+                                  defaultValue={controllerField.value}
+                                  value={controllerField.value || ""}
+                                >
+                                  <SelectTrigger id={`advancePaymentMethod-${field.id}`} className={errors.entries?.[index]?.advancePaymentMethod ? 'border-destructive' : ''}>
+                                    <SelectValue placeholder="Select payment method" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {paymentMethodsList.map(method => (
+                                      <SelectItem key={method.value} value={method.value}>
+                                        {method.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                            {errors.entries?.[index]?.advancePaymentMethod && <p className="text-xs text-destructive mt-1">{errors.entries?.[index]?.advancePaymentMethod?.message}</p>}
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`advanceRemarks-${field.id}`} className="text-sm font-medium">Advance Remarks (Optional)</Label>
+                            <Textarea 
+                              id={`advanceRemarks-${field.id}`}
+                              {...control.register(`entries.${index}.advanceRemarks`)}
+                              placeholder="Add any remarks for this advance"
+                              className={errors.entries?.[index]?.advanceRemarks ? 'border-destructive' : ''}
+                              rows={2}
+                            />
+                            {errors.entries?.[index]?.advanceRemarks && <p className="text-xs text-destructive mt-1">{errors.entries?.[index]?.advanceRemarks?.message}</p>}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </Card>
                 )
@@ -241,7 +321,9 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
             </div>
           </ScrollArea>
           
-          {errors.entries && typeof errors.entries === 'string' && <p className="text-xs text-destructive mt-1">{errors.entries.message}</p>}
+          {errors.entries && !Array.isArray(errors.entries) && typeof errors.entries.message === 'string' && (
+            <p className="text-sm text-destructive mt-1">{errors.entries.message}</p>
+          )}
 
 
           <DialogFooter>
@@ -257,3 +339,4 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
     </Dialog>
   );
 }
+

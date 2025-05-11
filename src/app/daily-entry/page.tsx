@@ -4,10 +4,9 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2, Loader2 } from 'lucide-react';
-// import { DailyEntryForm } from '@/components/daily-entry/daily-entry-form'; // Lazy loaded
 import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
 import { DataTable } from '@/components/common/data-table';
-import type { DailyLogEntry, Laborer } from '@/lib/types';
+import type { DailyLogEntry, Laborer, PaymentMethod } from '@/lib/types';
 import { initialDailyLogEntries, initialLaborers } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +16,12 @@ import { DAILY_ENTRIES_STORAGE_KEY, LABORERS_STORAGE_KEY } from '@/lib/storageKe
 
 const DailyEntryForm = lazy(() => import('@/components/daily-entry/daily-entry-form').then(module => ({ default: module.DailyEntryForm })));
 
+const paymentMethodLabels: Record<PaymentMethod, string> = {
+  cash: 'Cash',
+  phonepe: 'PhonePe',
+  account: 'Account Pay',
+};
+
 export default function DailyEntryPage() {
   const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
   const [laborers, setLaborers] = useState<Laborer[]>([]);
@@ -24,20 +29,18 @@ export default function DailyEntryPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load daily entries from LocalStorage
     try {
       const storedDailyEntries = localStorage.getItem(DAILY_ENTRIES_STORAGE_KEY);
       if (storedDailyEntries) {
         setDailyEntries(JSON.parse(storedDailyEntries));
       } else {
-        setDailyEntries(initialDailyLogEntries); // Usually empty, but for consistency
+        setDailyEntries(initialDailyLogEntries); 
       }
     } catch (error) {
       console.error("Error loading daily entries from localStorage:", error);
       setDailyEntries(initialDailyLogEntries);
     }
 
-    // Load laborers from LocalStorage (read-only)
     try {
       const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
       if (storedLaborers) {
@@ -56,7 +59,6 @@ export default function DailyEntryPage() {
     }
   }, []);
 
-  // Save daily entries to LocalStorage whenever the state changes
   useEffect(() => {
     try {
       localStorage.setItem(DAILY_ENTRIES_STORAGE_KEY, JSON.stringify(dailyEntries));
@@ -95,15 +97,18 @@ export default function DailyEntryPage() {
   const handleFormSubmit = (formData: BulkDailyLogEntriesFormData) => {
     const newEntries: DailyLogEntry[] = formData.entries.map(entryData => {
       const laborerInfo = getLaborerInfo(entryData.laborerId);
+      const advanceAmount = entryData.advanceAmount ? Number(entryData.advanceAmount) : undefined;
       return {
         id: crypto.randomUUID(),
         laborerId: entryData.laborerId,
         date: formData.date.toISOString(),
         attendanceStatus: entryData.attendanceStatus,
-        advanceAmount: entryData.advanceAmount ? Number(entryData.advanceAmount) : undefined,
+        advanceAmount: advanceAmount,
+        advancePaymentMethod: advanceAmount && advanceAmount > 0 ? entryData.advancePaymentMethod : undefined,
+        advanceRemarks: advanceAmount && advanceAmount > 0 ? entryData.advanceRemarks : undefined,
         workLocation: entryData.attendanceStatus === 'present' ? formData.workLocation : undefined,
-        laborerName: laborerInfo.name, // Storing for easier display in table
-        laborerPhotoPreview: laborerInfo.photoPreview, // Storing for easier display
+        laborerName: laborerInfo.name, 
+        laborerPhotoPreview: laborerInfo.photoPreview, 
       };
     });
 
@@ -126,7 +131,6 @@ export default function DailyEntryPage() {
   const columns = [
     { 
       accessorKey: (item: DailyLogEntry) => {
-        // Use stored name/photo if available, otherwise lookup (though it should be stored by handleFormSubmit)
         const name = item.laborerName || getLaborerInfo(item.laborerId).name;
         const photoPreview = item.laborerPhotoPreview || getLaborerInfo(item.laborerId).photoPreview;
         return (
@@ -165,6 +169,20 @@ export default function DailyEntryPage() {
       accessorKey: 'advanceAmount' as keyof DailyLogEntry, 
       header: 'Advance (₹)',
       cell: (item: DailyLogEntry) => item.advanceAmount ? `₹${item.advanceAmount.toFixed(2)}` : '-'
+    },
+    {
+      accessorKey: 'advancePaymentMethod' as keyof DailyLogEntry,
+      header: 'Adv. Method',
+      cell: (item: DailyLogEntry) => item.advancePaymentMethod ? (
+        <Badge variant="outline" className="whitespace-nowrap">
+          {paymentMethodLabels[item.advancePaymentMethod] || item.advancePaymentMethod}
+        </Badge>
+      ) : '-'
+    },
+    { 
+      accessorKey: 'advanceRemarks' as keyof DailyLogEntry, 
+      header: 'Adv. Remarks',
+      cell: (item: DailyLogEntry) => item.advanceRemarks || '-'
     },
     { accessorKey: 'workLocation' as keyof DailyLogEntry, header: 'Work Location',
       cell: (item: DailyLogEntry) => item.workLocation || '-'
@@ -208,10 +226,11 @@ export default function DailyEntryPage() {
               setIsFormOpen(false);
             }}
             onSubmit={handleFormSubmit}
-            laborers={laborers} // Pass loaded laborers
+            laborers={laborers} 
           />
         </Suspense>
       )}
     </div>
   );
 }
+

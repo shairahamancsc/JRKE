@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -10,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Textarea } from '@/components/ui/textarea';
 import { CalendarIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
@@ -19,14 +21,23 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
-import type { AdvancePayment, Laborer } from '@/lib/types';
+import type { AdvancePayment, Laborer, PaymentMethod } from '@/lib/types';
 import { cn } from '@/lib/utils';
+
+const paymentMethods: { value: PaymentMethod; label: string }[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'phonepe', label: 'PhonePe' },
+  { value: 'account', label: 'Account Pay' },
+];
 
 const advanceSchema = z.object({
   laborerId: z.string().min(1, "Laborer is required"),
   date: z.date({ required_error: "Date is required" }),
   amount: z.coerce.number().min(0.01, "Amount must be positive"),
+  paymentMethod: z.enum(['phonepe', 'account', 'cash']).optional(),
+  remarks: z.string().optional(),
 });
 
 type AdvanceFormData = z.infer<typeof advanceSchema>;
@@ -46,24 +57,32 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
       laborerId: defaultValues?.laborerId || '',
       date: defaultValues?.date ? parseISO(defaultValues.date) : new Date(),
       amount: defaultValues?.amount || 0,
+      paymentMethod: defaultValues?.paymentMethod || undefined,
+      remarks: defaultValues?.remarks || '',
     },
   });
 
   const selectedDate = watch('date');
 
   React.useEffect(() => {
-    if (defaultValues) {
-      reset({
-        laborerId: defaultValues.laborerId,
-        date: parseISO(defaultValues.date),
-        amount: defaultValues.amount,
-      });
-    } else {
-      reset({
-        laborerId: '',
-        date: new Date(),
-        amount: 0,
-      });
+    if (isOpen) {
+      if (defaultValues) {
+        reset({
+          laborerId: defaultValues.laborerId,
+          date: parseISO(defaultValues.date),
+          amount: defaultValues.amount,
+          paymentMethod: defaultValues.paymentMethod || undefined,
+          remarks: defaultValues.remarks || '',
+        });
+      } else {
+        reset({
+          laborerId: '',
+          date: new Date(),
+          amount: 0,
+          paymentMethod: undefined,
+          remarks: '',
+        });
+      }
     }
   }, [defaultValues, reset, isOpen]);
 
@@ -78,11 +97,14 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Edit Advance' : 'Record New Advance'}</DialogTitle>
+          <DialogDescription>
+            Fill in the details for the advance payment.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
           <div>
             <Label htmlFor="laborerId">Laborer</Label>
             <Controller
@@ -115,7 +137,7 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      id="date" // Added id to match Label htmlFor
+                      id="date" 
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
@@ -142,10 +164,47 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
           </div>
 
           <div>
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="amount">Amount (₹)</Label>
             <Input id="amount" type="number" step="0.01" {...register('amount')} className={errors.amount ? 'border-destructive' : ''} />
             {errors.amount && <p className="text-xs text-destructive mt-1">{errors.amount.message}</p>}
           </div>
+
+          <div>
+            <Label htmlFor="paymentMethod">Payment Method (Optional)</Label>
+            <Controller
+              name="paymentMethod"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger id="paymentMethod" className={errors.paymentMethod ? 'border-destructive' : ''}>
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">-- None --</SelectItem>
+                    {paymentMethods.map(method => (
+                      <SelectItem key={method.value} value={method.value}>
+                        {method.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.paymentMethod && <p className="text-xs text-destructive mt-1">{errors.paymentMethod.message}</p>}
+          </div>
+
+          <div>
+            <Label htmlFor="remarks">Remarks (Optional)</Label>
+            <Textarea 
+              id="remarks" 
+              {...register('remarks')} 
+              placeholder="Add any remarks for this advance" 
+              className={errors.remarks ? 'border-destructive' : ''} 
+              rows={3}
+            />
+            {errors.remarks && <p className="text-xs text-destructive mt-1">{errors.remarks.message}</p>}
+          </div>
+
 
           <DialogFooter>
             <DialogClose asChild>
@@ -160,3 +219,4 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
     </Dialog>
   );
 }
+

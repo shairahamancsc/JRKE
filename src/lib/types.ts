@@ -22,11 +22,15 @@ export interface Laborer {
   licensePreview?: string; // Base64 or URL for preview
 }
 
+export type PaymentMethod = 'phonepe' | 'account' | 'cash';
+
 export interface AdvancePayment {
   id: string;
   laborerId: string;
   date: string; // ISO string format for dates
   amount: number;
+  paymentMethod?: PaymentMethod;
+  remarks?: string;
 }
 
 export interface WorkLog {
@@ -45,8 +49,11 @@ export interface DailyLogEntry {
   date: string; // ISO string format
   attendanceStatus: 'present' | 'absent';
   advanceAmount?: number;
+  advancePaymentMethod?: PaymentMethod;
+  advanceRemarks?: string;
   workLocation?: string;
   // For convenience when displaying, not strictly part of the stored data model if derived
   laborerName?: string; 
   laborerPhotoPreview?: string;
 }
+

@@ -6,13 +6,20 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 // import { AdvanceForm } from '@/components/advances/advance-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
-import type { AdvancePayment, Laborer } from '@/lib/types';
+import type { AdvancePayment, Laborer, PaymentMethod } from '@/lib/types';
 import { initialAdvancePayments, initialLaborers } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { ADVANCES_STORAGE_KEY, LABORERS_STORAGE_KEY } from '@/lib/storageKeys';
+import { Badge } from '@/components/ui/badge';
 
 const AdvanceForm = lazy(() => import('@/components/advances/advance-form').then(module => ({ default: module.AdvanceForm })));
+
+const paymentMethodLabels: Record<PaymentMethod, string> = {
+  cash: 'Cash',
+  phonepe: 'PhonePe',
+  account: 'Account Pay',
+};
 
 export default function AdvancesPage() {
   const [advances, setAdvances] = useState<AdvancePayment[]>([]);
@@ -22,7 +29,6 @@ export default function AdvancesPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load advances from LocalStorage
     try {
       const storedAdvances = localStorage.getItem(ADVANCES_STORAGE_KEY);
       if (storedAdvances) {
@@ -35,7 +41,6 @@ export default function AdvancesPage() {
       setAdvances(initialAdvancePayments);
     }
 
-    // Load laborers from LocalStorage (read-only for this page)
     try {
       const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
       if (storedLaborers) {
@@ -50,11 +55,10 @@ export default function AdvancesPage() {
 
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
-      window.location.hash = ""; // Clear hash
+      window.location.hash = ""; 
     }
   }, []);
 
-  // Save advances to LocalStorage whenever the state changes
   useEffect(() => {
     try {
       localStorage.setItem(ADVANCES_STORAGE_KEY, JSON.stringify(advances));
@@ -92,7 +96,7 @@ export default function AdvancesPage() {
       setAdvances(prevAdvances => prevAdvances.map(a => a.id === advance.id ? advance : a));
       toast({ title: "Advance Updated", description: `Advance for ${getLaborerName(advance.laborerId)} has been updated.` });
     } else {
-      setAdvances(prevAdvances => [advance, ...prevAdvances]);
+      setAdvances(prevAdvances => [advance, ...prevAdvances].sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime()));
       toast({ title: "Advance Added", description: `Advance of ${advance.amount} recorded for ${getLaborerName(advance.laborerId)}.` });
     }
     setIsFormOpen(false);
@@ -115,8 +119,22 @@ export default function AdvancesPage() {
     },
     { 
       accessorKey: 'amount' as keyof AdvancePayment, 
-      header: 'Amount',
+      header: 'Amount (₹)',
       cell: (item: AdvancePayment) => `₹${item.amount.toFixed(2)}`
+    },
+    {
+      accessorKey: 'paymentMethod' as keyof AdvancePayment,
+      header: 'Payment Method',
+      cell: (item: AdvancePayment) => item.paymentMethod ? (
+        <Badge variant="secondary" className="whitespace-nowrap">
+          {paymentMethodLabels[item.paymentMethod] || item.paymentMethod}
+        </Badge>
+      ) : '-'
+    },
+    {
+      accessorKey: 'remarks' as keyof AdvancePayment,
+      header: 'Remarks',
+      cell: (item: AdvancePayment) => item.remarks || '-'
     },
   ];
 
@@ -155,7 +173,7 @@ export default function AdvancesPage() {
               setEditingAdvance(undefined);
             }}
             onSubmit={handleFormSubmit}
-            laborers={laborers} // Pass the loaded laborers to the form
+            laborers={laborers} 
             defaultValues={editingAdvance}
           />
         </Suspense>
@@ -163,3 +181,4 @@ export default function AdvancesPage() {
     </div>
   );
 }
+
