@@ -101,7 +101,7 @@ export default function DailyEntryPage() {
         date: formData.date.toISOString(),
         attendanceStatus: entryData.attendanceStatus,
         advanceAmount: entryData.advanceAmount ? Number(entryData.advanceAmount) : undefined,
-        workLocation: entryData.attendanceStatus === 'present' ? entryData.workLocation : undefined,
+        workLocation: entryData.attendanceStatus === 'present' ? formData.workLocation : undefined,
         laborerName: laborerInfo.name, // Storing for easier display in table
         laborerPhotoPreview: laborerInfo.photoPreview, // Storing for easier display
       };
