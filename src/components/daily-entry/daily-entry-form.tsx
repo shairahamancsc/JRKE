@@ -26,7 +26,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import type { DailyLogEntry, Laborer, PaymentMethod } from '@/lib/types';
+import type { DailyLogEntry, Labour, PaymentMethod } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
@@ -37,10 +37,10 @@ const paymentMethodsList: { value: PaymentMethod; label: string }[] = [
   { value: 'account', label: 'Account Pay' },
 ];
 
-const individualLaborerDailyEntrySchema = z.object({
-  laborerId: z.string(),
-  laborerName: z.string(), 
-  laborerPhotoPreview: z.string().optional(), 
+const individualLabourDailyEntrySchema = z.object({
+  labourId: z.string(),
+  labourName: z.string(), 
+  labourPhotoPreview: z.string().optional(), 
   attendanceStatus: z.enum(['present', 'absent'], { required_error: "Attendance status is required" }),
   advanceAmount: z.coerce.number().min(0, "Advance must be a non-negative amount.").optional().or(z.literal('')),
   advancePaymentMethod: z.enum(['phonepe', 'account', 'cash']).optional(),
@@ -50,7 +50,7 @@ const individualLaborerDailyEntrySchema = z.object({
 const bulkDailyLogEntriesSchema = z.object({
   date: z.date({ required_error: "Date is required" }),
   workLocation: z.string().optional(), 
-  entries: z.array(individualLaborerDailyEntrySchema),
+  entries: z.array(individualLabourDailyEntrySchema),
 }).refine(data => {
   const anyPresent = data.entries.some(entry => entry.attendanceStatus === 'present');
   if (anyPresent && (!data.workLocation || data.workLocation.trim() === '')) {
@@ -58,7 +58,7 @@ const bulkDailyLogEntriesSchema = z.object({
   }
   return true;
 }, {
-  message: "Work location is required if at least one laborer is present.",
+  message: "Work location is required if at least one labour is present.",
   path: ["workLocation"], 
 }).refine(data => {
     for (const entry of data.entries) {
@@ -84,10 +84,10 @@ interface DailyEntryFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: BulkDailyLogEntriesFormData) => void;
-  laborers: Laborer[];
+  labours: Labour[];
 }
 
-export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEntryFormProps) {
+export function DailyEntryForm({ isOpen, onClose, onSubmit, labours }: DailyEntryFormProps) {
   const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<BulkDailyLogEntriesFormData>({
     resolver: zodResolver(bulkDailyLogEntriesSchema),
     defaultValues: {
@@ -104,7 +104,7 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
 
   const selectedDate = watch('date');
   const watchedEntries = watch('entries');
-  const isAnyLaborerPresent = watchedEntries?.some(entry => entry.attendanceStatus === 'present');
+  const isAnyLabourPresent = watchedEntries?.some(entry => entry.attendanceStatus === 'present');
 
 
   useEffect(() => {
@@ -112,10 +112,10 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
       reset({
         date: new Date(),
         workLocation: '',
-        entries: laborers.map(laborer => ({
-          laborerId: laborer.id,
-          laborerName: laborer.name || 'Unknown Laborer',
-          laborerPhotoPreview: laborer.photoPreview,
+        entries: labours.map(labour => ({
+          labourId: labour.id,
+          labourName: labour.name || 'Unknown Labour',
+          labourPhotoPreview: labour.photoPreview,
           attendanceStatus: 'present',
           advanceAmount: undefined,
           advancePaymentMethod: undefined,
@@ -123,7 +123,7 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
         })),
       });
     }
-  }, [isOpen, laborers, reset]);
+  }, [isOpen, labours, reset]);
 
   const handleFormSubmit: SubmitHandler<BulkDailyLogEntriesFormData> = (data) => {
     const processedData = {
@@ -146,9 +146,9 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Add Daily Logs for All Laborers</DialogTitle>
+          <DialogTitle>Add Daily Logs for All Labours</DialogTitle>
           <DialogDescription>
-            Select the date, provide a common work location if any laborers are present, and then mark attendance and advances for each laborer.
+            Select the date, provide a common work location if any labours are present, and then mark attendance and advances for each labour.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
@@ -194,10 +194,10 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
                 {...control.register(`workLocation`)}
                 className={errors.workLocation ? 'border-destructive' : ''}
                 placeholder="Enter common work location/details"
-                disabled={!isAnyLaborerPresent}
+                disabled={!isAnyLabourPresent}
               />
               {errors.workLocation && <p className="text-xs text-destructive mt-1">{errors.workLocation.message}</p>}
-              {!isAnyLaborerPresent && <p className="text-xs text-muted-foreground mt-1">Enable by marking at least one laborer as present.</p>}
+              {!isAnyLabourPresent && <p className="text-xs text-muted-foreground mt-1">Enable by marking at least one labour as present.</p>}
             </div>
           </div>
 
@@ -213,13 +213,13 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
                   <Card key={field.id} className="p-4 shadow-sm bg-card">
                     <div className="flex items-center mb-3">
                       <Avatar className="h-12 w-12 mr-3">
-                        <AvatarImage src={field.laborerPhotoPreview} alt={field.laborerName} data-ai-hint="person" />
+                        <AvatarImage src={field.labourPhotoPreview} alt={field.labourName} data-ai-hint="person" />
                         <AvatarFallback><UserCircle2 className="h-8 w-8 text-muted-foreground" /></AvatarFallback>
                       </Avatar>
-                      <h3 className="text-lg font-medium text-card-foreground">{field.laborerName}</h3>
+                      <h3 className="text-lg font-medium text-card-foreground">{field.labourName}</h3>
                     </div>
 
-                    <input type="hidden" {...control.register(`entries.${index}.laborerId`)} />
+                    <input type="hidden" {...control.register(`entries.${index}.labourId`)} />
 
                     <div className="space-y-3">
                       <div>
@@ -339,4 +339,3 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, laborers }: DailyEnt
     </Dialog>
   );
 }
-

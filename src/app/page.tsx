@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck, CalendarIcon, UserCircle2 } from 'lucide-react';
-import { initialLaborers, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data'; // Keep for fallback
+import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data'; // Keep for fallback
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { LABORERS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
-import type { Laborer, AdvancePayment, WorkLog, DailyLogEntry } from '@/lib/types';
+import { LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
+import type { Labour, AdvancePayment, WorkLog, DailyLogEntry } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const [laborerCount, setLaborerCount] = useState(0);
+  const [labourCount, setLabourCount] = useState(0);
   const [advanceCount, setAdvanceCount] = useState(0);
   const [workLogCount, setWorkLogCount] = useState(0);
   const [allDailyEntries, setAllDailyEntries] = useState<DailyLogEntry[]>([]);
@@ -30,8 +30,8 @@ export default function DashboardPage() {
   useEffect(() => {
     setIsLoading(true);
     try {
-      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
-      setLaborerCount(storedLaborers ? (JSON.parse(storedLaborers) as Laborer[]).length : initialLaborers.length);
+      const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
+      setLabourCount(storedLabours ? (JSON.parse(storedLabours) as Labour[]).length : initialLabours.length);
 
       const storedAdvances = localStorage.getItem(ADVANCES_STORAGE_KEY);
       setAdvanceCount(storedAdvances ? (JSON.parse(storedAdvances) as AdvancePayment[]).length : initialAdvancePayments.length);
@@ -46,7 +46,7 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error loading dashboard data from localStorage:", error);
       // Fallback to initial data counts in case of error
-      setLaborerCount(initialLaborers.length);
+      setLabourCount(initialLabours.length);
       setAdvanceCount(initialAdvancePayments.length);
       setWorkLogCount(initialWorkLogs.length);
       setAllDailyEntries(initialDailyLogEntries);
@@ -73,15 +73,15 @@ export default function DashboardPage() {
 
 
   const summaryCards = [
-    { title: "Total Laborers", value: laborerCount, icon: Users, href: "/laborers", color: "text-primary" },
+    { title: "Total Labours", value: labourCount, icon: Users, href: "/labours", color: "text-primary" },
     { title: "Total Advances", value: advanceCount, icon: IndianRupee, href: "/advances", color: "text-accent" },
     { title: "Work Logs Entries", value: workLogCount, icon: ClipboardList, href: "/work-logs", color: "text-secondary-foreground" },
   ];
 
   const quickLinks = [
-    { title: "Add New Laborer", href: "/laborers#add", icon: PlusCircle },
+    { title: "Add New Labour", href: "/labours#add", icon: PlusCircle },
     { title: "Record Advance", href: "/advances#add", icon: PlusCircle },
-    { title: "Daily Labor Entries", href: "/daily-entry#add", icon: ClipboardCheck }, 
+    { title: "Daily Labour Entries", href: "/daily-entry#add", icon: ClipboardCheck }, 
     { title: "Generate Report", href: "/reports", icon: ArrowRight },
   ];
 
@@ -186,13 +186,13 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-3 flex-grow min-w-0">
                           <Avatar className="h-10 w-10 flex-shrink-0">
-                            <AvatarImage src={entry.laborerPhotoPreview} alt={entry.laborerName || "Laborer"} data-ai-hint="person face" />
+                            <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face" />
                             <AvatarFallback>
-                              {entry.laborerName && entry.laborerName.length > 0 ? entry.laborerName.charAt(0).toUpperCase() : <UserCircle2 className="h-5 w-5 text-muted-foreground" />}
+                              {entry.labourName && entry.labourName.length > 0 ? entry.labourName.charAt(0).toUpperCase() : <UserCircle2 className="h-5 w-5 text-muted-foreground" />}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-grow min-w-0">
-                            <p className="font-medium text-sm truncate" title={entry.laborerName || 'Unknown Laborer'}>{entry.laborerName || 'Unknown Laborer'}</p>
+                            <p className="font-medium text-sm truncate" title={entry.labourName || 'Unknown Labour'}>{entry.labourName || 'Unknown Labour'}</p>
                             {entry.attendanceStatus === 'present' && entry.workLocation && (
                               <p className="text-xs text-muted-foreground truncate" title={entry.workLocation}>
                                 Location: {entry.workLocation}
@@ -223,4 +223,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2, Loader2 } from 'lucide-react';
 import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
 import { DataTable } from '@/components/common/data-table';
-import type { DailyLogEntry, Laborer, PaymentMethod } from '@/lib/types';
-import { initialDailyLogEntries, initialLaborers } from '@/lib/data';
+import type { DailyLogEntry, Labour, PaymentMethod } from '@/lib/types';
+import { initialDailyLogEntries, initialLabours } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { DAILY_ENTRIES_STORAGE_KEY, LABORERS_STORAGE_KEY } from '@/lib/storageKeys';
+import { DAILY_ENTRIES_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
 
 const DailyEntryForm = lazy(() => import('@/components/daily-entry/daily-entry-form').then(module => ({ default: module.DailyEntryForm })));
 
@@ -24,7 +24,7 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 
 export default function DailyEntryPage() {
   const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
-  const [laborers, setLaborers] = useState<Laborer[]>([]);
+  const [labours, setLabours] = useState<Labour[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
 
@@ -42,15 +42,15 @@ export default function DailyEntryPage() {
     }
 
     try {
-      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
-      if (storedLaborers) {
-        setLaborers(JSON.parse(storedLaborers));
+      const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
+      if (storedLabours) {
+        setLabours(JSON.parse(storedLabours));
       } else {
-        setLaborers(initialLaborers);
+        setLabours(initialLabours);
       }
     } catch (error) {
-      console.error("Error loading laborers from localStorage for daily entry page:", error);
-      setLaborers(initialLaborers);
+      console.error("Error loading labours from localStorage for daily entry page:", error);
+      setLabours(initialLabours);
     }
     
     if (typeof window !== "undefined" && window.location.hash === "#add") {
@@ -73,10 +73,10 @@ export default function DailyEntryPage() {
   }, [dailyEntries, toast]);
 
   const handleAddEntry = () => {
-    if (laborers.length === 0) {
+    if (labours.length === 0) {
       toast({
-        title: "No Laborers Found",
-        description: "Please add laborers first before making daily entries.",
+        title: "No Labours Found",
+        description: "Please add labours first before making daily entries.",
         variant: "destructive",
       });
       return;
@@ -86,33 +86,33 @@ export default function DailyEntryPage() {
 
   const handleDeleteEntry = (entryToDelete: DailyLogEntry) => {
     setDailyEntries(currentEntries => currentEntries.filter(e => e.id !== entryToDelete.id));
-    const laborerName = getLaborerInfo(entryToDelete.laborerId).name;
+    const labourName = getLabourInfo(entryToDelete.labourId).name;
     toast({
       title: "Daily Log Deleted",
-      description: `Log for ${laborerName} on ${format(parseISO(entryToDelete.date), 'PPP')} has been removed.`,
+      description: `Log for ${labourName} on ${format(parseISO(entryToDelete.date), 'PPP')} has been removed.`,
       variant: "destructive",
     });
   };
 
   const handleFormSubmit = (formData: BulkDailyLogEntriesFormData) => {
     const newEntries: DailyLogEntry[] = formData.entries.map(entryData => {
-      const laborerInfo = getLaborerInfo(entryData.laborerId);
+      const labourInfo = getLabourInfo(entryData.labourId);
       const advanceAmount = entryData.advanceAmount ? Number(entryData.advanceAmount) : undefined;
       return {
         id: crypto.randomUUID(),
-        laborerId: entryData.laborerId,
+        labourId: entryData.labourId,
         date: formData.date.toISOString(),
         attendanceStatus: entryData.attendanceStatus,
         advanceAmount: advanceAmount,
         advancePaymentMethod: advanceAmount && advanceAmount > 0 ? entryData.advancePaymentMethod : undefined,
         advanceRemarks: advanceAmount && advanceAmount > 0 ? entryData.advanceRemarks : undefined,
         workLocation: entryData.attendanceStatus === 'present' ? formData.workLocation : undefined,
-        laborerName: laborerInfo.name, 
-        laborerPhotoPreview: laborerInfo.photoPreview, 
+        labourName: labourInfo.name, 
+        labourPhotoPreview: labourInfo.photoPreview, 
       };
     });
 
-    setDailyEntries(currentEntries => [...newEntries, ...currentEntries].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime() || (a.laborerName || "").localeCompare(b.laborerName || "")));
+    setDailyEntries(currentEntries => [...newEntries, ...currentEntries].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime() || (a.labourName || "").localeCompare(b.labourName || "")));
     toast({ 
       title: "Daily Logs Added", 
       description: `${newEntries.length} log(s) for ${format(formData.date, 'PPP')} have been recorded.` 
@@ -120,19 +120,19 @@ export default function DailyEntryPage() {
     setIsFormOpen(false);
   };
   
-  const getLaborerInfo = (laborerId: string) => {
-    const laborer = laborers.find(l => l.id === laborerId);
+  const getLabourInfo = (labourId: string) => {
+    const labour = labours.find(l => l.id === labourId);
     return { 
-      name: laborer?.name || 'Unknown Laborer', 
-      photoPreview: laborer?.photoPreview 
+      name: labour?.name || 'Unknown Labour', 
+      photoPreview: labour?.photoPreview 
     };
   };
 
   const columns = [
     { 
       accessorKey: (item: DailyLogEntry) => {
-        const name = item.laborerName || getLaborerInfo(item.laborerId).name;
-        const photoPreview = item.laborerPhotoPreview || getLaborerInfo(item.laborerId).photoPreview;
+        const name = item.labourName || getLabourInfo(item.labourId).name;
+        const photoPreview = item.labourPhotoPreview || getLabourInfo(item.labourId).photoPreview;
         return (
           <div className="flex items-center gap-2">
             <Avatar className="h-10 w-10">
@@ -145,7 +145,7 @@ export default function DailyEntryPage() {
           </div>
         );
       }, 
-      header: 'Laborer' 
+      header: 'Labour' 
     },
     { 
       accessorKey: 'date' as keyof DailyLogEntry, 
@@ -192,17 +192,17 @@ export default function DailyEntryPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col items-start sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Daily Labor Entries</h1>
+        <h1 className="text-3xl font-bold text-foreground">Daily Labour Entries</h1>
         <Button 
           onClick={handleAddEntry} 
           className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground self-stretch sm:self-auto"
-          disabled={laborers.length === 0}
+          disabled={labours.length === 0}
         >
           <PlusCircle className="mr-2 h-5 w-5" /> Add Daily Logs
         </Button>
       </div>
-      {laborers.length === 0 && (
-        <p className="text-muted-foreground mb-4">Please add laborers in the 'Laborers' section to make daily entries.</p>
+      {labours.length === 0 && (
+        <p className="text-muted-foreground mb-4">Please add labours in the 'Labours' section to make daily entries.</p>
       )}
 
       <DataTable
@@ -226,11 +226,10 @@ export default function DailyEntryPage() {
               setIsFormOpen(false);
             }}
             onSubmit={handleFormSubmit}
-            laborers={laborers} 
+            labours={labours} 
           />
         </Suspense>
       )}
     </div>
   );
 }
-

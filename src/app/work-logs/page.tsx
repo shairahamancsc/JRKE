@@ -7,17 +7,17 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 // import { WorkLogForm } from '@/components/work-logs/work-log-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
-import type { WorkLog, Laborer } from '@/lib/types';
-import { initialWorkLogs, initialLaborers } from '@/lib/data';
+import type { WorkLog, Labour } from '@/lib/types';
+import { initialWorkLogs, initialLabours } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { WORK_LOGS_STORAGE_KEY, LABORERS_STORAGE_KEY } from '@/lib/storageKeys';
+import { WORK_LOGS_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
 
 const WorkLogForm = lazy(() => import('@/components/work-logs/work-log-form').then(module => ({ default: module.WorkLogForm })));
 
 export default function WorkLogsPage() {
   const [workLogs, setWorkLogs] = useState<WorkLog[]>([]);
-  const [laborers, setLaborers] = useState<Laborer[]>([]);
+  const [labours, setLabours] = useState<Labour[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingWorkLog, setEditingWorkLog] = useState<WorkLog | undefined>(undefined);
   const { toast } = useToast();
@@ -36,17 +36,17 @@ export default function WorkLogsPage() {
       setWorkLogs(initialWorkLogs);
     }
 
-    // Load laborers from LocalStorage (read-only)
+    // Load labours from LocalStorage (read-only)
     try {
-      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
-      if (storedLaborers) {
-        setLaborers(JSON.parse(storedLaborers));
+      const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
+      if (storedLabours) {
+        setLabours(JSON.parse(storedLabours));
       } else {
-        setLaborers(initialLaborers);
+        setLabours(initialLabours);
       }
     } catch (error) {
-      console.error("Error loading laborers from localStorage for work logs page:", error);
-      setLaborers(initialLaborers);
+      console.error("Error loading labours from localStorage for work logs page:", error);
+      setLabours(initialLabours);
     }
 
     if (typeof window !== "undefined" && window.location.hash === "#add") {
@@ -83,7 +83,7 @@ export default function WorkLogsPage() {
     setWorkLogs(prevWorkLogs => prevWorkLogs.filter(wl => wl.id !== workLogToDelete.id));
     toast({
       title: "Work Log Deleted",
-      description: `Work log for ${getLaborerName(workLogToDelete.laborerId)} on ${format(parseISO(workLogToDelete.date), 'PPP')} has been removed.`,
+      description: `Work log for ${getLabourName(workLogToDelete.labourId)} on ${format(parseISO(workLogToDelete.date), 'PPP')} has been removed.`,
       variant: "destructive",
     });
   };
@@ -118,23 +118,23 @@ export default function WorkLogsPage() {
 
     if (editingWorkLog) {
       setWorkLogs(prevWorkLogs => prevWorkLogs.map(wl => wl.id === serializableWorkLog.id ? serializableWorkLog : wl));
-      toast({ title: "Work Log Updated", description: `Work log for ${getLaborerName(serializableWorkLog.laborerId)} has been updated.` });
+      toast({ title: "Work Log Updated", description: `Work log for ${getLabourName(serializableWorkLog.labourId)} has been updated.` });
     } else {
       setWorkLogs(prevWorkLogs => [serializableWorkLog, ...prevWorkLogs]);
-      toast({ title: "Work Log Added", description: `New work log for ${getLaborerName(serializableWorkLog.laborerId)} has been added.` });
+      toast({ title: "Work Log Added", description: `New work log for ${getLabourName(serializableWorkLog.labourId)} has been added.` });
     }
     setIsFormOpen(false);
     setEditingWorkLog(undefined);
   }
   
-  const getLaborerName = (laborerId: string) => {
-    return laborers.find(l => l.id === laborerId)?.name || 'Unknown Laborer';
+  const getLabourName = (labourId: string) => {
+    return labours.find(l => l.id === labourId)?.name || 'Unknown Labour';
   };
 
   const columns = [
     { 
-      accessorKey: (item: WorkLog) => getLaborerName(item.laborerId), 
-      header: 'Laborer' 
+      accessorKey: (item: WorkLog) => getLabourName(item.labourId), 
+      header: 'Labour' 
     },
     { 
       accessorKey: 'date' as keyof WorkLog, 
@@ -189,7 +189,7 @@ export default function WorkLogsPage() {
               setEditingWorkLog(undefined);
             }}
             onSubmit={handleFormSubmit}
-            laborers={laborers} // Pass loaded laborers
+            labours={labours} // Pass loaded labours
             defaultValues={editingWorkLog}
           />
         </Suspense>

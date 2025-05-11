@@ -23,7 +23,7 @@ import {
   DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog';
-import type { AdvancePayment, Laborer, PaymentMethod } from '@/lib/types';
+import type { AdvancePayment, Labour, PaymentMethod } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const paymentMethods: { value: PaymentMethod; label: string }[] = [
@@ -33,7 +33,7 @@ const paymentMethods: { value: PaymentMethod; label: string }[] = [
 ];
 
 const advanceSchema = z.object({
-  laborerId: z.string().min(1, "Laborer is required"),
+  labourId: z.string().min(1, "Labour is required"),
   date: z.date({ required_error: "Date is required" }),
   amount: z.coerce.number().min(0.01, "Amount must be positive"),
   paymentMethod: z.enum(['phonepe', 'account', 'cash']).optional(),
@@ -46,15 +46,15 @@ interface AdvanceFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: AdvancePayment) => void;
-  laborers: Laborer[];
+  labours: Labour[];
   defaultValues?: AdvancePayment;
 }
 
-export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues }: AdvanceFormProps) {
+export function AdvanceForm({ isOpen, onClose, onSubmit, labours, defaultValues }: AdvanceFormProps) {
   const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = useForm<AdvanceFormData>({
     resolver: zodResolver(advanceSchema),
     defaultValues: {
-      laborerId: defaultValues?.laborerId || '',
+      labourId: defaultValues?.labourId || '',
       date: defaultValues?.date ? parseISO(defaultValues.date) : new Date(),
       amount: defaultValues?.amount || 0,
       paymentMethod: defaultValues?.paymentMethod || undefined,
@@ -68,7 +68,7 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
     if (isOpen) {
       if (defaultValues) {
         reset({
-          laborerId: defaultValues.laborerId,
+          labourId: defaultValues.labourId,
           date: parseISO(defaultValues.date),
           amount: defaultValues.amount,
           paymentMethod: defaultValues.paymentMethod || undefined,
@@ -76,7 +76,7 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
         });
       } else {
         reset({
-          laborerId: '',
+          labourId: '',
           date: new Date(),
           amount: 0,
           paymentMethod: undefined,
@@ -106,29 +106,29 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
           <div>
-            <Label htmlFor="laborerId">Laborer</Label>
+            <Label htmlFor="labourId">Labour</Label>
             <Controller
-              name="laborerId"
+              name="labourId"
               control={control}
               render={({ field }) => (
                 <Select 
                   onValueChange={field.onChange} 
                   value={field.value || ""} // Control with empty string for placeholder
                 >
-                  <SelectTrigger id="laborerId" className={errors.laborerId ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Select a laborer" />
+                  <SelectTrigger id="labourId" className={errors.labourId ? 'border-destructive' : ''}>
+                    <SelectValue placeholder="Select a labour" />
                   </SelectTrigger>
                   <SelectContent>
-                    {laborers.map(laborer => (
-                      <SelectItem key={laborer.id} value={laborer.id}>
-                        {laborer.name}
+                    {labours.map(labour => (
+                      <SelectItem key={labour.id} value={labour.id}>
+                        {labour.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             />
-            {errors.laborerId && <p className="text-xs text-destructive mt-1">{errors.laborerId.message}</p>}
+            {errors.labourId && <p className="text-xs text-destructive mt-1">{errors.labourId.message}</p>}
           </div>
 
           <div>
@@ -225,4 +225,3 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
     </Dialog>
   );
 }
-

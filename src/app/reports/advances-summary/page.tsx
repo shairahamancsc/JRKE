@@ -14,16 +14,16 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { summarizeAdvancePaymentsAction } from '@/lib/actions';
 import { useToast } from "@/hooks/use-toast";
-import type { Laborer, AdvancePayment } from '@/lib/types';
-import { initialLaborers, initialAdvancePayments } from '@/lib/data';
+import type { Labour, AdvancePayment } from '@/lib/types';
+import { initialLabours, initialAdvancePayments } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
-import { LABORERS_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
+import { LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
 
 const MarkdownDisplay = lazy(() => import('@/components/reports/markdown-display').then(module => ({ default: module.MarkdownDisplay })));
 
 const advanceSummarySchema = z.object({
-  selectedLaborerId: z.string().optional(), 
-  laborDetails: z.string().min(10, "Laborer details are required."),
+  selectedLabourId: z.string().optional(), 
+  labourDetails: z.string().min(10, "Labour details are required."),
   advancePayments: z.string().min(10, "Advance payment records are required."),
   query: z.string().min(5, "Query is too short."),
 });
@@ -34,33 +34,33 @@ export default function AdvanceSummaryPage() {
   const [summary, setSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [laborers, setLaborers] = useState<Laborer[]>([]);
+  const [labours, setLabours] = useState<Labour[]>([]);
   const [advances, setAdvances] = useState<AdvancePayment[]>([]);
   const { toast } = useToast();
 
   const { register, handleSubmit, reset, control, watch, setValue, formState: { errors } } = useForm<AdvanceSummaryFormData>({
     resolver: zodResolver(advanceSummarySchema),
     defaultValues: {
-      laborDetails: '',
+      labourDetails: '',
       advancePayments: '',
       query: '',
     }
   });
 
-  const selectedLaborerId = watch('selectedLaborerId');
+  const selectedLabourId = watch('selectedLabourId');
 
   useEffect(() => {
-    // Load laborers from LocalStorage
+    // Load labours from LocalStorage
     try {
-      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
-      if (storedLaborers) {
-        setLaborers(JSON.parse(storedLaborers));
+      const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
+      if (storedLabours) {
+        setLabours(JSON.parse(storedLabours));
       } else {
-        setLaborers(initialLaborers);
+        setLabours(initialLabours);
       }
     } catch (e) {
-      console.error("Error loading laborers from localStorage for advances summary:", e);
-      setLaborers(initialLaborers);
+      console.error("Error loading labours from localStorage for advances summary:", e);
+      setLabours(initialLabours);
     }
 
     // Load advances from LocalStorage
@@ -78,32 +78,32 @@ export default function AdvanceSummaryPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedLaborerId && laborers.length > 0 && advances.length >= 0) { // Ensure data is loaded
-      const selectedLaborer = laborers.find(l => l.id === selectedLaborerId);
-      if (selectedLaborer) {
-        setValue('laborDetails', `Laborer Name: ${selectedLaborer.name}\nDetails: ${selectedLaborer.details}\nPhone: ${selectedLaborer.phoneNo || 'N/A'}`);
+    if (selectedLabourId && labours.length > 0 && advances.length >= 0) { // Ensure data is loaded
+      const selectedLabour = labours.find(l => l.id === selectedLabourId);
+      if (selectedLabour) {
+        setValue('labourDetails', `Labour Name: ${selectedLabour.name}\nDetails: ${selectedLabour.details}\nPhone: ${selectedLabour.phoneNo || 'N/A'}`);
         
-        const laborerAdvances = advances
-          .filter(a => a.laborerId === selectedLaborerId)
+        const labourAdvances = advances
+          .filter(a => a.labourId === selectedLabourId)
           .map(a => `Date: ${format(parseISO(a.date), 'PPP')}, Amount: ₹${a.amount.toFixed(2)}`)
           .join('\n');
         
-        setValue('advancePayments', laborerAdvances || 'No advance payments found for this laborer.');
-        setValue('query', `Summarize advances for ${selectedLaborer.name}.`);
+        setValue('advancePayments', labourAdvances || 'No advance payments found for this labour.');
+        setValue('query', `Summarize advances for ${selectedLabour.name}.`);
       }
-    } else if (!selectedLaborerId) {
-      // Pre-fill with all data if no specific laborer is selected
-      const allLaborerDetails = laborers.map(l => `Name: ${l.name}, Details: ${l.details}, Phone: ${l.phoneNo || 'N/A'}`).join('\n\n');
-      setValue('laborDetails', allLaborerDetails || 'No laborer details available.');
+    } else if (!selectedLabourId) {
+      // Pre-fill with all data if no specific labour is selected
+      const allLabourDetails = labours.map(l => `Name: ${l.name}, Details: ${l.details}, Phone: ${l.phoneNo || 'N/A'}`).join('\n\n');
+      setValue('labourDetails', allLabourDetails || 'No labour details available.');
 
       const allAdvanceDetails = advances.map(a => {
-        const laborerName = laborers.find(l => l.id === a.laborerId)?.name || 'Unknown';
-        return `Laborer: ${laborerName}, Date: ${format(parseISO(a.date), 'PPP')}, Amount: ₹${a.amount.toFixed(2)}`;
+        const labourName = labours.find(l => l.id === a.labourId)?.name || 'Unknown';
+        return `Labour: ${labourName}, Date: ${format(parseISO(a.date), 'PPP')}, Amount: ₹${a.amount.toFixed(2)}`;
       }).join('\n');
       setValue('advancePayments', allAdvanceDetails || 'No advance payments recorded.');
       setValue('query', 'Summarize all advance payments.');
     }
-  }, [selectedLaborerId, laborers, advances, setValue]);
+  }, [selectedLabourId, labours, advances, setValue]);
 
   const handleFormSubmit: SubmitHandler<AdvanceSummaryFormData> = async (data) => {
     setIsLoading(true);
@@ -111,7 +111,7 @@ export default function AdvanceSummaryPage() {
     setSummary(null);
 
     try {
-      const { selectedLaborerId: sId, ...actionData } = data; // Renamed to avoid conflict
+      const { selectedLabourId: sId, ...actionData } = data; // Renamed to avoid conflict
       const result = await summarizeAdvancePaymentsAction(actionData);
       if (result.success && result.summary) {
         setSummary(result.summary);
@@ -135,26 +135,26 @@ export default function AdvanceSummaryPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-foreground">Summarize Advance Payments</CardTitle>
           <CardDescription>
-            Optionally select a laborer to pre-fill details, or manually enter information. Then, provide a specific query to get an AI-generated summary.
+            Optionally select a labour to pre-fill details, or manually enter information. Then, provide a specific query to get an AI-generated summary.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             <div>
-              <Label htmlFor="selectedLaborerId">Select Laborer (Optional)</Label>
+              <Label htmlFor="selectedLabourId">Select Labour (Optional)</Label>
               <Controller
-                name="selectedLaborerId"
+                name="selectedLabourId"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
-                    <SelectTrigger id="selectedLaborerId">
-                      <SelectValue placeholder="Select a laborer to pre-fill details" />
+                    <SelectTrigger id="selectedLabourId">
+                      <SelectValue placeholder="Select a labour to pre-fill details" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">-- All Laborers / Manual Input --</SelectItem>
-                      {laborers.map(laborer => (
-                        <SelectItem key={laborer.id} value={laborer.id}>
-                          {laborer.name}
+                      <SelectItem value="">-- All Labours / Manual Input --</SelectItem>
+                      {labours.map(labour => (
+                        <SelectItem key={labour.id} value={labour.id}>
+                          {labour.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -164,15 +164,15 @@ export default function AdvanceSummaryPage() {
             </div>
 
             <div>
-              <Label htmlFor="laborDetails" className="font-semibold">Laborer Details</Label>
+              <Label htmlFor="labourDetails" className="font-semibold">Labour Details</Label>
               <Textarea
-                id="laborDetails"
-                {...register('laborDetails')}
+                id="labourDetails"
+                {...register('labourDetails')}
                 rows={5}
-                placeholder="Enter details of laborers, including names, roles, etc. This will be pre-filled if a laborer is selected or based on all laborers if none is selected."
-                className={`mt-1 ${errors.laborDetails ? 'border-destructive' : ''}`}
+                placeholder="Enter details of labours, including names, roles, etc. This will be pre-filled if a labour is selected or based on all labours if none is selected."
+                className={`mt-1 ${errors.labourDetails ? 'border-destructive' : ''}`}
               />
-              {errors.laborDetails && <p className="text-xs text-destructive mt-1">{errors.laborDetails.message}</p>}
+              {errors.labourDetails && <p className="text-xs text-destructive mt-1">{errors.labourDetails.message}</p>}
             </div>
 
             <div>
@@ -181,7 +181,7 @@ export default function AdvanceSummaryPage() {
                 id="advancePayments"
                 {...register('advancePayments')}
                 rows={8}
-                placeholder="Enter a list of advance payments, including laborer name, date, and amount for each. This will be pre-filled."
+                placeholder="Enter a list of advance payments, including labour name, date, and amount for each. This will be pre-filled."
                 className={`mt-1 ${errors.advancePayments ? 'border-destructive' : ''}`}
               />
               {errors.advancePayments && <p className="text-xs text-destructive mt-1">{errors.advancePayments.message}</p>}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -22,11 +23,11 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import type { WorkLog, Laborer } from '@/lib/types';
+import type { WorkLog, Labour } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const workLogSchema = z.object({
-  laborerId: z.string().min(1, "Laborer is required"),
+  labourId: z.string().min(1, "Labour is required"),
   date: z.date({ required_error: "Date is required" }),
   location: z.string().min(1, "Location is required"),
   workType: z.string().min(1, "Type of work is required"),
@@ -39,17 +40,17 @@ interface WorkLogFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: WorkLog) => void;
-  laborers: Laborer[];
+  labours: Labour[];
   defaultValues?: WorkLog;
 }
 
-export function WorkLogForm({ isOpen, onClose, onSubmit, laborers, defaultValues }: WorkLogFormProps) {
+export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues }: WorkLogFormProps) {
   const [picturePreview, setPicturePreview] = useState<string | undefined>(defaultValues?.picturePreview);
   
   const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = useForm<WorkLogFormData>({
     resolver: zodResolver(workLogSchema),
     defaultValues: {
-      laborerId: defaultValues?.laborerId || '',
+      labourId: defaultValues?.labourId || '',
       date: defaultValues?.date ? parseISO(defaultValues.date) : new Date(),
       location: defaultValues?.location || '',
       workType: defaultValues?.workType || '',
@@ -62,7 +63,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, laborers, defaultValues
   React.useEffect(() => {
     if (defaultValues) {
       reset({
-        laborerId: defaultValues.laborerId,
+        labourId: defaultValues.labourId,
         date: parseISO(defaultValues.date),
         location: defaultValues.location,
         workType: defaultValues.workType,
@@ -71,7 +72,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, laborers, defaultValues
       setPicturePreview(defaultValues.picturePreview);
     } else {
       reset({
-        laborerId: '',
+        labourId: '',
         date: new Date(),
         location: '',
         workType: '',
@@ -99,7 +100,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, laborers, defaultValues
   const handleFormSubmit: SubmitHandler<WorkLogFormData> = (data) => {
     onSubmit({
       id: defaultValues?.id || crypto.randomUUID(),
-      laborerId: data.laborerId,
+      labourId: data.labourId,
       date: data.date.toISOString(),
       location: data.location,
       workType: data.workType,
@@ -117,26 +118,26 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, laborers, defaultValues
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
           <div>
-            <Label htmlFor="laborerId">Laborer</Label>
+            <Label htmlFor="labourId">Labour</Label>
             <Controller
-              name="laborerId"
+              name="labourId"
               control={control}
               render={({ field }) => (
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <SelectTrigger id="laborerId" className={errors.laborerId ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Select a laborer" />
+                  <SelectTrigger id="labourId" className={errors.labourId ? 'border-destructive' : ''}>
+                    <SelectValue placeholder="Select a labour" />
                   </SelectTrigger>
                   <SelectContent>
-                    {laborers.map(laborer => (
-                      <SelectItem key={laborer.id} value={laborer.id}>
-                        {laborer.name}
+                    {labours.map(labour => (
+                      <SelectItem key={labour.id} value={labour.id}>
+                        {labour.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             />
-            {errors.laborerId && <p className="text-xs text-destructive mt-1">{errors.laborerId.message}</p>}
+            {errors.labourId && <p className="text-xs text-destructive mt-1">{errors.labourId.message}</p>}
           </div>
 
           <div>

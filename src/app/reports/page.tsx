@@ -14,7 +14,7 @@ export default function ReportsPage() {
     },
     {
       title: "Advance Payments Summary",
-      description: "Query and get an AI-generated summary of total advances paid to labor.",
+      description: "Query and get an AI-generated summary of total advances paid to labour.",
       href: "/reports/advances-summary",
       icon: IndianRupee, // Changed from DollarSign
     },
@@ -25,7 +25,7 @@ export default function ReportsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">Automated Reporting</h1>
         <p className="text-muted-foreground mt-2">
-          Leverage AI to generate insightful reports for your labor management.
+          Leverage AI to generate insightful reports for your labour management.
         </p>
       </div>
 
@@ -52,4 +52,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-

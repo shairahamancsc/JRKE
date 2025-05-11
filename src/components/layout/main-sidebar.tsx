@@ -29,7 +29,7 @@ import { SheetTitle } from "@/components/ui/sheet"; // Import SheetTitle for mob
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/laborers", label: "Laborers", icon: Users },
+  { href: "/labours", label: "Labours", icon: Users },
   { href: "/advances", label: "Advances", icon: IndianRupee },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
@@ -110,4 +110,3 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
-

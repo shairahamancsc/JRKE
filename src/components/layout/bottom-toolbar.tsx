@@ -13,7 +13,7 @@ export function BottomToolbar() {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/daily-entry#add", label: "Add Log", icon: PlusCircle, isCentral: true },
-    { href: "/laborers", label: "Laborers", icon: Users },
+    { href: "/labours", label: "Labours", icon: Users },
   ];
 
   return (
@@ -27,7 +27,8 @@ export function BottomToolbar() {
                 "flex flex-col items-center justify-center h-auto p-2 rounded-md transition-colors",
                 item.isCentral ? "text-primary scale-110 hover:bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-primary/5",
                 pathname === item.href && !item.isCentral && "text-primary bg-primary/10",
-                pathname === "/daily-entry" && item.href === "/daily-entry#add" && "text-primary bg-primary/10" 
+                pathname === "/daily-entry" && item.href === "/daily-entry#add" && "text-primary bg-primary/10",
+                pathname === "/labours" && item.href === "/labours" && "text-primary bg-primary/10"
               )}
               aria-current={pathname === item.href ? "page" : undefined}
             >

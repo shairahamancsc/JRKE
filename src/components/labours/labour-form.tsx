@@ -20,11 +20,11 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import type { Laborer } from '@/lib/types';
+import type { Labour } from '@/lib/types';
 
 const phoneRegex = /^[6-9]\d{9}$/; // Indian mobile number regex
 
-const laborerSchema = z.object({
+const labourSchema = z.object({
   name: z.string().min(1, "Name is required"),
   details: z.string().min(1, "Details are required"),
   photoFile: z.instanceof(File).optional(),
@@ -41,23 +41,23 @@ const laborerSchema = z.object({
   licenseFile: z.instanceof(File).optional(),
 });
 
-type LaborerFormData = z.infer<typeof laborerSchema>;
+type LabourFormData = z.infer<typeof labourSchema>;
 
-interface LaborerFormProps {
+interface LabourFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Laborer) => void;
-  defaultValues?: Laborer;
+  onSubmit: (data: Labour) => void;
+  defaultValues?: Labour;
 }
 
-export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: LaborerFormProps) {
+export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourFormProps) {
   const [photoPreview, setPhotoPreview] = useState<string | undefined>(defaultValues?.photoPreview);
   const [aadhaarPreview, setAadhaarPreview] = useState<string | undefined>(defaultValues?.aadhaarPreview);
   const [panPreview, setPanPreview] = useState<string | undefined>(defaultValues?.panPreview);
   const [licensePreview, setLicensePreview] = useState<string | undefined>(defaultValues?.licensePreview);
   
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<LaborerFormData>({
-    resolver: zodResolver(laborerSchema),
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<LabourFormData>({
+    resolver: zodResolver(labourSchema),
     defaultValues: {
       name: defaultValues?.name || '',
       details: defaultValues?.details || '',
@@ -96,7 +96,7 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
   const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     setPreview: React.Dispatch<React.SetStateAction<string | undefined>>,
-    fileField: keyof LaborerFormData,
+    fileField: keyof LabourFormData,
     defaultPreview?: string
   ) => {
     const file = event.target.files?.[0];
@@ -113,7 +113,7 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
     }
   };
 
-  const handleFormSubmit: SubmitHandler<LaborerFormData> = (data) => {
+  const handleFormSubmit: SubmitHandler<LabourFormData> = (data) => {
     onSubmit({
       id: defaultValues?.id || crypto.randomUUID(),
       name: data.name,
@@ -151,12 +151,12 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
     }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{defaultValues ? 'Edit Laborer' : 'Add New Laborer'}</DialogTitle>
+          <DialogTitle>{defaultValues ? 'Edit Labour' : 'Add New Labour'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[75vh] pr-3">
           <div className="flex flex-col items-center space-y-2">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={photoPreview} alt={defaultValues?.name || "Laborer photo"} data-ai-hint="person portrait" />
+              <AvatarImage src={photoPreview} alt={defaultValues?.name || "Labour photo"} data-ai-hint="person portrait" />
               <AvatarFallback>
                 <UserCircle2 className="h-16 w-16 text-muted-foreground" />
               </AvatarFallback>
@@ -254,7 +254,7 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
               <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>
             <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              {defaultValues ? 'Save Changes' : 'Add Laborer'}
+              {defaultValues ? 'Save Changes' : 'Add Labour'}
             </Button>
           </DialogFooter>
         </form>

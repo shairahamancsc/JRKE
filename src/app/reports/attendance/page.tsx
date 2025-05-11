@@ -59,28 +59,20 @@ export default function AttendanceReportPage() {
           setError(result.error || "Failed to generate report.");
           toast({ title: "Error", description: result.error || "Failed to generate report.", variant: "destructive" });
         }
-        setIsLoading(false); // Moved here from useEffect
+        setIsLoading(false); 
       };
       reader.onerror = () => {
         setError("Failed to read the image file.");
         toast({ title: "Error", description: "Failed to read the image file.", variant: "destructive" });
-        setIsLoading(false); // Moved here from useEffect
+        setIsLoading(false); 
       };
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred.";
       setError(errorMessage);
       toast({ title: "Error", description: errorMessage, variant: "destructive" });
-      setIsLoading(false); // Ensure loading stops on synchronous error
+      setIsLoading(false); 
     }
   };
-  
-  // useEffect for setIsLoading can be removed as it's handled in onload/onerror and finally for other errors.
-  // useEffect(() => {
-  //   if (report !== null || error !== null) {
-  //     setIsLoading(false);
-  //   }
-  // }, [report, error]);
-
 
   return (
     <div className="container mx-auto py-8">
@@ -99,7 +91,7 @@ export default function AttendanceReportPage() {
                 id="workLogs"
                 {...register('workLogs')}
                 rows={8}
-                placeholder="Enter detailed work logs including laborer names, work descriptions, and locations..."
+                placeholder="Enter detailed work logs including labour names, work descriptions, and locations..."
                 className={`mt-1 ${errors.workLogs ? 'border-destructive' : ''}`}
               />
               {errors.workLogs && <p className="text-xs text-destructive mt-1">{errors.workLogs.message}</p>}

@@ -1,5 +1,5 @@
 
-export interface Laborer {
+export interface Labour {
   id: string;
   name: string;
   details: string; // e.g., contact, trade, skill level
@@ -26,7 +26,7 @@ export type PaymentMethod = 'phonepe' | 'account' | 'cash';
 
 export interface AdvancePayment {
   id: string;
-  laborerId: string;
+  labourId: string;
   date: string; // ISO string format for dates
   amount: number;
   paymentMethod?: PaymentMethod;
@@ -35,7 +35,7 @@ export interface AdvancePayment {
 
 export interface WorkLog {
   id:string;
-  laborerId: string;
+  labourId: string;
   date: string; // ISO string format
   location: string;
   workType: string;
@@ -45,7 +45,7 @@ export interface WorkLog {
 
 export interface DailyLogEntry {
   id: string;
-  laborerId: string;
+  labourId: string;
   date: string; // ISO string format
   attendanceStatus: 'present' | 'absent';
   advanceAmount?: number;
@@ -53,7 +53,6 @@ export interface DailyLogEntry {
   advanceRemarks?: string;
   workLocation?: string;
   // For convenience when displaying, not strictly part of the stored data model if derived
-  laborerName?: string; 
-  laborerPhotoPreview?: string;
+  labourName?: string; 
+  labourPhotoPreview?: string;
 }
-

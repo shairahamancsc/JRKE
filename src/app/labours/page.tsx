@@ -5,31 +5,31 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 // import Image from 'next/image'; // Not directly used, AvatarImage handles it
 import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2, Loader2, FileText, Phone, Smartphone } from 'lucide-react';
-// import { LaborerForm } from '@/components/laborers/laborer-form'; // Lazy loaded
+// import { LabourForm } from '@/components/labours/labour-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
-import type { Laborer } from '@/lib/types';
-import { initialLaborers } from '@/lib/data';
+import type { Labour } from '@/lib/types';
+import { initialLabours } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LABORERS_STORAGE_KEY } from '@/lib/storageKeys';
+import { LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
 
-const LaborerForm = lazy(() => import('@/components/laborers/laborer-form').then(module => ({ default: module.LaborerForm })));
+const LabourForm = lazy(() => import('@/components/labours/labour-form').then(module => ({ default: module.LabourForm })));
 
-export default function LaborersPage() {
-  const [laborers, setLaborers] = useState<Laborer[]>([]);
+export default function LaboursPage() {
+  const [labours, setLabours] = useState<Labour[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingLaborer, setEditingLaborer] = useState<Laborer | undefined>(undefined);
+  const [editingLabour, setEditingLabour] = useState<Labour | undefined>(undefined);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load laborers from LocalStorage or use initialLaborers
+    // Load labours from LocalStorage or use initialLabours
     try {
-      const storedLaborers = localStorage.getItem(LABORERS_STORAGE_KEY);
-      if (storedLaborers) {
-        setLaborers(JSON.parse(storedLaborers));
+      const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
+      if (storedLabours) {
+        setLabours(JSON.parse(storedLabours));
       } else {
-        setLaborers(initialLaborers.map(l => ({
+        setLabours(initialLabours.map(l => ({
           ...l,
           phoneNo: l.phoneNo ?? undefined,
           emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
@@ -41,9 +41,9 @@ export default function LaborersPage() {
         })));
       }
     } catch (error) {
-      console.error("Error loading laborers from localStorage:", error);
+      console.error("Error loading labours from localStorage:", error);
       // Fallback to initial data in case of error
-       setLaborers(initialLaborers.map(l => ({
+       setLabours(initialLabours.map(l => ({
         ...l,
         phoneNo: l.phoneNo ?? undefined,
         emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
@@ -61,69 +61,69 @@ export default function LaborersPage() {
     }
   }, []);
 
-  // Save laborers to LocalStorage whenever the state changes
+  // Save labours to LocalStorage whenever the state changes
   useEffect(() => {
     try {
-      localStorage.setItem(LABORERS_STORAGE_KEY, JSON.stringify(laborers));
+      localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(labours));
     } catch (error) {
-      console.error("Error saving laborers to localStorage:", error);
+      console.error("Error saving labours to localStorage:", error);
       toast({
         title: "Storage Error",
-        description: "Could not save laborer data. Your browser storage might be full or disabled.",
+        description: "Could not save labour data. Your browser storage might be full or disabled.",
         variant: "destructive",
       });
     }
-  }, [laborers, toast]);
+  }, [labours, toast]);
 
-  const handleAddLaborer = () => {
-    setEditingLaborer(undefined);
+  const handleAddLabour = () => {
+    setEditingLabour(undefined);
     setIsFormOpen(true);
   };
 
-  const handleEditLaborer = (laborer: Laborer) => {
-    setEditingLaborer(laborer);
+  const handleEditLabour = (labour: Labour) => {
+    setEditingLabour(labour);
     setIsFormOpen(true);
   };
 
-  const handleDeleteLaborer = (laborerToDelete: Laborer) => {
-    setLaborers(prevLaborers => prevLaborers.filter(l => l.id !== laborerToDelete.id));
+  const handleDeleteLabour = (labourToDelete: Labour) => {
+    setLabours(prevLabours => prevLabours.filter(l => l.id !== labourToDelete.id));
     toast({
-      title: "Laborer Deleted",
-      description: `${laborerToDelete.name} has been removed.`,
+      title: "Labour Deleted",
+      description: `${labourToDelete.name} has been removed.`,
       variant: "destructive",
     });
   };
 
-  const handleFormSubmit = (laborerData: Laborer) => {
-    saveLaborer(laborerData);
+  const handleFormSubmit = (labourData: Labour) => {
+    saveLabour(labourData);
   };
 
-  const saveLaborer = (laborerToSave: Laborer) => {
-    const { photoFile, aadhaarFile, panFile, licenseFile, ...restOfLaborer } = laborerToSave;
-    const finalLaborerData: Laborer = {
-        ...restOfLaborer,
-        photoPreview: photoFile ? laborerToSave.photoPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.photoPreview : laborerToSave.photoPreview),
-        aadhaarPreview: aadhaarFile ? laborerToSave.aadhaarPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.aadhaarPreview : laborerToSave.aadhaarPreview),
-        panPreview: panFile ? laborerToSave.panPreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.panPreview : laborerToSave.panPreview),
-        licensePreview: licenseFile ? laborerToSave.licensePreview : (editingLaborer && laborerToSave.id === editingLaborer.id ? editingLaborer.licensePreview : laborerToSave.licensePreview),
+  const saveLabour = (labourToSave: Labour) => {
+    const { photoFile, aadhaarFile, panFile, licenseFile, ...restOfLabour } = labourToSave;
+    const finalLabourData: Labour = {
+        ...restOfLabour,
+        photoPreview: photoFile ? labourToSave.photoPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.photoPreview : labourToSave.photoPreview),
+        aadhaarPreview: aadhaarFile ? labourToSave.aadhaarPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.aadhaarPreview : labourToSave.aadhaarPreview),
+        panPreview: panFile ? labourToSave.panPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.panPreview : labourToSave.panPreview),
+        licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.licensePreview : labourToSave.licensePreview),
     };
 
-    if (editingLaborer) {
-      setLaborers(prevLaborers => prevLaborers.map(l => l.id === finalLaborerData.id ? finalLaborerData : l));
-      toast({ title: "Laborer Updated", description: `${finalLaborerData.name}'s details have been updated.` });
+    if (editingLabour) {
+      setLabours(prevLabours => prevLabours.map(l => l.id === finalLabourData.id ? finalLabourData : l));
+      toast({ title: "Labour Updated", description: `${finalLabourData.name}'s details have been updated.` });
     } else {
-      setLaborers(prevLaborers => [finalLaborerData, ...prevLaborers]);
-      toast({ title: "Laborer Added", description: `${finalLaborerData.name} has been added.` });
+      setLabours(prevLabours => [finalLabourData, ...prevLabours]);
+      toast({ title: "Labour Added", description: `${finalLabourData.name} has been added.` });
     }
     setIsFormOpen(false);
-    setEditingLaborer(undefined);
+    setEditingLabour(undefined);
   };
 
   const columns = [
     { 
-      accessorKey: 'photoPreview' as keyof Laborer, 
+      accessorKey: 'photoPreview' as keyof Labour, 
       header: 'Photo',
-      cell: (item: Laborer) => (
+      cell: (item: Labour) => (
         <Avatar className="h-10 w-10">
           <AvatarImage src={item.photoPreview} alt={item.name} data-ai-hint="person" />
           <AvatarFallback>
@@ -132,23 +132,23 @@ export default function LaborersPage() {
         </Avatar>
       )
     },
-    { accessorKey: 'name' as keyof Laborer, header: 'Name' },
-    { accessorKey: 'details' as keyof Laborer, header: 'Details' },
+    { accessorKey: 'name' as keyof Labour, header: 'Name' },
+    { accessorKey: 'details' as keyof Labour, header: 'Details' },
     { 
-      accessorKey: 'phoneNo' as keyof Laborer, 
+      accessorKey: 'phoneNo' as keyof Labour, 
       header: 'Phone No.', 
-      cell: (item: Laborer) => item.phoneNo || '-' 
+      cell: (item: Labour) => item.phoneNo || '-' 
     },
     { 
-      accessorKey: 'emergencyPhoneNo' as keyof Laborer, 
+      accessorKey: 'emergencyPhoneNo' as keyof Labour, 
       header: 'Emergency No.', 
-      cell: (item: Laborer) => item.emergencyPhoneNo || '-' 
+      cell: (item: Labour) => item.emergencyPhoneNo || '-' 
     },
-    { accessorKey: 'aadhaarNo' as keyof Laborer, header: 'Aadhaar No.', cell: (item: Laborer) => item.aadhaarNo || '-' },
-    { accessorKey: 'panNo' as keyof Laborer, header: 'PAN No.', cell: (item: Laborer) => item.panNo || '-' },
+    { accessorKey: 'aadhaarNo' as keyof Labour, header: 'Aadhaar No.', cell: (item: Labour) => item.aadhaarNo || '-' },
+    { accessorKey: 'panNo' as keyof Labour, header: 'PAN No.', cell: (item: Labour) => item.panNo || '-' },
     {
       header: 'Docs',
-      cell: (item: Laborer) => (
+      cell: (item: Labour) => (
         <div className="flex space-x-1">
           {[
             { preview: item.aadhaarPreview, name: "Aadhaar" },
@@ -176,20 +176,20 @@ export default function LaborersPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col items-start sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Laborer Management</h1>
+        <h1 className="text-3xl font-bold text-foreground">Labour Management</h1>
         <Button 
-          onClick={handleAddLaborer} 
+          onClick={handleAddLabour} 
           className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground self-stretch sm:self-auto"
         >
-          <PlusCircle className="mr-2 h-5 w-5" /> Add Laborer
+          <PlusCircle className="mr-2 h-5 w-5" /> Add Labour
         </Button>
       </div>
 
       <DataTable
         columns={columns}
-        data={laborers}
-        onEdit={handleEditLaborer}
-        onDelete={handleDeleteLaborer}
+        data={labours}
+        onEdit={handleEditLabour}
+        onDelete={handleDeleteLabour}
       />
 
       {isFormOpen && (
@@ -201,14 +201,14 @@ export default function LaborersPage() {
             </div>
           </div>
         }>
-          <LaborerForm
+          <LabourForm
             isOpen={isFormOpen}
             onClose={() => {
               setIsFormOpen(false);
-              setEditingLaborer(undefined);
+              setEditingLabour(undefined);
             }}
             onSubmit={handleFormSubmit}
-            defaultValues={editingLaborer}
+            defaultValues={editingLabour}
           />
         </Suspense>
       )}
