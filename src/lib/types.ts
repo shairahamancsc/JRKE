@@ -6,6 +6,9 @@ export interface Laborer {
   photoPreview?: string; // Base64 or URL for preview
   photoFile?: File; // To hold the actual file for upload
 
+  phoneNo?: string;
+  emergencyPhoneNo?: string;
+
   aadhaarNo?: string;
   panNo?: string;
 

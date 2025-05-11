@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCircle2, FileUp, Eye } from "lucide-react";
+import { UserCircle2, FileUp, Eye, Phone, Smartphone } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,18 @@ import {
 } from '@/components/ui/dialog';
 import type { Laborer } from '@/lib/types';
 
+const phoneRegex = /^[6-9]\d{9}$/; // Indian mobile number regex
+
 const laborerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   details: z.string().min(1, "Details are required"),
   photoFile: z.instanceof(File).optional(),
+  phoneNo: z.string().optional().or(z.literal('')).refine(val => !val || phoneRegex.test(val), {
+    message: "Invalid phone number format (must be 10 digits starting with 6-9).",
+  }),
+  emergencyPhoneNo: z.string().optional().or(z.literal('')).refine(val => !val || phoneRegex.test(val), {
+    message: "Invalid emergency phone number format (must be 10 digits starting with 6-9).",
+  }),
   aadhaarNo: z.string().optional().or(z.literal('')),
   panNo: z.string().optional().or(z.literal('')),
   aadhaarFile: z.instanceof(File).optional(),
@@ -54,6 +62,8 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
       name: defaultValues?.name || '',
       details: defaultValues?.details || '',
       photoFile: undefined,
+      phoneNo: defaultValues?.phoneNo || '',
+      emergencyPhoneNo: defaultValues?.emergencyPhoneNo || '',
       aadhaarNo: defaultValues?.aadhaarNo || '',
       panNo: defaultValues?.panNo || '',
       aadhaarFile: undefined,
@@ -63,11 +73,13 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
   });
 
   React.useEffect(() => {
-    if (isOpen) { // Ensure reset only happens when dialog opens or defaultValues change
+    if (isOpen) { 
       reset({ 
         name: defaultValues?.name || '', 
         details: defaultValues?.details || '',
         photoFile: undefined,
+        phoneNo: defaultValues?.phoneNo || '',
+        emergencyPhoneNo: defaultValues?.emergencyPhoneNo || '',
         aadhaarNo: defaultValues?.aadhaarNo || '',
         panNo: defaultValues?.panNo || '',
         aadhaarFile: undefined,
@@ -108,6 +120,8 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
       details: data.details,
       photoFile: data.photoFile,
       photoPreview: data.photoFile ? photoPreview : defaultValues?.photoPreview,
+      phoneNo: data.phoneNo,
+      emergencyPhoneNo: data.emergencyPhoneNo,
       aadhaarNo: data.aadhaarNo,
       panNo: data.panNo,
       aadhaarFile: data.aadhaarFile,
@@ -170,6 +184,20 @@ export function LaborerForm({ isOpen, onClose, onSubmit, defaultValues }: Labore
             <Textarea id="details" {...register('details')} className={errors.details ? 'border-destructive' : ''} />
             {errors.details && <p className="text-xs text-destructive mt-1">{errors.details.message}</p>}
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="phoneNo" className="flex items-center"><Phone className="mr-2 h-4 w-4 text-muted-foreground" />Phone No.</Label>
+              <Input id="phoneNo" {...register('phoneNo')} className={errors.phoneNo ? 'border-destructive' : ''} placeholder="Enter 10-digit mobile no."/>
+              {errors.phoneNo && <p className="text-xs text-destructive mt-1">{errors.phoneNo.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="emergencyPhoneNo" className="flex items-center"><Smartphone className="mr-2 h-4 w-4 text-muted-foreground" />Emergency Phone No.</Label>
+              <Input id="emergencyPhoneNo" {...register('emergencyPhoneNo')} className={errors.emergencyPhoneNo ? 'border-destructive' : ''} placeholder="Enter 10-digit mobile no."/>
+              {errors.emergencyPhoneNo && <p className="text-xs text-destructive mt-1">{errors.emergencyPhoneNo.message}</p>}
+            </div>
+          </div>
+
 
           <div>
             <Label htmlFor="aadhaarNo">Aadhaar No.</Label>

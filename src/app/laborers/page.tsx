@@ -4,7 +4,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 // import Image from 'next/image'; // Not directly used, AvatarImage handles it
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UserCircle2, Loader2, FileText } from 'lucide-react';
+import { PlusCircle, UserCircle2, Loader2, FileText, Phone, Smartphone } from 'lucide-react';
 // import { LaborerForm } from '@/components/laborers/laborer-form'; // Lazy loaded
 import { DataTable } from '@/components/common/data-table';
 import type { Laborer } from '@/lib/types';
@@ -25,6 +25,8 @@ export default function LaborersPage() {
     // Load initial laborers, ensuring new fields are present (even if undefined)
     setLaborers(initialLaborers.map(l => ({
       ...l,
+      phoneNo: l.phoneNo ?? undefined,
+      emergencyPhoneNo: l.emergencyPhoneNo ?? undefined,
       aadhaarNo: l.aadhaarNo ?? undefined,
       panNo: l.panNo ?? undefined,
       aadhaarPreview: l.aadhaarPreview ?? undefined,
@@ -103,6 +105,16 @@ export default function LaborersPage() {
     },
     { accessorKey: 'name' as keyof Laborer, header: 'Name' },
     { accessorKey: 'details' as keyof Laborer, header: 'Details' },
+    { 
+      accessorKey: 'phoneNo' as keyof Laborer, 
+      header: 'Phone No.', 
+      cell: (item: Laborer) => item.phoneNo || '-' 
+    },
+    { 
+      accessorKey: 'emergencyPhoneNo' as keyof Laborer, 
+      header: 'Emergency No.', 
+      cell: (item: Laborer) => item.emergencyPhoneNo || '-' 
+    },
     { accessorKey: 'aadhaarNo' as keyof Laborer, header: 'Aadhaar No.', cell: (item: Laborer) => item.aadhaarNo || '-' },
     { accessorKey: 'panNo' as keyof Laborer, header: 'PAN No.', cell: (item: Laborer) => item.panNo || '-' },
     {
