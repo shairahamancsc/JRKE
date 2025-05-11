@@ -5,16 +5,26 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck } from 'lucide-react';
-import { initialLaborers, initialAdvancePayments, initialWorkLogs } from '@/lib/data'; // Keep for fallback
+import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck, CalendarIcon, UserCircle2 } from 'lucide-react';
+import { initialLaborers, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data'; // Keep for fallback
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { LABORERS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY } from '@/lib/storageKeys';
-import type { Laborer, AdvancePayment, WorkLog } from '@/lib/types';
+import { LABORERS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
+import type { Laborer, AdvancePayment, WorkLog, DailyLogEntry } from '@/lib/types';
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const [laborerCount, setLaborerCount] = useState(0);
   const [advanceCount, setAdvanceCount] = useState(0);
   const [workLogCount, setWorkLogCount] = useState(0);
+  const [allDailyEntries, setAllDailyEntries] = useState<DailyLogEntry[]>([]);
+  const [searchDate, setSearchDate] = useState<Date | undefined>(undefined);
+  const [filteredEntries, setFilteredEntries] = useState<DailyLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -29,15 +39,37 @@ export default function DashboardPage() {
       const storedWorkLogs = localStorage.getItem(WORK_LOGS_STORAGE_KEY);
       setWorkLogCount(storedWorkLogs ? (JSON.parse(storedWorkLogs) as WorkLog[]).length : initialWorkLogs.length);
 
+      const storedDailyEntries = localStorage.getItem(DAILY_ENTRIES_STORAGE_KEY);
+      const parsedDailyEntries = storedDailyEntries ? (JSON.parse(storedDailyEntries) as DailyLogEntry[]) : initialDailyLogEntries;
+      setAllDailyEntries(parsedDailyEntries);
+
     } catch (error) {
       console.error("Error loading dashboard data from localStorage:", error);
       // Fallback to initial data counts in case of error
       setLaborerCount(initialLaborers.length);
       setAdvanceCount(initialAdvancePayments.length);
       setWorkLogCount(initialWorkLogs.length);
+      setAllDailyEntries(initialDailyLogEntries);
     }
     setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (searchDate && allDailyEntries.length > 0) {
+      const selectedDateStr = format(searchDate, 'yyyy-MM-dd');
+      const filtered = allDailyEntries.filter(entry => {
+        try {
+          return format(parseISO(entry.date), 'yyyy-MM-dd') === selectedDateStr;
+        } catch (e) {
+          console.error("Error parsing entry date:", entry.date, e);
+          return false;
+        }
+      });
+      setFilteredEntries(filtered);
+    } else {
+      setFilteredEntries([]); 
+    }
+  }, [searchDate, allDailyEntries]);
 
 
   const summaryCards = [
@@ -107,6 +139,88 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      <Card className="mt-10 shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">Search Daily Attendance</CardTitle>
+          <CardDescription>Select a date to view attendance records for that day.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <Label htmlFor="attendance-date-picker" className="text-sm font-medium whitespace-nowrap">Select Date:</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="attendance-date-picker"
+                  variant={"outline"}
+                  className={cn(
+                    "w-full sm:w-auto sm:min-w-[280px] justify-start text-left font-normal",
+                    !searchDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {searchDate ? format(searchDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={searchDate}
+                  onSelect={setSearchDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {searchDate && (
+            <div className="mt-6 border-t pt-6">
+              <h3 className="text-lg font-semibold mb-4">
+                Attendance for {format(searchDate, "PPP")}
+              </h3>
+              {isLoading ? ( 
+                <p className="text-muted-foreground">Loading entries...</p>
+              ) : filteredEntries.length > 0 ? (
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 rounded-md border p-4 bg-background/50">
+                  {filteredEntries.map((entry) => (
+                    <Card key={entry.id} className="p-3 bg-card shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 flex-grow min-w-0">
+                          <Avatar className="h-10 w-10 flex-shrink-0">
+                            <AvatarImage src={entry.laborerPhotoPreview} alt={entry.laborerName || "Laborer"} data-ai-hint="person face" />
+                            <AvatarFallback>
+                              {entry.laborerName && entry.laborerName.length > 0 ? entry.laborerName.charAt(0).toUpperCase() : <UserCircle2 className="h-5 w-5 text-muted-foreground" />}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-grow min-w-0">
+                            <p className="font-medium text-sm truncate" title={entry.laborerName || 'Unknown Laborer'}>{entry.laborerName || 'Unknown Laborer'}</p>
+                            {entry.attendanceStatus === 'present' && entry.workLocation && (
+                              <p className="text-xs text-muted-foreground truncate" title={entry.workLocation}>
+                                Location: {entry.workLocation}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Badge
+                          variant={entry.attendanceStatus === 'present' ? 'default' : 'secondary'}
+                          className={`whitespace-nowrap flex-shrink-0 ${entry.attendanceStatus === 'present' ? 
+                                      'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30 dark:bg-green-700/30 dark:text-green-300 dark:border-green-700/40 dark:hover:bg-green-700/40' : 
+                                      'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30 dark:bg-red-700/30 dark:text-red-300 dark:border-red-700/40 dark:hover:bg-red-700/40'}`}
+                        >
+                          {entry.attendanceStatus.charAt(0).toUpperCase() + entry.attendanceStatus.slice(1)}
+                        </Badge>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No attendance records found for this date.</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
+
