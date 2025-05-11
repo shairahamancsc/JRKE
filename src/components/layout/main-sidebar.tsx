@@ -56,7 +56,7 @@ export function MainSidebar() {
         )}
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
           <Building className="h-7 w-7 text-sidebar-primary" />
-          <span className="group-data-[collapsible=icon]:hidden">Jrk Labor Mgmt</span>
+          <span className="group-data-[collapsible=icon]:hidden">JRK ENTERPRISES</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
@@ -110,3 +110,4 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
+

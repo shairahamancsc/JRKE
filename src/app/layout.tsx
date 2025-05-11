@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -19,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Jrk Labor Management',
+  title: 'JRK ENTERPRISES',
   description: 'Manage labor, track advances, and log daily work.',
 };
 
@@ -62,3 +63,4 @@ export default function RootLayout({
     </html>
   );
 }
+
