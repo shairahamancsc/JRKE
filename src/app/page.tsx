@@ -4,8 +4,9 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck } from 'lucide-react'; // Changed DollarSign to IndianRupee
+import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck } from 'lucide-react';
 import { initialLaborers, initialAdvancePayments, initialWorkLogs } from '@/lib/data';
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 export default function DashboardPage() {
   // Data processing is now done on the server during rendering
@@ -15,8 +16,8 @@ export default function DashboardPage() {
 
   const summaryCards = [
     { title: "Total Laborers", value: laborerCount, icon: Users, href: "/laborers", color: "text-primary" },
-    { title: "Total Advances", value: advanceCount, icon: IndianRupee, href: "/advances", color: "text-accent" }, // Changed DollarSign to IndianRupee
-    { title: "Work Logs Entries", value: workLogCount, icon: ClipboardList, href: "/work-logs", color: "text-secondary-foreground" }, // Clarified label
+    { title: "Total Advances", value: advanceCount, icon: IndianRupee, href: "/advances", color: "text-accent" },
+    { title: "Work Logs Entries", value: workLogCount, icon: ClipboardList, href: "/work-logs", color: "text-secondary-foreground" },
   ];
 
   const quickLinks = [
@@ -28,7 +29,10 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8 text-foreground">Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <ThemeToggle />
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
         {summaryCards.map((card, index) => (
@@ -62,4 +66,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
