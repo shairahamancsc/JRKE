@@ -1,5 +1,5 @@
 
-import type { Laborer, AdvancePayment, WorkLog } from './types';
+import type { Laborer, AdvancePayment, WorkLog, DailyLogEntry } from './types';
 
 export const initialLaborers: Laborer[] = [
   { id: '1', name: 'John Doe', details: 'Skilled Carpenter, 5 years experience', photoPreview: 'https://picsum.photos/seed/laborer1/100/100' },
@@ -29,4 +29,16 @@ export const initialWorkLogs: WorkLog[] = [
     workType: 'Concrete Pouring Support',
     picturePreview: 'https://picsum.photos/seed/picsum2/100/100'
   },
+];
+
+export const initialDailyLogEntries: DailyLogEntry[] = [
+  // Example Entry:
+  // {
+  //   id: 'dle1',
+  //   laborerId: '1',
+  //   date: new Date().toISOString(),
+  //   attendanceStatus: 'present',
+  //   advanceAmount: 50,
+  //   workLocation: 'Main Courtyard, Phase 2',
+  // },
 ];

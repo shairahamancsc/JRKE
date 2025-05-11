@@ -23,3 +23,15 @@ export interface WorkLog {
   picturePreview?: string; // Base64 or URL for preview
   pictureFile?: File; // To hold the actual file for upload
 }
+
+export interface DailyLogEntry {
+  id: string;
+  laborerId: string;
+  date: string; // ISO string format
+  attendanceStatus: 'present' | 'absent';
+  advanceAmount?: number;
+  workLocation?: string;
+  // For convenience when displaying, not strictly part of the stored data model if derived
+  laborerName?: string; 
+  laborerPhotoPreview?: string;
+}

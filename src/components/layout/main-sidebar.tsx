@@ -10,6 +10,7 @@ import {
   FileText,
   LayoutDashboard,
   Building,
+  ClipboardCheck, // Added for Daily Entry
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/laborers", label: "Laborers", icon: Users },
   { href: "/advances", label: "Advances", icon: DollarSign },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
+  { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck }, // New Daily Entry link
   {
     label: "Reports",
     icon: FileText,
