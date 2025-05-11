@@ -111,7 +111,10 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
               name="laborerId"
               control={control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select 
+                  onValueChange={field.onChange} 
+                  value={field.value || ""} // Control with empty string for placeholder
+                >
                   <SelectTrigger id="laborerId" className={errors.laborerId ? 'border-destructive' : ''}>
                     <SelectValue placeholder="Select a laborer" />
                   </SelectTrigger>
@@ -175,12 +178,15 @@ export function AdvanceForm({ isOpen, onClose, onSubmit, laborers, defaultValues
               name="paymentMethod"
               control={control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select 
+                  onValueChange={field.onChange} 
+                  value={field.value || ""}  // Control with empty string for placeholder
+                >
                   <SelectTrigger id="paymentMethod" className={errors.paymentMethod ? 'border-destructive' : ''}>
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">-- None --</SelectItem>
+                    {/* <SelectItem value="">-- None --</SelectItem>  Removed to fix error */}
                     {paymentMethods.map(method => (
                       <SelectItem key={method.value} value={method.value}>
                         {method.label}
