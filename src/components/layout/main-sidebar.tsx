@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   LogOut, // Added LogOut icon
   UserPlus, // Added UserPlus for registration link
+  FileArchive, // Icon for Proprietor Documents
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -39,6 +40,7 @@ const navItems = [
   { href: "/advances", label: "Advances", icon: IndianRupee },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
+  { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
   {
     label: "Reports",
     icon: FileText,

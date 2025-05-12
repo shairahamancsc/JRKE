@@ -1,5 +1,8 @@
 
-import type { Labour, AdvancePayment, WorkLog, DailyLogEntry } from './types';
+
+import type { Labour, AdvancePayment, WorkLog, DailyLogEntry, ProprietorDocument, ProprietorDocumentTypeValue } from './types';
+import { proprietorDocumentTypes } from './types';
+
 
 export const initialLabours: Labour[] = [
   { 
@@ -80,3 +83,19 @@ export const initialDailyLogEntries: DailyLogEntry[] = [
   //   workLocation: 'Main Courtyard, Phase 2',
   // },
 ];
+
+export const initialProprietorDocuments: ProprietorDocument[] = [
+  // Example:
+  // {
+  //   id: 'doc1',
+  //   documentType: 'gst_certificate',
+  //   documentName: 'Company GST Reg 2023',
+  //   fileName: 'gst_cert_2023.pdf',
+  //   fileDataUrl: 'data:application/pdf;base64,...', // Example data URI
+  //   uploadedAt: new Date().toISOString(),
+  //   fileType: 'application/pdf',
+  // }
+];
+
+// Exporting the const array directly
+export const proprietorDocumentTypesList: { value: ProprietorDocumentTypeValue; label: string }[] = proprietorDocumentTypes.map(dt => ({...dt}));

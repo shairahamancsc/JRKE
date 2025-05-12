@@ -65,3 +65,26 @@ export interface Supervisor {
   // WARNING: Storing passwords directly is insecure. Use hashing in production.
   password: string;
 }
+
+// Document types for proprietor
+export const proprietorDocumentTypes = [
+  { value: 'gst_certificate', label: 'GST Certificate' },
+  { value: 'aadhaar_card_proprietor', label: 'Aadhaar Card (Proprietor)' },
+  { value: 'pan_card_proprietor', label: 'PAN Card (Proprietor)' },
+  { value: 'business_registration', label: 'Business Registration' },
+  { value: 'company_pan_card', label: 'PAN Card (Company)' },
+  { value: 'bank_statement_company', label: 'Bank Statement (Company)' },
+  { value: 'other', label: 'Other Document' },
+] as const;
+
+export type ProprietorDocumentTypeValue = typeof proprietorDocumentTypes[number]['value'];
+
+export interface ProprietorDocument {
+  id: string;
+  documentType: ProprietorDocumentTypeValue;
+  documentName: string; // User-provided name for the document, e.g., "Office Lease Agreement" if type is "Other"
+  fileName: string;
+  fileDataUrl: string; // Store file as data URI for easy download
+  uploadedAt: string; // ISO date string
+  fileType?: string; // MIME type of the file
+}
