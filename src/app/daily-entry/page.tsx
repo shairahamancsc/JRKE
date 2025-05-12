@@ -28,7 +28,7 @@ export default function DailyEntryPage() {
     DAILY_ENTRIES_STORAGE_KEY,
     initialDailyLogEntries
   );
-  const [labours, setLabours] = useState<Labour[]>([]); 
+  const [labours, setLabours] = useState<Labour[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
   const [lastSubmissionDetails, setLastSubmissionDetails] = useState<{
@@ -51,10 +51,10 @@ export default function DailyEntryPage() {
       localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
       setLabours(initialLabours);
     }
-    
+
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
-      window.location.hash = ""; 
+      window.location.hash = "";
     }
   }, []);
 
@@ -94,29 +94,29 @@ export default function DailyEntryPage() {
         advancePaymentMethod: advanceAmount && advanceAmount > 0 ? entryData.advancePaymentMethod : undefined,
         advanceRemarks: advanceAmount && advanceAmount > 0 ? entryData.advanceRemarks : undefined,
         workLocation: entryData.attendanceStatus === 'present' ? formData.workLocation : undefined,
-        labourName: labourInfo.name, 
-        labourPhotoPreview: labourInfo.photoPreview, 
+        labourName: labourInfo.name,
+        labourPhotoPreview: labourInfo.photoPreview,
       };
     });
 
     setDailyEntries(currentEntries => [...newEntries, ...currentEntries].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime() || (a.labourName || "").localeCompare(b.labourName || "")));
-    toast({ 
-      title: "Daily Logs Added", 
-      description: `${newEntries.length} log(s) for ${format(formData.date, 'PPP')} have been recorded.` 
+    toast({
+      title: "Daily Logs Added",
+      description: `${newEntries.length} log(s) for ${format(formData.date, 'PPP')} have been recorded.`
     });
-    setLastSubmissionDetails({
+    setLastSubmissionDetails({ // Store details for WhatsApp sharing
       date: formData.date,
       workLocation: formData.workLocation,
       entries: newEntries,
     });
     setIsFormOpen(false);
   };
-  
+
   const getLabourInfo = (labourId: string) => {
     const labour = labours.find(l => l.id === labourId);
-    return { 
-      name: labour?.name || 'Unknown Labour', 
-      photoPreview: labour?.photoPreview 
+    return {
+      name: labour?.name || 'Unknown Labour',
+      photoPreview: labour?.photoPreview
     };
   };
 
@@ -130,11 +130,11 @@ export default function DailyEntryPage() {
     const presentLaboursList = entries
       .filter(e => e.attendanceStatus === 'present')
       .map(e => e.labourName || 'Unknown Labour');
-    
-    const presentLaboursText = presentLaboursList.length > 0 
-      ? presentLaboursList.join('\n- ') 
+
+    const presentLaboursText = presentLaboursList.length > 0
+      ? presentLaboursList.join('\n- ')
       : 'No one present';
-    
+
     const advancesTakenList = entries
       .filter(e => e.advanceAmount && e.advanceAmount > 0)
       .map(e => `${e.labourName || 'Unknown Labour'}: ₹${e.advanceAmount?.toFixed(2)}`);
@@ -149,17 +149,18 @@ export default function DailyEntryPage() {
     if (workLocation) {
       message += `Work Info:\n${workLocation}\n\n`;
     } else if (presentLaboursList.length > 0) {
-      message += `Work Info:\nNot Specified\n\n`;
+      message += `Work Info:\nNot Specified\n\n`; // Indicate if work location is missing but someone was present
     }
 
     message += `Advances:\n- ${advancesTakenText}`;
-    
+
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message.trim())}`;
     window.open(whatsappUrl, '_blank');
   };
 
+
   const columns = React.useMemo(() => [
-    { 
+    {
       accessorKey: (item: DailyLogEntry) => {
         const name = item.labourName || getLabourInfo(item.labourId).name;
         const photoPreview = item.labourPhotoPreview || getLabourInfo(item.labourId).photoPreview;
@@ -174,11 +175,11 @@ export default function DailyEntryPage() {
             <span>{name}</span>
           </div>
         );
-      }, 
-      header: 'Labour' 
+      },
+      header: 'Labour'
     },
-    { 
-      accessorKey: 'date' as keyof DailyLogEntry, 
+    {
+      accessorKey: 'date' as keyof DailyLogEntry,
       header: 'Date',
       cell: (item: DailyLogEntry) => format(parseISO(item.date), 'PPP')
     },
@@ -187,16 +188,16 @@ export default function DailyEntryPage() {
       header: 'Attendance',
       cell: (item: DailyLogEntry) => (
         <Badge variant={item.attendanceStatus === 'present' ? 'default' : 'secondary'}
-               className={item.attendanceStatus === 'present' ? 
-                            'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30 dark:bg-green-700/30 dark:text-green-300 dark:border-green-700/40 dark:hover:bg-green-700/40' : 
+               className={item.attendanceStatus === 'present' ?
+                            'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30 dark:bg-green-700/30 dark:text-green-300 dark:border-green-700/40 dark:hover:bg-green-700/40' :
                             'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30 dark:bg-red-700/30 dark:text-red-300 dark:border-red-700/40 dark:hover:bg-red-700/40'}
         >
           {item.attendanceStatus.charAt(0).toUpperCase() + item.attendanceStatus.slice(1)}
         </Badge>
       )
     },
-    { 
-      accessorKey: 'advanceAmount' as keyof DailyLogEntry, 
+    {
+      accessorKey: 'advanceAmount' as keyof DailyLogEntry,
       header: 'Advance (₹)',
       cell: (item: DailyLogEntry) => item.advanceAmount ? `₹${item.advanceAmount.toFixed(2)}` : '-'
     },
@@ -209,8 +210,8 @@ export default function DailyEntryPage() {
         </Badge>
       ) : '-'
     },
-    { 
-      accessorKey: 'advanceRemarks' as keyof DailyLogEntry, 
+    {
+      accessorKey: 'advanceRemarks' as keyof DailyLogEntry,
       header: 'Adv. Remarks',
       cell: (item: DailyLogEntry) => item.advanceRemarks || '-'
     },
@@ -218,24 +219,24 @@ export default function DailyEntryPage() {
       cell: (item: DailyLogEntry) => item.workLocation || '-'
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [labours]); 
+  ], [labours]);
 
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col items-start sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold text-foreground">Daily Labour Entries</h1>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button 
-            onClick={handleAddEntry} 
+          <Button
+            onClick={handleAddEntry}
             className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={labours.length === 0}
           >
             <PlusCircle className="mr-2 h-5 w-5" /> Add Daily Logs
           </Button>
           {lastSubmissionDetails && (
-            <Button 
-              onClick={handleShareToWhatsApp} 
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-primary-foreground"
+            <Button
+              onClick={handleShareToWhatsApp}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white dark:text-white" // Explicit white text
             >
               <Share2 className="mr-2 h-5 w-5" />
               Share via WhatsApp
@@ -268,7 +269,7 @@ export default function DailyEntryPage() {
               setIsFormOpen(false);
             }}
             onSubmit={handleFormSubmit}
-            labours={labours} 
+            labours={labours}
           />
         </Suspense>
       )}
