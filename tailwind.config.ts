@@ -105,7 +105,7 @@ export default {
         },
          'slide-in-up-main': { // Keyframe for main content slide up after splash
            from: { transform: 'translateY(20px)', opacity: '0' },
-           to { transform: 'translateY(0)', opacity: '1' }
+           to: { transform: 'translateY(0)', opacity: '1' } // Fixed: Added colon after 'to'
         }
   		},
   		animation: {
