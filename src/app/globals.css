@@ -69,8 +69,8 @@ body {
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 51 100% 55%; /* Adjusted Golden Yellow for dark mode */
-    --accent-foreground: 51 100% 15%;
+    --accent: 145 65% 45%; /* Changed from Golden Yellow to Green */
+    --accent-foreground: 145 20% 95%; /* Changed for Green accent */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
@@ -87,8 +87,8 @@ body {
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 120 61% 45%; /* Adjusted Forest Green for dark sidebar */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 51 100% 55%; /* Adjusted Golden Yellow for dark sidebar */
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-accent: 145 60% 40%; /* Changed from Golden Yellow to Green for dark sidebar */
+    --sidebar-accent-foreground: 0 0% 98%; /* Changed for Green sidebar accent */
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 120 61% 34%;
   }
