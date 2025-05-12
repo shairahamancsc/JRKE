@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -12,6 +13,7 @@ import {
   Building,
   ClipboardCheck,
   LogOut, // Added LogOut icon
+  UserPlus, // Added UserPlus for registration link
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -47,10 +49,16 @@ const navItems = [
   },
 ];
 
+// Add supervisor registration link specifically for Admin
+const adminNavItems = [
+    { href: "/register-supervisor", label: "Register Supervisor", icon: UserPlus },
+];
+
+
 export function MainSidebar() {
   const pathname = usePathname();
   const { isMobile } = useSidebar();
-  const { isAuthenticated, logout, isLoading } = useAuth(); // Get auth state and logout function
+  const { isAuthenticated, logout, isLoading, currentUsername } = useAuth(); // Get auth state, logout function, and username
   const { toast } = useToast();
 
   const handleLogout = () => {
@@ -62,6 +70,9 @@ export function MainSidebar() {
   if (isLoading || !isAuthenticated) {
     return null;
   }
+
+  const isAdmin = currentUsername === 'Admin';
+
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
@@ -115,9 +126,25 @@ export function MainSidebar() {
               </SidebarMenuItem>
             )
           )}
+           {/* Conditionally render admin-specific links */}
+           {isAdmin && adminNavItems.map((item) => (
+             <SidebarMenuItem key={item.href}>
+               <SidebarMenuButton
+                 asChild
+                 isActive={pathname === item.href}
+                 tooltip={{ children: item.label, side: 'right', align: 'center' }}
+                 className="justify-start"
+               >
+                 <Link href={item.href} className="flex items-center gap-3">
+                   <item.icon className="h-5 w-5" />
+                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                 </Link>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2 flex flex-col gap-2 items-stretch">
+      <SidebarFooter className="p-2 flex flex-col gap-2 items-stretch mt-auto"> {/* Added mt-auto */}
          {/* Logout Button */}
          <SidebarMenuButton
             onClick={handleLogout}

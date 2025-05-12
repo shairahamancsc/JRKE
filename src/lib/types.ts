@@ -1,4 +1,5 @@
 
+
 export interface Labour {
   id: string;
   name: string;
@@ -53,6 +54,14 @@ export interface DailyLogEntry {
   advanceRemarks?: string;
   workLocation?: string;
   // For convenience when displaying, not strictly part of the stored data model if derived
-  labourName?: string; 
+  labourName?: string;
   labourPhotoPreview?: string;
+}
+
+// Added Supervisor type
+export interface Supervisor {
+  id: string;
+  username: string;
+  // WARNING: Storing passwords directly is insecure. Use hashing in production.
+  password: string;
 }
