@@ -5,12 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Users,
-  IndianRupee, // Corrected from DollarSign based on previous changes
+  IndianRupee,
   ClipboardList,
   FileText,
   LayoutDashboard,
   Building,
   ClipboardCheck,
+  LogOut, // Added LogOut icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -23,9 +24,12 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarFooter,
-  useSidebar, // Import useSidebar hook
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { SheetTitle } from "@/components/ui/sheet"; // Import SheetTitle for mobile accessibility
+import { SheetTitle } from "@/components/ui/sheet";
+import { useAuth } from "@/context/auth-context"; // Import useAuth
+import { Button } from "../ui/button"; // Import Button for logout
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -45,12 +49,23 @@ const navItems = [
 
 export function MainSidebar() {
   const pathname = usePathname();
-  const { isMobile } = useSidebar(); // Use the hook to detect mobile context
+  const { isMobile } = useSidebar();
+  const { isAuthenticated, logout, isLoading } = useAuth(); // Get auth state and logout function
+  const { toast } = useToast();
+
+  const handleLogout = () => {
+    logout();
+    toast({ title: "Logged Out", description: "You have been logged out successfully." });
+  };
+
+  // Don't render the sidebar if loading or not authenticated
+  if (isLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader className="p-4">
-        {/* Add a visually hidden SheetTitle for accessibility when in mobile sheet view */}
         {isMobile && (
           <SheetTitle className="sr-only">Main Navigation Menu</SheetTitle>
         )}
@@ -102,10 +117,25 @@ export function MainSidebar() {
           )}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
-        <div className="group-data-[collapsible=icon]:hidden">
+      <SidebarFooter className="p-2 flex flex-col gap-2 items-stretch">
+         {/* Logout Button */}
+         <SidebarMenuButton
+            onClick={handleLogout}
+            tooltip={{ children: "Logout", side: 'right', align: 'center' }}
+            className="justify-start w-full"
+            variant="ghost" // Optional: style as ghost button
+         >
+           <LogOut className="h-5 w-5" />
+           <span className="group-data-[collapsible=icon]:hidden">Logout</span>
+         </SidebarMenuButton>
+
+        {/* Copyright Info */}
+        <div className="group-data-[collapsible=icon]:hidden text-center">
           <span className="text-xs text-sidebar-foreground/70">© {new Date().getFullYear()} Jrk Enterprises.</span>
         </div>
+         <div className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center hidden">
+           {/* Optional: Icon-only copyright or element when collapsed */}
+         </div>
       </SidebarFooter>
     </Sidebar>
   );
