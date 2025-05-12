@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -90,18 +91,49 @@ export default {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
-        'slide-in-up': {
+        'slide-in-up': { // Keep original slide-in-up for page content if needed elsewhere
           '0%': { transform: 'translateY(20px)', opacity: '0' },
           '100%': { transform: 'translateY(0px)', opacity: '1' },
         },
+        'fade-out-splash': { // Keyframe for splash fade out
+          from: { opacity: '1' },
+          to: { opacity: '0' },
+        },
+        'scale-in-splash': { // Keyframe for splash logo scale in
+          from: { transform: 'scale(0.9)', opacity: '0' },
+          to: { transform: 'scale(1)', opacity: '1' },
+        },
+         'slide-in-up-main': { // Keyframe for main content slide up after splash
+           from: { transform: 'translateY(20px)', opacity: '0' },
+           to { transform: 'translateY(0)', opacity: '1' }
+        }
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in': 'fade-in 0.5s ease-out',
-        'slide-in-up': 'slide-in-up 0.5s ease-out',
-  		}
+        'slide-in-up': 'slide-in-up 0.5s ease-out', // Keep original
+        'fade-out-splash': 'fade-out-splash 0.5s ease-out forwards', // Add splash fade out animation
+        'scale-in-splash': 'scale-in-splash 0.7s ease-out forwards', // Add splash scale in animation
+        'slide-in-up-main': 'slide-in-up-main 0.5s ease-out forwards', // Add main content slide up
+  		},
+      animationDelay: { // Add animation delay utility
+        '2000': '2000ms',
+      }
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+      require("tailwindcss-animate"),
+      // Add plugin for animation-delay
+      function ({ matchUtilities, theme }: { matchUtilities: any, theme: any }) {
+        matchUtilities(
+          {
+            'animation-delay': (value: string) => ({
+              'animation-delay': value,
+            }),
+          },
+          { values: theme('animationDelay') }
+        )
+      },
+    ],
 } satisfies Config;

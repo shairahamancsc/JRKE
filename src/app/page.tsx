@@ -1,12 +1,12 @@
 
-"use client"; 
+"use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck, CalendarIcon, UserCircle2, Briefcase, Landmark, Info } from 'lucide-react';
-import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data'; 
+import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data';
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
 import type { Labour, AdvancePayment, WorkLog, DailyLogEntry, PaymentMethod } from '@/lib/types';
@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
       const storedAdvances = localStorage.getItem(ADVANCES_STORAGE_KEY);
       setAdvanceCount(storedAdvances ? (JSON.parse(storedAdvances) as AdvancePayment[]).length : initialAdvancePayments.length);
-      
+
       const storedWorkLogs = localStorage.getItem(WORK_LOGS_STORAGE_KEY);
       setWorkLogCount(storedWorkLogs ? (JSON.parse(storedWorkLogs) as WorkLog[]).length : initialWorkLogs.length);
 
@@ -72,7 +72,7 @@ export default function DashboardPage() {
       });
       setFilteredEntries(filtered);
     } else {
-      setFilteredEntries([]); 
+      setFilteredEntries([]);
     }
   }, [searchDate, allDailyEntries]);
 
@@ -86,7 +86,7 @@ export default function DashboardPage() {
   const quickLinks = useMemo(() => [
     { title: "Add New Labour", href: "/labours#add", icon: PlusCircle },
     { title: "Record Advance", href: "/advances#add", icon: PlusCircle },
-    { title: "Daily Labour Entries", href: "/daily-entry#add", icon: ClipboardCheck }, 
+    { title: "Daily Labour Entries", href: "/daily-entry#add", icon: ClipboardCheck },
     { title: "Generate Report", href: "/reports", icon: ArrowRight },
   ], []);
 
@@ -96,7 +96,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <ThemeToggle />
       </div>
-      
+
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
           {[1,2,3].map(i => (
@@ -182,7 +182,7 @@ export default function DashboardPage() {
               <h3 className="text-lg font-semibold mb-4">
                 Attendance for {format(searchDate, "PPP")}
               </h3>
-              {isLoading ? ( 
+              {isLoading ? (
                 <p className="text-muted-foreground">Loading entries...</p>
               ) : filteredEntries.length > 0 ? (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 rounded-md border p-4 bg-background/50">
@@ -202,14 +202,14 @@ export default function DashboardPage() {
                         </div>
                         <Badge
                           variant={entry.attendanceStatus === 'present' ? 'default' : 'secondary'}
-                          className={`whitespace-nowrap flex-shrink-0 ${entry.attendanceStatus === 'present' ? 
-                                      'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30 dark:bg-green-700/30 dark:text-green-300 dark:border-green-700/40 dark:hover:bg-green-700/40' : 
+                          className={`whitespace-nowrap flex-shrink-0 ${entry.attendanceStatus === 'present' ?
+                                      'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30 dark:bg-green-700/30 dark:text-green-300 dark:border-green-700/40 dark:hover:bg-green-700/40' :
                                       'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30 dark:bg-red-700/30 dark:text-red-300 dark:border-red-700/40 dark:hover:bg-red-700/40'}`}
                         >
                           {entry.attendanceStatus.charAt(0).toUpperCase() + entry.attendanceStatus.slice(1)}
                         </Badge>
                       </div>
-                      
+
                       {((entry.attendanceStatus === 'present' && entry.workLocation) || (entry.advanceAmount && entry.advanceAmount > 0)) && (
                         <div className="mt-2 pt-2 border-t border-border/50 text-xs space-y-1">
                           {entry.attendanceStatus === 'present' && entry.workLocation && (
@@ -256,4 +256,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
