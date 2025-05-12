@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UserCircle2, Loader2 } from 'lucide-react';
+import { PlusCircle, UserCircle2, Loader2, Share2 } from 'lucide-react'; // Added Share2
 import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
 import { DataTable } from '@/components/common/data-table';
 import type { DailyLogEntry, Labour, PaymentMethod } from '@/lib/types';
@@ -28,12 +28,16 @@ export default function DailyEntryPage() {
     DAILY_ENTRIES_STORAGE_KEY,
     initialDailyLogEntries
   );
-  const [labours, setLabours] = useState<Labour[]>([]); // Labours are read, not managed by this page's debounced hook
+  const [labours, setLabours] = useState<Labour[]>([]); 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
+  const [lastSubmissionDetails, setLastSubmissionDetails] = useState<{
+    date: Date;
+    workLocation?: string;
+    entries: DailyLogEntry[];
+  } | null>(null);
 
   useEffect(() => {
-    // Load labours from localStorage
     try {
       const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
       if (storedLabours) {
@@ -64,6 +68,7 @@ export default function DailyEntryPage() {
       return;
     }
     setIsFormOpen(true);
+    setLastSubmissionDetails(null); // Clear previous submission details when opening form
   };
 
   const handleDeleteEntry = (entryToDelete: DailyLogEntry) => {
@@ -99,6 +104,11 @@ export default function DailyEntryPage() {
       title: "Daily Logs Added", 
       description: `${newEntries.length} log(s) for ${format(formData.date, 'PPP')} have been recorded.` 
     });
+    setLastSubmissionDetails({
+      date: formData.date,
+      workLocation: formData.workLocation,
+      entries: newEntries,
+    });
     setIsFormOpen(false);
   };
   
@@ -108,6 +118,44 @@ export default function DailyEntryPage() {
       name: labour?.name || 'Unknown Labour', 
       photoPreview: labour?.photoPreview 
     };
+  };
+
+  const handleShareToWhatsApp = () => {
+    if (!lastSubmissionDetails) return;
+
+    const { date, workLocation, entries } = lastSubmissionDetails;
+
+    const formattedDate = format(date, 'dd/MM/yyyy');
+
+    const presentLaboursList = entries
+      .filter(e => e.attendanceStatus === 'present')
+      .map(e => e.labourName || 'Unknown Labour');
+    
+    const presentLaboursText = presentLaboursList.length > 0 
+      ? presentLaboursList.join('\n- ') 
+      : 'No one present';
+    
+    const advancesTakenList = entries
+      .filter(e => e.advanceAmount && e.advanceAmount > 0)
+      .map(e => `${e.labourName || 'Unknown Labour'}: ₹${e.advanceAmount?.toFixed(2)}`);
+
+    const advancesTakenText = advancesTakenList.length > 0
+      ? advancesTakenList.join('\n- ')
+      : 'No advances taken';
+
+    let message = `${formattedDate}\n\n`;
+    message += `Present:\n- ${presentLaboursText}\n\n`;
+
+    if (workLocation) {
+      message += `Work Info:\n${workLocation}\n\n`;
+    } else if (presentLaboursList.length > 0) {
+      message += `Work Info:\nNot Specified\n\n`;
+    }
+
+    message += `Advances:\n- ${advancesTakenText}`;
+    
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message.trim())}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const columns = React.useMemo(() => [
@@ -170,21 +218,32 @@ export default function DailyEntryPage() {
       cell: (item: DailyLogEntry) => item.workLocation || '-'
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [labours]); // Dependency on labours as getLabourInfo uses it
+  ], [labours]); 
 
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col items-start sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold text-foreground">Daily Labour Entries</h1>
-        <Button 
-          onClick={handleAddEntry} 
-          className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground self-stretch sm:self-auto"
-          disabled={labours.length === 0}
-        >
-          <PlusCircle className="mr-2 h-5 w-5" /> Add Daily Logs
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={handleAddEntry} 
+            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
+            disabled={labours.length === 0}
+          >
+            <PlusCircle className="mr-2 h-5 w-5" /> Add Daily Logs
+          </Button>
+          {lastSubmissionDetails && (
+            <Button 
+              onClick={handleShareToWhatsApp} 
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-primary-foreground"
+            >
+              <Share2 className="mr-2 h-5 w-5" />
+              Share via WhatsApp
+            </Button>
+          )}
+        </div>
       </div>
-      {labours.length === 0 && (
+      {labours.length === 0 && !isFormOpen && ( // Only show if form is not open
         <p className="text-muted-foreground mb-4">Please add labours in the 'Labours' section to make daily entries.</p>
       )}
 
@@ -216,3 +275,4 @@ export default function DailyEntryPage() {
     </div>
   );
 }
+
