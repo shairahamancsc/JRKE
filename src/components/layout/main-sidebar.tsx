@@ -8,14 +8,13 @@ import {
   Users,
   IndianRupee,
   ClipboardList,
-  // FileText, // Removed as Reports section is being removed
   LayoutDashboard,
   Building,
   ClipboardCheck,
-  LogOut, // Added LogOut icon
-  UserPlus, // Added UserPlus for registration link
-  FileArchive, // Icon for Proprietor Documents
-  Calculator, // Added Calculator icon for GST Calculator
+  LogOut, 
+  UserPlus, 
+  FileArchive, 
+  Calculator, 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -25,15 +24,12 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  // SidebarGroup, // Removed as Reports section is being removed
-  // SidebarGroupLabel, // Removed as Reports section is being removed
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { SheetTitle } from "@/components/ui/sheet";
-import { useAuth } from "@/context/auth-context"; // Import useAuth
-// import { Button } from "../ui/button"; // Button import not used directly here, SidebarMenuButton is used for logout
-import { useToast } from "@/hooks/use-toast"; // Import useToast
+import { useAuth } from "@/context/auth-context"; 
+import { useToast } from "@/hooks/use-toast"; 
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -42,18 +38,9 @@ const navItems = [
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
-  { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, // New GST Calculator Link
-  // { // Reports section removed
-  //   label: "Reports",
-  //   icon: FileText,
-  //   subItems: [
-  //     { href: "/reports/attendance", label: "Attendance Report", icon: ClipboardList },
-  //     { href: "/reports/advances-summary", label: "Advance Summary", icon: IndianRupee },
-  //   ],
-  // },
+  { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, 
 ];
 
-// Add supervisor registration link specifically for Admin
 const adminNavItems = [
     { href: "/register-supervisor", label: "Register Supervisor", icon: UserPlus },
 ];
@@ -62,7 +49,7 @@ const adminNavItems = [
 export function MainSidebar() {
   const pathname = usePathname();
   const { isMobile } = useSidebar();
-  const { isAuthenticated, logout, isLoading, currentUsername } = useAuth(); // Get auth state, logout function, and username
+  const { isAuthenticated, logout, isLoading, currentUsername } = useAuth(); 
   const { toast } = useToast();
 
   const handleLogout = () => {
@@ -70,7 +57,6 @@ export function MainSidebar() {
     toast({ title: "Logged Out", description: "You have been logged out successfully." });
   };
 
-  // Don't render the sidebar if loading or not authenticated
   if (isLoading || !isAuthenticated) {
     return null;
   }
@@ -92,30 +78,6 @@ export function MainSidebar() {
       <SidebarContent>
         <SidebarMenu>
           {navItems.map((item) =>
-            // SubItems logic removed as Reports section is removed
-            // item.subItems ? (
-            //   <SidebarGroup key={item.label}>
-            //     <SidebarGroupLabel className="flex items-center gap-2">
-            //       <item.icon className="h-5 w-5" />
-            //       <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-            //     </SidebarGroupLabel>
-            //     {item.subItems.map((subItem) => (
-            //       <SidebarMenuItem key={subItem.href}>
-            //         <SidebarMenuButton
-            //           asChild
-            //           isActive={pathname === subItem.href}
-            //           tooltip={{ children: subItem.label, side: 'right', align: 'center' }}
-            //           className="justify-start"
-            //         >
-            //           <Link href={subItem.href} className="flex items-center gap-3">
-            //             <subItem.icon className="h-4 w-4" />
-            //             <span className="group-data-[collapsible=icon]:hidden">{subItem.label}</span>
-            //           </Link>
-            //         </SidebarMenuButton>
-            //       </SidebarMenuItem>
-            //     ))}
-            //   </SidebarGroup>
-            // ) : (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
@@ -129,9 +91,7 @@ export function MainSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            // )
           )}
-           {/* Conditionally render admin-specific links */}
            {isAdmin && adminNavItems.map((item) => (
              <SidebarMenuItem key={item.href}>
                <SidebarMenuButton
@@ -149,24 +109,21 @@ export function MainSidebar() {
            ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2 flex flex-col gap-2 items-stretch mt-auto"> {/* Added mt-auto */}
-         {/* Logout Button */}
+      <SidebarFooter className="p-2 flex flex-col gap-2 items-stretch mt-auto"> 
          <SidebarMenuButton
             onClick={handleLogout}
             tooltip={{ children: "Logout", side: 'right', align: 'center' }}
             className="justify-start w-full"
-            variant="ghost" // Optional: style as ghost button
+            variant="ghost" 
          >
            <LogOut className="h-5 w-5" />
            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
          </SidebarMenuButton>
 
-        {/* Copyright Info */}
         <div className="group-data-[collapsible=icon]:hidden text-center">
           <span className="text-xs text-sidebar-foreground/70">© {new Date().getFullYear()} Jrk Enterprises.</span>
         </div>
          <div className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center hidden">
-           {/* Optional: Icon-only copyright or element when collapsed */}
          </div>
       </SidebarFooter>
     </Sidebar>
