@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
@@ -115,6 +116,9 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Edit Work Log' : 'Add New Work Log'}</DialogTitle>
+          <DialogDescription>
+            Please fill in the work log details below. All required fields are marked.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
           <div>

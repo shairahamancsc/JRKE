@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
@@ -152,6 +153,9 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Edit Labour' : 'Add New Labour'}</DialogTitle>
+          <DialogDescription>
+            Please fill in the labour&apos;s information below. All required fields are marked.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[75vh] pr-3">
           <div className="flex flex-col items-center space-y-2">
