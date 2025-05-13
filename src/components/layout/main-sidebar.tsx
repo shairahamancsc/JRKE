@@ -8,7 +8,7 @@ import {
   Users,
   IndianRupee,
   ClipboardList,
-  FileText,
+  // FileText, // Removed as Reports section is being removed
   LayoutDashboard,
   Building,
   ClipboardCheck,
@@ -24,14 +24,14 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarGroup,
-  SidebarGroupLabel,
+  // SidebarGroup, // Removed as Reports section is being removed
+  // SidebarGroupLabel, // Removed as Reports section is being removed
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/context/auth-context"; // Import useAuth
-import { Button } from "../ui/button"; // Import Button for logout
+// import { Button } from "../ui/button"; // Button import not used directly here, SidebarMenuButton is used for logout
 import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 const navItems = [
@@ -41,14 +41,14 @@ const navItems = [
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
-  {
-    label: "Reports",
-    icon: FileText,
-    subItems: [
-      { href: "/reports/attendance", label: "Attendance Report", icon: ClipboardList },
-      { href: "/reports/advances-summary", label: "Advance Summary", icon: IndianRupee },
-    ],
-  },
+  // { // Reports section removed
+  //   label: "Reports",
+  //   icon: FileText,
+  //   subItems: [
+  //     { href: "/reports/attendance", label: "Attendance Report", icon: ClipboardList },
+  //     { href: "/reports/advances-summary", label: "Advance Summary", icon: IndianRupee },
+  //   ],
+  // },
 ];
 
 // Add supervisor registration link specifically for Admin
@@ -90,29 +90,30 @@ export function MainSidebar() {
       <SidebarContent>
         <SidebarMenu>
           {navItems.map((item) =>
-            item.subItems ? (
-              <SidebarGroup key={item.label}>
-                <SidebarGroupLabel className="flex items-center gap-2">
-                  <item.icon className="h-5 w-5" />
-                  <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                </SidebarGroupLabel>
-                {item.subItems.map((subItem) => (
-                  <SidebarMenuItem key={subItem.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === subItem.href}
-                      tooltip={{ children: subItem.label, side: 'right', align: 'center' }}
-                      className="justify-start"
-                    >
-                      <Link href={subItem.href} className="flex items-center gap-3">
-                        <subItem.icon className="h-4 w-4" />
-                        <span className="group-data-[collapsible=icon]:hidden">{subItem.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarGroup>
-            ) : (
+            // SubItems logic removed as Reports section is removed
+            // item.subItems ? (
+            //   <SidebarGroup key={item.label}>
+            //     <SidebarGroupLabel className="flex items-center gap-2">
+            //       <item.icon className="h-5 w-5" />
+            //       <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+            //     </SidebarGroupLabel>
+            //     {item.subItems.map((subItem) => (
+            //       <SidebarMenuItem key={subItem.href}>
+            //         <SidebarMenuButton
+            //           asChild
+            //           isActive={pathname === subItem.href}
+            //           tooltip={{ children: subItem.label, side: 'right', align: 'center' }}
+            //           className="justify-start"
+            //         >
+            //           <Link href={subItem.href} className="flex items-center gap-3">
+            //             <subItem.icon className="h-4 w-4" />
+            //             <span className="group-data-[collapsible=icon]:hidden">{subItem.label}</span>
+            //           </Link>
+            //         </SidebarMenuButton>
+            //       </SidebarMenuItem>
+            //     ))}
+            //   </SidebarGroup>
+            // ) : (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
@@ -126,7 +127,7 @@ export function MainSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            )
+            // )
           )}
            {/* Conditionally render admin-specific links */}
            {isAdmin && adminNavItems.map((item) => (
@@ -169,3 +170,4 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
+

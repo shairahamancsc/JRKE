@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, IndianRupee, ClipboardList, PlusCircle, ArrowRight, ClipboardCheck, CalendarIcon, UserCircle2, Briefcase, Landmark, Info } from 'lucide-react';
+import { Users, IndianRupee, ClipboardList, PlusCircle, /* ArrowRight, */ ClipboardCheck, CalendarIcon, UserCircle2, Briefcase, Landmark, Info } from 'lucide-react'; // ArrowRight removed
 import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data';
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
@@ -87,7 +87,7 @@ export default function DashboardPage() {
     { title: "Add New Labour", href: "/labours#add", icon: PlusCircle },
     { title: "Record Advance", href: "/advances#add", icon: PlusCircle },
     { title: "Daily Labour Entries", href: "/daily-entry#add", icon: ClipboardCheck },
-    { title: "Generate Report", href: "/reports", icon: ArrowRight },
+    // { title: "Generate Report", href: "/reports", icon: ArrowRight }, // Removed
   ], []);
 
   return (
@@ -256,3 +256,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
