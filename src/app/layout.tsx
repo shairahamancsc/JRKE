@@ -15,6 +15,7 @@ import { BottomToolbar } from '@/components/layout/bottom-toolbar';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { AuthProvider } from '@/context/auth-context'; // Import AuthProvider
 import { AuthGuard } from '@/components/layout/auth-guard'; // Import AuthGuard
+import FloatingShapesBackground from '@/components/layout/floating-shapes-background'; // Import the new background component
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -86,6 +87,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
+              <FloatingShapesBackground /> {/* Add the floating shapes background here */}
               {/* Conditionally render content after splash screen timeout */}
               <div className={showContent ? 'animate-slide-in-up-main' : 'opacity-0'}>
                   <SidebarProvider defaultOpen>
