@@ -15,6 +15,7 @@ import {
   LogOut, // Added LogOut icon
   UserPlus, // Added UserPlus for registration link
   FileArchive, // Icon for Proprietor Documents
+  Calculator, // Added Calculator icon for GST Calculator
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -41,6 +42,7 @@ const navItems = [
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
+  { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, // New GST Calculator Link
   // { // Reports section removed
   //   label: "Reports",
   //   icon: FileText,
