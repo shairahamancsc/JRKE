@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calculator, RotateCcw, IndianRupee, CheckCircle, XCircle, ShieldCheck } from 'lucide-react';
+import { Calculator, RotateCcw, IndianRupee, CheckCircle, XCircle, ShieldCheck, Building2, MapPin, Loader2 } from 'lucide-react';
+import { getGstinDetails, type GetGstinDetailsOutput } from '@/ai/flows/get-gstin-details-flow';
+import { useToast } from '@/hooks/use-toast';
 
 const gstRates = [
   { label: '0%', value: 0 },
@@ -21,18 +23,14 @@ const gstRates = [
 
 type CalculationBase = 'exclusive' | 'inclusive';
 
-interface GstinValidationResult {
+interface GstinValidationDisplayResult {
   isValid: boolean;
   message: string;
+  isFormatCheck?: boolean; // To distinguish format check messages from API results
 }
 
 // Regex for GSTIN validation (covers format, not checksum algorithm)
-// 1. First 2 chars: State Code (Digits 01-37, some newer codes exist)
-// 2. Next 10 chars: PAN (5 Alphas, 4 Numerics, 1 Alpha)
-// 3. 13th char: Entity number of the same PAN holder in a state (1-9, A-Z excluding I and O)
-// 4. 14th char: Alphabet 'Z' by default
-// 5. 15th char: Checksum digit (Alpha or Numeric)
-const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-HJ-NP-Z]{1}Z[0-9A-Z]{1}$/;
+const GSTIN_REGEX_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-HJ-NP-Z]{1}Z[0-9A-Z]{1}$/;
 
 
 export default function GstCalculatorPage() {
@@ -47,7 +45,11 @@ export default function GstCalculatorPage() {
 
   // State for GSTIN Validator
   const [gstin, setGstin] = useState<string>('');
-  const [gstinValidationResult, setGstinValidationResult] = useState<GstinValidationResult | null>(null);
+  const [gstinValidationDisplay, setGstinValidationDisplay] = useState<GstinValidationDisplayResult | null>(null);
+  const [gstinDetails, setGstinDetails] = useState<GetGstinDetailsOutput | null>(null);
+  const [isFetchingGstinDetails, setIsFetchingGstinDetails] = useState<boolean>(false);
+  const { toast } = useToast();
+
 
   const handleCalculate = () => {
     setCalculatorError(null);
@@ -100,29 +102,67 @@ export default function GstCalculatorPage() {
     ? "Amount (Excluding GST)" 
     : "Amount (Including GST)";
 
-  const handleValidateGstin = () => {
+  const handleValidateGstin = async () => {
     const trimmedGstin = gstin.trim().toUpperCase();
+    setGstinDetails(null); // Clear previous details
+    setGstinValidationDisplay(null); // Clear previous validation message
+
     if (!trimmedGstin) {
-      setGstinValidationResult({ isValid: false, message: "GSTIN cannot be empty." });
+      setGstinValidationDisplay({ isValid: false, message: "GSTIN cannot be empty.", isFormatCheck: true });
       return;
     }
-    if (GSTIN_REGEX.test(trimmedGstin)) {
-      // Further checks could be added here, e.g. state code validity if desired.
-      // For simplicity, regex match is considered valid for format.
-      setGstinValidationResult({ isValid: true, message: "GSTIN format is valid." });
-    } else {
+
+    if (!GSTIN_REGEX_PATTERN.test(trimmedGstin)) {
       let errorMsg = "Invalid GSTIN format.";
       if (trimmedGstin.length !== 15) {
         errorMsg += ` Expected 15 characters, got ${trimmedGstin.length}.`;
       }
-      // Add more specific format error messages if needed
-      setGstinValidationResult({ isValid: false, message: errorMsg });
+      setGstinValidationDisplay({ isValid: false, message: errorMsg, isFormatCheck: true });
+      return;
+    }
+    
+    // Format is valid, proceed to fetch details
+    setGstinValidationDisplay({ isValid: true, message: "GSTIN format is valid. Fetching details...", isFormatCheck: true });
+    setIsFetchingGstinDetails(true);
+
+    try {
+      const response = await getGstinDetails({ gstin: trimmedGstin });
+      if (response.error) {
+        setGstinValidationDisplay({ isValid: false, message: response.error });
+        setGstinDetails(null);
+      } else if (response.companyName && response.companyAddress) {
+        setGstinDetails(response);
+        setGstinValidationDisplay({ isValid: true, message: "GSTIN details retrieved successfully." });
+      } else {
+        // Should not happen with current flow logic but good for robustness
+        setGstinValidationDisplay({ isValid: false, message: "Could not retrieve GSTIN details." });
+        setGstinDetails(null);
+      }
+    } catch (error: any) {
+      console.error('Error fetching GSTIN details:', error);
+      let errorMessage = "Error fetching GSTIN details. Please try again.";
+      if (error.message && error.message.includes("Invalid GSTIN format")) {
+        errorMessage = "Invalid GSTIN format according to API.";
+      } else if (error.message) {
+        errorMessage = error.message; // Use error message from Genkit if available
+      }
+      setGstinValidationDisplay({ isValid: false, message: errorMessage });
+      setGstinDetails(null);
+      toast({
+        variant: "destructive",
+        title: "GSTIN Lookup Failed",
+        description: errorMessage,
+      });
+    } finally {
+      setIsFetchingGstinDetails(false);
     }
   };
 
   const handleResetGstinValidator = () => {
     setGstin('');
-    setGstinValidationResult(null);
+    setGstinValidationDisplay(null);
+    setGstinDetails(null);
+    setIsFetchingGstinDetails(false);
   };
 
   return (
@@ -218,9 +258,9 @@ export default function GstCalculatorPage() {
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
             <ShieldCheck className="h-7 w-7 text-primary" />
-            <CardTitle className="text-2xl font-bold">GSTIN Validator</CardTitle>
+            <CardTitle className="text-2xl font-bold">GSTIN Information</CardTitle>
           </div>
-          <CardDescription>Check the format of a Goods and Services Tax Identification Number.</CardDescription>
+          <CardDescription>Validate GSTIN format and retrieve business details (mock data).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -233,29 +273,65 @@ export default function GstCalculatorPage() {
               placeholder="Enter 15-digit GSTIN"
               maxLength={15}
               className="uppercase"
+              disabled={isFetchingGstinDetails}
             />
           </div>
 
-          {gstinValidationResult && (
-            <div className={`flex items-center p-3 rounded-md text-sm ${
-              gstinValidationResult.isValid 
+          {gstinValidationDisplay && (
+            <div className={`flex items-start p-3 rounded-md text-sm ${
+              gstinValidationDisplay.isValid 
                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border border-green-300 dark:border-green-700' 
                 : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-700'
             }`}>
-              {gstinValidationResult.isValid ? 
-                <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" /> : 
-                <XCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+              {gstinValidationDisplay.isValid ? 
+                <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" /> : 
+                <XCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
               }
-              {gstinValidationResult.message}
+              <span>{gstinValidationDisplay.message}</span>
             </div>
           )}
+
+          {isFetchingGstinDetails && (
+            <div className="flex items-center justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2 text-muted-foreground">Fetching GSTIN details...</span>
+            </div>
+          )}
+
+          {gstinDetails && gstinDetails.companyName && (
+            <div className="space-y-3 pt-4 border-t">
+              <h3 className="text-lg font-semibold text-foreground">Business Details:</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start">
+                  <Building2 className="h-5 w-5 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-foreground">{gstinDetails.companyName}</p>
+                    <p className="text-xs text-muted-foreground">Company Name</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <MapPin className="h-5 w-5 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <div>
+                    <p className="text-foreground">{gstinDetails.companyAddress}</p>
+                    <p className="text-xs text-muted-foreground">Registered Address</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </CardContent>
         <CardFooter className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={handleResetGstinValidator}>
+          <Button variant="outline" onClick={handleResetGstinValidator} disabled={isFetchingGstinDetails}>
             <RotateCcw className="mr-2 h-4 w-4" /> Reset
           </Button>
-          <Button onClick={handleValidateGstin} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <ShieldCheck className="mr-2 h-4 w-4" /> Validate
+          <Button onClick={handleValidateGstin} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isFetchingGstinDetails}>
+            {isFetchingGstinDetails ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="mr-2 h-4 w-4" />
+            )}
+            Get Details
           </Button>
         </CardFooter>
       </Card>
@@ -281,4 +357,3 @@ function ResultDisplay({ label, value, isEmphasized = false }: ResultDisplayProp
     </div>
   );
 }
-
