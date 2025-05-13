@@ -48,6 +48,15 @@ export default function RootLayout({
        }, 500);
        return () => clearTimeout(removeTimer);
     }, 2000);
+
+    // Register Service Worker for PWA capabilities
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => console.log('Service Worker registered with scope:', registration.scope))
+        .catch((error) => console.error('Service Worker registration failed:', error));
+    }
+
     return () => clearTimeout(fadeTimer);
   }, []);
 
@@ -56,6 +65,13 @@ export default function RootLayout({
       <head>
         <title>JRK ENTERPRISES</title>
         <meta name="description" content="Manage labour, track advances, and log daily work." />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#228B22" /> 
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="JRK App" />
+        {/* Add links for apple-touch-icon if you have them */}
+        {/* <link rel="apple-touch-icon" href="/icons/icon-192x192.png"></link> */}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
