@@ -1,5 +1,4 @@
 
-
 export interface Labour {
   id: string;
   name: string;
@@ -21,6 +20,8 @@ export interface Labour {
 
   licenseFile?: File;
   licensePreview?: string; // Base64 or URL for preview
+
+  salaryRate?: number; // New field for daily salary rate
 }
 
 export type PaymentMethod = 'phonepe' | 'account' | 'cash';
@@ -87,4 +88,15 @@ export interface ProprietorDocument {
   fileDataUrl: string; // Store file as data URI for easy download
   uploadedAt: string; // ISO date string
   fileType?: string; // MIME type of the file
+}
+
+// New type for Payroll display
+export interface PayrollRow {
+  labourId: string;
+  labourName: string;
+  salaryRate: number;
+  presentDays: number;
+  grossSalary: number;
+  totalAdvances: number;
+  netPayable: number;
 }

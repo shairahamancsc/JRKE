@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCircle2, FileUp, Eye, Phone, Smartphone } from "lucide-react";
+import { UserCircle2, FileUp, Eye, Phone, Smartphone, IndianRupee } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ const labourSchema = z.object({
   aadhaarFile: z.instanceof(File).optional(),
   panFile: z.instanceof(File).optional(),
   licenseFile: z.instanceof(File).optional(),
+  salaryRate: z.coerce.number().min(0, "Salary rate must be a positive number.").optional(),
 });
 
 type LabourFormData = z.infer<typeof labourSchema>;
@@ -70,6 +71,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       aadhaarFile: undefined,
       panFile: undefined,
       licenseFile: undefined,
+      salaryRate: defaultValues?.salaryRate,
     },
   });
 
@@ -86,6 +88,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
         aadhaarFile: undefined,
         panFile: undefined,
         licenseFile: undefined,
+        salaryRate: defaultValues?.salaryRate,
       });
       setPhotoPreview(defaultValues?.photoPreview);
       setAadhaarPreview(defaultValues?.aadhaarPreview);
@@ -114,7 +117,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
     }
   };
 
-  const handleFormSubmit: SubmitHandler<LabourFormData> = (data) => {
+  const handleFormSubmitInternal: SubmitHandler<LabourFormData> = (data) => {
     onSubmit({
       id: defaultValues?.id || crypto.randomUUID(),
       name: data.name,
@@ -131,6 +134,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       panPreview: data.panFile ? panPreview : defaultValues?.panPreview,
       licenseFile: data.licenseFile,
       licensePreview: data.licenseFile ? licensePreview : defaultValues?.licensePreview,
+      salaryRate: data.salaryRate,
     });
     onClose();
   };
@@ -157,7 +161,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
             Please fill in the labour&apos;s information below. All required fields are marked.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[75vh] pr-3">
+        <form onSubmit={handleSubmit(handleFormSubmitInternal)} className="space-y-4 py-4 overflow-y-auto max-h-[75vh] pr-3">
           <div className="flex flex-col items-center space-y-2">
             <Avatar className="h-24 w-24">
               <AvatarImage src={photoPreview} alt={defaultValues?.name || "Labour photo"} data-ai-hint="person portrait" />
@@ -200,6 +204,19 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
               <Input id="emergencyPhoneNo" {...register('emergencyPhoneNo')} className={errors.emergencyPhoneNo ? 'border-destructive' : ''} placeholder="Enter 10-digit mobile no."/>
               {errors.emergencyPhoneNo && <p className="text-xs text-destructive mt-1">{errors.emergencyPhoneNo.message}</p>}
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="salaryRate" className="flex items-center"><IndianRupee className="mr-1 h-4 w-4 text-muted-foreground" />Daily Salary Rate (₹)</Label>
+            <Input 
+              id="salaryRate" 
+              type="number" 
+              step="0.01" 
+              {...register('salaryRate')} 
+              className={errors.salaryRate ? 'border-destructive' : ''} 
+              placeholder="Enter daily salary rate"
+            />
+            {errors.salaryRate && <p className="text-xs text-destructive mt-1">{errors.salaryRate.message}</p>}
           </div>
 
 

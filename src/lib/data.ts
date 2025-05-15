@@ -1,5 +1,4 @@
 
-
 import type { Labour, AdvancePayment, WorkLog, DailyLogEntry, ProprietorDocument, ProprietorDocumentTypeValue } from './types';
 import { proprietorDocumentTypes } from './types';
 
@@ -17,6 +16,7 @@ export const initialLabours: Labour[] = [
     aadhaarPreview: 'https://picsum.photos/seed/aadhaar1/200/120',
     panPreview: 'https://picsum.photos/seed/pan1/200/120',
     licensePreview: undefined,
+    salaryRate: 700, // Example salary rate
   },
   { 
     id: '2', 
@@ -30,6 +30,7 @@ export const initialLabours: Labour[] = [
     aadhaarPreview: 'https://picsum.photos/seed/aadhaar2/200/120',
     panPreview: undefined,
     licensePreview: 'https://picsum.photos/seed/license2/200/120',
+    salaryRate: 550, // Example salary rate
   },
   { 
     id: '3', 
@@ -43,6 +44,7 @@ export const initialLabours: Labour[] = [
     aadhaarPreview: undefined,
     panPreview: 'https://picsum.photos/seed/pan3/200/120',
     licensePreview: undefined,
+    salaryRate: 800, // Example salary rate
   },
 ];
 

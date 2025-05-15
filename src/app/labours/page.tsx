@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UserCircle2, Loader2, FileText, Phone, Smartphone } from 'lucide-react';
+import { PlusCircle, UserCircle2, Loader2, FileText, Phone, Smartphone, IndianRupee } from 'lucide-react';
 import { DataTable } from '@/components/common/data-table';
 import type { Labour } from '@/lib/types';
 import { initialLabours } from '@/lib/data';
@@ -62,6 +63,7 @@ export default function LaboursPage() {
         aadhaarPreview: aadhaarFile ? labourToSave.aadhaarPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.aadhaarPreview : labourToSave.aadhaarPreview),
         panPreview: panFile ? labourToSave.panPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.panPreview : labourToSave.panPreview),
         licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.licensePreview : labourToSave.licensePreview),
+        salaryRate: labourToSave.salaryRate, // Ensure salaryRate is saved
     };
 
     if (editingLabour) {
@@ -90,6 +92,11 @@ export default function LaboursPage() {
     },
     { accessorKey: 'name' as keyof Labour, header: 'Name' },
     { accessorKey: 'details' as keyof Labour, header: 'Details' },
+    { 
+      accessorKey: 'salaryRate' as keyof Labour, 
+      header: 'Daily Rate (₹)', 
+      cell: (item: Labour) => item.salaryRate ? `₹${item.salaryRate.toFixed(2)}` : '-' 
+    },
     { 
       accessorKey: 'phoneNo' as keyof Labour, 
       header: 'Phone No.', 

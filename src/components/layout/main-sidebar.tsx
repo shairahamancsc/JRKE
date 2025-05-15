@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link";
@@ -14,7 +13,8 @@ import {
   LogOut, 
   UserPlus, 
   FileArchive, 
-  Calculator, 
+  Calculator,
+  Wallet, // New icon for Payroll
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -37,6 +37,7 @@ const navItems = [
   { href: "/advances", label: "Advances", icon: IndianRupee },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
+  { href: "/payroll", label: "Payroll", icon: Wallet }, // New Payroll link
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
   { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, 
 ];
@@ -129,4 +130,3 @@ export function MainSidebar() {
     </Sidebar>
   );
 }
-
