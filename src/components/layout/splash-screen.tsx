@@ -22,6 +22,9 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">JRK ENTERPRISES</h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-2">Loading...</p>
       </div>
+      <p className="absolute bottom-10 text-xs sm:text-sm text-muted-foreground animate-fade-in animation-delay-500">
+        Developed By Shaik Anisul Rahaman
+      </p>
     </div>
   );
 }
