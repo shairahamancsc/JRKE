@@ -92,7 +92,7 @@ export interface ProprietorDocument {
 
 // New type for Payroll display
 export interface PayrollRow {
-  labourId: string;
+  id: string; // Changed from labourId to id
   labourName: string;
   salaryRate: number;
   presentDays: number;
@@ -100,3 +100,4 @@ export interface PayrollRow {
   totalAdvances: number;
   netPayable: number;
 }
+

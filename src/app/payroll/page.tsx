@@ -77,21 +77,21 @@ export default function PayrollPage() {
 
         const grossSalary = presentDays * (labour.salaryRate || 0);
 
-        const totalAdvances = advances.filter(advance =>
+        const totalAdvancesInPeriod = advances.filter(advance =>
           advance.labourId === labour.id &&
           isWithinInterval(parseISO(advance.date), interval)
         ).reduce((sum, advance) => sum + advance.amount, 0);
 
-        const netPayable = grossSalary - totalAdvances;
+        const netPayable = grossSalary - totalAdvancesInPeriod;
         currentTotalNetPayable += netPayable;
 
         return {
-          labourId: labour.id,
+          id: labour.id, // Changed from labourId to id
           labourName: labour.name,
           salaryRate: labour.salaryRate || 0,
           presentDays,
           grossSalary,
-          totalAdvances,
+          totalAdvances: totalAdvancesInPeriod,
           netPayable,
         };
       });
