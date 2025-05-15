@@ -5,9 +5,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/common/data-table';
-import { IndianRupee, CalendarIcon, AlertTriangle, Loader2, Wallet } from 'lucide-react';
+import { IndianRupee, CalendarIcon, AlertTriangle, Loader2, Wallet, Scale } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay, differenceInDays } from 'date-fns';
 import type { Labour, DailyLogEntry, AdvancePayment, PayrollRow } from '@/lib/types';
 import { LABOURS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
@@ -18,6 +18,7 @@ import { initialLabours, initialDailyLogEntries, initialAdvancePayments } from '
 export default function PayrollPage() {
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date } | undefined>({});
   const [payrollData, setPayrollData] = useState<PayrollRow[]>([]);
+  const [totalNetPayable, setTotalNetPayable] = useState<number>(0);
   const [labours, setLabours] = useState<Labour[]>([]);
   const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
   const [advances, setAdvances] = useState<AdvancePayment[]>([]);
@@ -56,14 +57,17 @@ export default function PayrollPage() {
 
     setIsLoading(true);
     setCalculationDone(false);
+    setTotalNetPayable(0); // Reset total
 
     const interval = {
       start: startOfDay(dateRange.from),
       end: endOfDay(dateRange.to),
     };
 
+    let currentTotalNetPayable = 0;
+
     const calculatedData: PayrollRow[] = labours
-      .filter(labour => typeof labour.salaryRate === 'number' && labour.salaryRate > 0) // Process only labours with valid salary rate
+      .filter(labour => typeof labour.salaryRate === 'number' && labour.salaryRate > 0)
       .map(labour => {
         const presentDays = dailyEntries.filter(entry =>
           entry.labourId === labour.id &&
@@ -79,6 +83,7 @@ export default function PayrollPage() {
         ).reduce((sum, advance) => sum + advance.amount, 0);
 
         const netPayable = grossSalary - totalAdvances;
+        currentTotalNetPayable += netPayable;
 
         return {
           labourId: labour.id,
@@ -92,6 +97,7 @@ export default function PayrollPage() {
       });
 
     setPayrollData(calculatedData);
+    setTotalNetPayable(currentTotalNetPayable);
     setIsLoading(false);
     setCalculationDone(true);
 
@@ -227,6 +233,17 @@ export default function PayrollPage() {
               </p>
             )}
           </CardContent>
+           {payrollData.length > 0 && !isLoading && (
+            <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-4 border-t">
+                <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                    <Scale className="h-6 w-6 text-primary" />
+                    <span>Total Net Payable:</span>
+                    <span className={cn(totalNetPayable < 0 ? 'text-destructive' : 'text-green-600 dark:text-green-400')}>
+                        ₹{totalNetPayable.toFixed(2)}
+                    </span>
+                </div>
+            </CardFooter>
+          )}
         </Card>
       )}
     </div>
