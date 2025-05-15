@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { initialLabours, initialDailyLogEntries, initialAdvancePayments } from '@/lib/data'; // For fallback
 
 export default function PayrollPage() {
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date } | undefined>({});
   const [payrollData, setPayrollData] = useState<PayrollRow[]>([]);
   const [labours, setLabours] = useState<Labour[]>([]);
   const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
@@ -45,7 +45,7 @@ export default function PayrollPage() {
   }, [toast]);
 
   const handleCalculatePayroll = () => {
-    if (!dateRange.from || !dateRange.to) {
+    if (!dateRange?.from || !dateRange?.to) {
       toast({ title: "Select Date Range", description: "Please select a valid start and end date.", variant: "destructive" });
       return;
     }
@@ -187,7 +187,7 @@ export default function PayrollPage() {
             </div>
             <Button 
               onClick={handleCalculatePayroll} 
-              disabled={isLoading || !dateRange.from || !dateRange.to}
+              disabled={isLoading || !dateRange?.from || !dateRange?.to}
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <IndianRupee className="mr-2 h-4 w-4" />}
@@ -207,7 +207,7 @@ export default function PayrollPage() {
         <Card className="shadow-xl">
           <CardHeader>
             <CardTitle>Payroll Results</CardTitle>
-            {dateRange.from && dateRange.to && (
+            {dateRange?.from && dateRange?.to && (
                  <CardDescription>
                     Showing payroll for the period: {format(dateRange.from, "PPP")} to {format(dateRange.to, "PPP")}.
                  </CardDescription>
