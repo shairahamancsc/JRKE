@@ -7,15 +7,15 @@ import { PlusCircle, UserCircle2, Loader2, Share2, Briefcase, IndianRupee, Landm
 import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
 // Removed DataTable import as it's no longer directly used for the main view
 // import { DataTable } from '@/components/common/data-table';
-import type { DailyLogEntry, Labour, PaymentMethod } from '@/lib/types';
-import { initialDailyLogEntries, initialLabours } from '@/lib/data';
+import type { DailyLogEntry, Labour, PaymentMethod, AdvancePayment } from '@/lib/types';
+import { initialDailyLogEntries, initialLabours, initialAdvancePayments } from '@/lib/data';
 import { format, parseISO, startOfDay } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { DAILY_ENTRIES_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
+import { DAILY_ENTRIES_STORAGE_KEY, LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
 import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -83,23 +83,15 @@ export default function DailyEntryPage() {
     setLastSubmissionDetails(null);
   };
 
-  // Deletion is harder in grouped view, remove direct delete button for now
-  // Individual entries can still be deleted via the Dashboard search results
-  // const handleDeleteEntry = (entryToDelete: DailyLogEntry) => {
-  //   setDailyEntries(currentEntries => currentEntries.filter(e => e.id !== entryToDelete.id));
-  //   const labourName = getLabourInfo(entryToDelete.labourId).name;
-  //   toast({
-  //     title: "Daily Log Deleted",
-  //     description: `Log for ${labourName} on ${format(parseISO(entryToDelete.date), 'PPP')} has been removed.`,
-  //     variant: "destructive",
-  //   });
-  // };
-
   const handleFormSubmit = (formData: BulkDailyLogEntriesFormData) => {
-    const newEntries: DailyLogEntry[] = formData.entries.map(entryData => {
+    const newDailyEntriesList: DailyLogEntry[] = [];
+    const newAdvancePaymentsList: AdvancePayment[] = [];
+
+    formData.entries.forEach(entryData => {
       const labourInfo = getLabourInfo(entryData.labourId);
       const advanceAmount = entryData.advanceAmount ? Number(entryData.advanceAmount) : undefined;
-      return {
+      
+      const dailyEntry: DailyLogEntry = {
         id: crypto.randomUUID(),
         labourId: entryData.labourId,
         date: formData.date.toISOString(),
@@ -108,20 +100,52 @@ export default function DailyEntryPage() {
         advancePaymentMethod: advanceAmount && advanceAmount > 0 ? entryData.advancePaymentMethod : undefined,
         advanceRemarks: advanceAmount && advanceAmount > 0 ? entryData.advanceRemarks : undefined,
         workLocation: entryData.attendanceStatus === 'present' ? formData.workLocation : undefined,
-        labourName: labourInfo.name, // Store name for easier display
-        labourPhotoPreview: labourInfo.photoPreview, // Store photo for easier display
+        labourName: labourInfo.name,
+        labourPhotoPreview: labourInfo.photoPreview,
       };
+      newDailyEntriesList.push(dailyEntry);
+
+      if (advanceAmount && advanceAmount > 0) {
+        const advancePayment: AdvancePayment = {
+          id: crypto.randomUUID(),
+          labourId: entryData.labourId,
+          date: formData.date.toISOString(),
+          amount: advanceAmount,
+          paymentMethod: entryData.advancePaymentMethod,
+          remarks: entryData.advanceRemarks || `Advance from daily entry on ${format(formData.date, 'PPP')}`,
+        };
+        newAdvancePaymentsList.push(advancePayment);
+      }
     });
 
-    setDailyEntries(currentEntries => [...newEntries, ...currentEntries].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime() || (a.labourName || "").localeCompare(b.labourName || "")));
+    // Update daily entries
+    setDailyEntries(currentEntries => [...newDailyEntriesList, ...currentEntries].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime() || (a.labourName || "").localeCompare(b.labourName || "")));
+
+    // Update advances if any were made
+    if (newAdvancePaymentsList.length > 0) {
+      try {
+        const storedAdvances = localStorage.getItem(ADVANCES_STORAGE_KEY);
+        const currentAdvances: AdvancePayment[] = storedAdvances ? JSON.parse(storedAdvances) : initialAdvancePayments;
+        const updatedAdvances = [...newAdvancePaymentsList, ...currentAdvances].sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+        localStorage.setItem(ADVANCES_STORAGE_KEY, JSON.stringify(updatedAdvances));
+      } catch (error) {
+        console.error("Error updating advances in localStorage from daily entry:", error);
+        toast({
+          title: "Advance Saving Error",
+          description: "Could not save new advances to the main list. They are recorded with the daily log.",
+          variant: "destructive"
+        });
+      }
+    }
+
     toast({
       title: "Daily Logs Added",
-      description: `${newEntries.length} log(s) for ${format(formData.date, 'PPP')} have been recorded.`
+      description: `${newDailyEntriesList.length} log(s) for ${format(formData.date, 'PPP')} have been recorded. ${newAdvancePaymentsList.length > 0 ? `${newAdvancePaymentsList.length} advance(s) also recorded.` : ''}`
     });
     setLastSubmissionDetails({
       date: formData.date,
       workLocation: formData.workLocation,
-      entries: newEntries,
+      entries: newDailyEntriesList, // Use the created daily entries for the WhatsApp share
     });
     setIsFormOpen(false);
   };
@@ -218,14 +242,6 @@ export default function DailyEntryPage() {
         <p className="text-muted-foreground mb-4">Please add labours in the 'Labours' section to make daily entries.</p>
       )}
 
-      {/* Removed DataTable */}
-      {/* <DataTable
-        columns={columns}
-        data={dailyEntries}
-        onDelete={handleDeleteEntry}
-      /> */}
-
-      {/* New Grouped View */}
       <div className="space-y-6">
         {sortedDates.length === 0 && !isFormOpen && (
           <Card className="shadow-sm">
@@ -383,5 +399,3 @@ export default function DailyEntryPage() {
     </div>
   );
 }
-
-    
