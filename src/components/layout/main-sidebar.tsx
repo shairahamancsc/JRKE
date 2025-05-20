@@ -14,7 +14,8 @@ import {
   UserPlus, 
   FileArchive, 
   Calculator,
-  Wallet, // New icon for Payroll
+  Wallet, 
+  Printer, // New icon for Self Declaration
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -37,9 +38,10 @@ const navItems = [
   { href: "/advances", label: "Advances", icon: IndianRupee },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
-  { href: "/payroll", label: "Payroll", icon: Wallet }, // New Payroll link
+  { href: "/payroll", label: "Payroll", icon: Wallet }, 
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
   { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, 
+  { href: "/self-declaration-form", label: "Self Declaration", icon: Printer }, // New Link
 ];
 
 const adminNavItems = [
