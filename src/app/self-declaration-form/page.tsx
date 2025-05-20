@@ -33,7 +33,6 @@ const declarationFormSchema = z.object({
   deponentTitle: z.string().min(1, "Title is required"),
   deponentName: z.string().min(1, "Applicant name is required"),
   relation: z.string().min(1, "Relation is required"),
-  relativeTitle: z.string().min(1, "Relative's title is required"),
   relativeName: z.string().min(1, "Relative's name is required"),
   contactNo: z.string().min(10, "Contact number must be 10 digits").max(10, "Contact number must be 10 digits").regex(/^\d{10}$/, "Invalid contact number"),
 });
@@ -49,7 +48,7 @@ export default function SelfDeclarationFormPage() {
     defaultValues: {
       deponentTitle: 'Mr.',
       relation: 'S/o',
-      relativeTitle: 'Mr.',
+      relativeName: '',
     }
   });
 
@@ -67,24 +66,19 @@ export default function SelfDeclarationFormPage() {
       return;
     }
     
-    // Temporarily make the template visible for html2canvas if it's hidden
-    // This can be improved by rendering off-screen
     const originalDisplay = pdfTemplateElement.style.display;
     pdfTemplateElement.style.display = 'block';
-    // pdfTemplateElement.style.position = 'absolute';
-    // pdfTemplateElement.style.left = '-9999px'; // Position off-screen
-    // pdfTemplateElement.style.top = '-9999px';
 
 
     try {
       const canvas = await html2canvas(pdfTemplateElement, {
-        scale: 2, // Increase scale for better resolution
+        scale: 2, 
         useCORS: true,
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'pt', // A4 size in points: 595.28 x 841.89
+        unit: 'pt', 
         format: 'a4',
       });
 
@@ -101,7 +95,7 @@ export default function SelfDeclarationFormPage() {
       const yOffset = (pdfHeight - scaledHeight) / 2;
 
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
-      pdf.output('dataurlnewwindow'); // Open PDF in new tab
+      pdf.output('dataurlnewwindow'); 
 
       toast({
         title: 'PDF Generated',
@@ -116,11 +110,7 @@ export default function SelfDeclarationFormPage() {
         variant: 'destructive',
       });
     } finally {
-      // Restore original display
        pdfTemplateElement.style.display = originalDisplay;
-      // pdfTemplateElement.style.position = 'static';
-      // pdfTemplateElement.style.left = 'auto';
-      // pdfTemplateElement.style.top = 'auto';
       setIsLoading(false);
     }
   };
@@ -129,7 +119,7 @@ export default function SelfDeclarationFormPage() {
     generatePdf(data);
   };
 
-  const currentData = watch(); // Get current form values for template preview
+  const currentData = watch(); 
 
   return (
     <div className="container mx-auto py-8">
@@ -169,7 +159,7 @@ export default function SelfDeclarationFormPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-1">
                 <Label htmlFor="relation">Relation</Label>
                 <Controller
@@ -187,24 +177,6 @@ export default function SelfDeclarationFormPage() {
                   )}
                 />
                 {errors.relation && <p className="text-xs text-destructive mt-1">{errors.relation.message}</p>}
-              </div>
-              <div className="md:col-span-1">
-                <Label htmlFor="relativeTitle">Relative's Title</Label>
-                <Controller
-                  name="relativeTitle"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger id="relativeTitle" className={errors.relativeTitle ? 'border-destructive' : ''}>
-                        <SelectValue placeholder="Select title" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {titleOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.relativeTitle && <p className="text-xs text-destructive mt-1">{errors.relativeTitle.message}</p>}
               </div>
               <div className="md:col-span-1">
                 <Label htmlFor="relativeName">Relative's Name</Label>
@@ -230,17 +202,17 @@ export default function SelfDeclarationFormPage() {
 
       {/* Hidden Template for PDF Generation */}
       <div id="pdf-template" style={{ 
-          display: 'none', // Hidden by default
-          width: '210mm', // A4 width
-          minHeight: '297mm', // A4 height
+          display: 'none', 
+          width: '210mm', 
+          minHeight: '297mm', 
           padding: '20mm', 
           fontFamily: 'Arial, sans-serif', 
           fontSize: '11pt', 
           lineHeight: '1.5',
-          color: '#000', // Ensure text is black for canvas
-          backgroundColor: '#fff' // Ensure background is white
+          color: '#000', 
+          backgroundColor: '#fff' 
         }}
-        className="bg-white text-black" // Tailwind classes for explicit colors
+        className="bg-white text-black" 
       >
         <div style={{ textAlign: 'center', marginBottom: '20px', fontWeight: 'bold', fontSize: '14pt' }}>
           SELF DECLARATION
@@ -250,7 +222,7 @@ export default function SelfDeclarationFormPage() {
         </div>
 
         <p style={{ marginBottom: '15px', textIndent: '0px' }}>
-          I, {currentData.deponentTitle || '[Title]'} {currentData.deponentName || '[Applicant Name]'} {currentData.relation || '[Relation]'} {currentData.relativeTitle || '[Relative Title]'}. {currentData.relativeName || '[Relative Name]'} have applied for a single-phase new electricity connection from the authority of TPSODL.
+          I, {currentData.deponentTitle || '[Title]'} {currentData.deponentName || '[Applicant Name]'} {currentData.relation || '[Relation]'}. {currentData.relativeName || '[Relative Name]'} have applied for a single-phase new electricity connection from the authority of TPSODL.
         </p>
 
         <ol style={{ listStyleType: 'decimal', paddingLeft: '20px', marginBottom: '15px' }}>
@@ -291,3 +263,4 @@ export default function SelfDeclarationFormPage() {
     </div>
   );
 }
+
