@@ -44,7 +44,7 @@ export default function SelfDeclarationFormPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const { control, register, handleSubmit, formState: { errors } } = useForm<DeclarationFormData>({
+  const { control, register, handleSubmit, watch, formState: { errors } } = useForm<DeclarationFormData>({
     resolver: zodResolver(declarationFormSchema),
     defaultValues: {
       deponentTitle: 'Mr.',
