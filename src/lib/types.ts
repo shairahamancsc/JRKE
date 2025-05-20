@@ -90,9 +90,9 @@ export interface ProprietorDocument {
   fileType?: string; // MIME type of the file
 }
 
-// New type for Payroll display
-export interface PayrollRow {
-  id: string; // Changed from labourId to id
+// Renamed PayrollRow to PaymentRow
+export interface PaymentRow {
+  id: string; 
   labourName: string;
   salaryRate: number;
   presentDays: number;
