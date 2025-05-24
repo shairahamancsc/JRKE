@@ -1,12 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { DataTable } from '@/components/common/data-table';
 import type { AdvancePayment, Labour, PaymentMethod } from '@/lib/types';
-import { initialAdvancePayments, initialLabours } from '@/lib/data';
+import { initialAdvancePayments /*, initialLabours */ } from '@/lib/data'; // Removed initialLabours to prevent overwrite
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { ADVANCES_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
@@ -32,24 +32,21 @@ export default function AdvancesPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load labours from localStorage (read-only for this page)
     try {
       const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
-        // If no labours data, it might not be initialized yet by the main Labours page.
-        // Default to an empty array here and do NOT write initialLabours.
         setLabours([]);
-        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for advances page. Defaulting to empty array.`);
+        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for advances page. Labours list will be empty.`);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for advances page:", error);
-      setLabours([]); // Default to empty on error
+      setLabours([]);
        toast({
         variant: "destructive",
         title: "Error Loading Labour Data",
-        description: "Could not load labour information for advances. Please check the Labours page."
+        description: "Could not load labour information for advances. Please ensure Labours page has data."
       });
     }
 
@@ -60,26 +57,30 @@ export default function AdvancesPage() {
   }, [toast]);
 
 
-  const handleAddAdvance = () => {
+  const getLabourName = useCallback((labourId: string) => {
+    return labours.find(l => l.id === labourId)?.name || 'Unknown Labour';
+  }, [labours]);
+
+  const handleAddAdvance = useCallback(() => {
     setEditingAdvance(undefined);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleEditAdvance = (advance: AdvancePayment) => {
+  const handleEditAdvance = useCallback((advance: AdvancePayment) => {
     setEditingAdvance(advance);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleDeleteAdvance = (advanceToDelete: AdvancePayment) => {
+  const handleDeleteAdvance = useCallback((advanceToDelete: AdvancePayment) => {
     setAdvances(prevAdvances => prevAdvances.filter(a => a.id !== advanceToDelete.id));
     toast({
       title: "Advance Deleted",
       description: `Advance of ${advanceToDelete.amount} for ${getLabourName(advanceToDelete.labourId)} has been removed.`,
       variant: "destructive",
     });
-  };
+  }, [setAdvances, toast, getLabourName]);
 
-  const handleFormSubmit = (advance: AdvancePayment) => {
+  const handleFormSubmit = useCallback((advance: AdvancePayment) => {
     if (editingAdvance) {
       setAdvances(prevAdvances => prevAdvances.map(a => a.id === advance.id ? advance : a));
       toast({ title: "Advance Updated", description: `Advance for ${getLabourName(advance.labourId)} has been updated.` });
@@ -89,11 +90,8 @@ export default function AdvancesPage() {
     }
     setIsFormOpen(false);
     setEditingAdvance(undefined);
-  };
+  }, [editingAdvance, setAdvances, toast, getLabourName, setIsFormOpen, setEditingAdvance]);
   
-  const getLabourName = (labourId: string) => {
-    return labours.find(l => l.id === labourId)?.name || 'Unknown Labour';
-  };
 
   const columns = React.useMemo(() => [
     { 
@@ -124,8 +122,7 @@ export default function AdvancesPage() {
       header: 'Remarks',
       cell: (item: AdvancePayment) => item.remarks || '-'
     },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [labours]);
+  ], [getLabourName]);
 
   return (
     <div className="container mx-auto py-8">

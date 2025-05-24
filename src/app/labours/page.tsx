@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2, Loader2, FileText, Phone, Smartphone, IndianRupee } from 'lucide-react';
 import { DataTable } from '@/components/common/data-table';
@@ -32,30 +32,26 @@ export default function LaboursPage() {
   }, []);
 
 
-  const handleAddLabour = () => {
+  const handleAddLabour = useCallback(() => {
     setEditingLabour(undefined);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleEditLabour = (labour: Labour) => {
+  const handleEditLabour = useCallback((labour: Labour) => {
     setEditingLabour(labour);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleDeleteLabour = (labourToDelete: Labour) => {
+  const handleDeleteLabour = useCallback((labourToDelete: Labour) => {
     setLabours(prevLabours => prevLabours.filter(l => l.id !== labourToDelete.id));
     toast({
       title: "Labour Deleted",
       description: `${labourToDelete.name} has been removed.`,
       variant: "destructive",
     });
-  };
+  }, [setLabours, toast]);
 
-  const handleFormSubmit = (labourData: Labour) => {
-    saveLabour(labourData);
-  };
-
-  const saveLabour = (labourToSave: Labour) => {
+  const saveLabour = useCallback((labourToSave: Labour) => {
     const { photoFile, aadhaarFile, panFile, licenseFile, ...restOfLabour } = labourToSave;
     const finalLabourData: Labour = {
         ...restOfLabour,
@@ -63,7 +59,7 @@ export default function LaboursPage() {
         aadhaarPreview: aadhaarFile ? labourToSave.aadhaarPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.aadhaarPreview : labourToSave.aadhaarPreview),
         panPreview: panFile ? labourToSave.panPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.panPreview : labourToSave.panPreview),
         licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.licensePreview : labourToSave.licensePreview),
-        salaryRate: labourToSave.salaryRate, // Ensure salaryRate is saved
+        salaryRate: labourToSave.salaryRate,
     };
 
     if (editingLabour) {
@@ -75,7 +71,13 @@ export default function LaboursPage() {
     }
     setIsFormOpen(false);
     setEditingLabour(undefined);
-  };
+  }, [editingLabour, setLabours, toast, setIsFormOpen, setEditingLabour]);
+
+
+  const handleFormSubmit = useCallback((labourData: Labour) => {
+    saveLabour(labourData);
+  }, [saveLabour]);
+
 
   const columns = React.useMemo(() => [
     { 
@@ -83,7 +85,7 @@ export default function LaboursPage() {
       header: 'Photo',
       cell: (item: Labour) => (
         <Avatar className="h-10 w-10">
-          <AvatarImage src={item.photoPreview} alt={item.name} data-ai-hint="person" />
+          <AvatarImage src={item.photoPreview} alt={item.name} data-ai-hint="person portrait" />
           <AvatarFallback>
             <UserCircle2 className="h-6 w-6 text-muted-foreground" />
           </AvatarFallback>

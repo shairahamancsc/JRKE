@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -83,7 +83,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
     }
   }, [defaultValues, reset, isOpen]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setValue('pictureFile', file);
@@ -96,9 +96,9 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
         setValue('pictureFile', undefined);
         setPicturePreview(undefined);
     }
-  };
+  }, [setValue]);
 
-  const handleFormSubmit: SubmitHandler<WorkLogFormData> = (data) => {
+  const handleFormSubmitInternal: SubmitHandler<WorkLogFormData> = useCallback((data) => {
     onSubmit({
       id: defaultValues?.id || crypto.randomUUID(),
       labourId: data.labourId,
@@ -109,7 +109,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
       picturePreview: data.pictureFile ? picturePreview : defaultValues?.picturePreview, // Keep existing preview if no new file
     });
     onClose();
-  };
+  }, [defaultValues, onSubmit, onClose, picturePreview]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -120,7 +120,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
             Please fill in the work log details below. All required fields are marked.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
+        <form onSubmit={handleSubmit(handleFormSubmitInternal)} className="space-y-4 py-4 overflow-y-auto max-h-[70vh] pr-2">
           <div>
             <Label htmlFor="labourId">Labour</Label>
             <Controller
@@ -145,7 +145,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
           </div>
 
           <div>
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date-worklog">Date</Label> {/* Changed ID to be unique */}
              <Controller
               name="date"
               control={control}
@@ -153,7 +153,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      id="date" // Added id to match Label htmlFor
+                      id="date-worklog" 
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
@@ -196,7 +196,7 @@ export function WorkLogForm({ isOpen, onClose, onSubmit, labours, defaultValues 
             <Input id="pictureFile" type="file" accept="image/*" onChange={handleFileChange} className="file:text-primary file:font-semibold"/>
             {picturePreview && (
               <div className="mt-2">
-                <Image src={picturePreview} alt="Picture preview" width={100} height={100} className="rounded-md object-cover" data-ai-hint="construction site" />
+                <Image src={picturePreview} alt="Picture preview" width={100} height={100} className="rounded-md object-cover" data-ai-hint="work site" />
               </div>
             )}
             {errors.pictureFile && <p className="text-xs text-destructive mt-1">{errors.pictureFile.message}</p>}

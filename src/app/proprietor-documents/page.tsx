@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect, lazy, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Download, Trash2, Eye, FileText, Loader2, AlertTriangle } from 'lucide-react';
 import { DataTable } from '@/components/common/data-table';
-import type { ProprietorDocument } from '@/lib/types';
+import type { ProprietorDocument, ProprietorDocumentTypeValue } from '@/lib/types';
 import { initialProprietorDocuments, proprietorDocumentTypesList } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
@@ -28,52 +28,40 @@ const ProprietorDocumentForm = lazy(() =>
   import('@/components/proprietor-documents/proprietor-document-form').then(module => ({ default: module.ProprietorDocumentForm }))
 );
 
+// Utility function, can be outside the component
+const getDocumentTypeLabelUtil = (value: string) => {
+  return proprietorDocumentTypesList.find(dt => dt.value === value)?.label || value;
+};
+
+
 export default function ProprietorDocumentsPage() {
   const [documents, setDocuments] = useDebouncedLocalStorage<ProprietorDocument[]>(
     PROPRIETOR_DOCUMENTS_STORAGE_KEY,
     initialProprietorDocuments
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
-  // const [editingDocument, setEditingDocument] = useState<ProprietorDocument | undefined>(undefined); // For future editing
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Pre-load logic if any, e.g., check localStorage directly on mount if not using debounced hook initially
-    // For now, useDebouncedLocalStorage handles initial load.
+  const handleAddDocument = useCallback(() => {
+    setIsFormOpen(true);
   }, []);
 
-  const handleAddDocument = () => {
-    // setEditingDocument(undefined);
-    setIsFormOpen(true);
-  };
-
-  // const handleEditDocument = (doc: ProprietorDocument) => {
-  //   setEditingDocument(doc);
-  //   setIsFormOpen(true);
-  // };
-
-  const handleDeleteDocument = (docToDelete: ProprietorDocument) => {
+  const handleDeleteDocument = useCallback((docToDelete: ProprietorDocument) => {
     setDocuments(prevDocs => prevDocs.filter(d => d.id !== docToDelete.id));
     toast({
       title: "Document Deleted",
       description: `${docToDelete.documentName} (${docToDelete.fileName}) has been removed.`,
       variant: "destructive",
     });
-  };
+  }, [setDocuments, toast]);
 
-  const handleFormSubmit = (docData: ProprietorDocument) => {
-    // if (editingDocument) {
-    //   setDocuments(prevDocs => prevDocs.map(d => d.id === docData.id ? docData : d));
-    //   toast({ title: "Document Updated", description: `${docData.documentName} has been updated.` });
-    // } else {
+  const handleFormSubmit = useCallback((docData: ProprietorDocument) => {
       setDocuments(prevDocs => [docData, ...prevDocs].sort((a, b) => parseISO(b.uploadedAt).getTime() - parseISO(a.uploadedAt).getTime()));
       toast({ title: "Document Uploaded", description: `${docData.documentName} (${docData.fileName}) has been uploaded.` });
-    // }
     setIsFormOpen(false);
-    // setEditingDocument(undefined);
-  };
+  }, [setDocuments, toast]);
 
-  const handleDownload = (fileDataUrl: string, fileName: string) => {
+  const handleDownload = useCallback((fileDataUrl: string, fileName: string) => {
     try {
       const link = document.createElement('a');
       link.href = fileDataUrl;
@@ -86,15 +74,11 @@ export default function ProprietorDocumentsPage() {
       console.error("Error downloading file:", error);
       toast({ title: "Download Error", description: `Could not start download for ${fileName}.`, variant: "destructive" });
     }
-  };
-
-  const getDocumentTypeLabel = (value: string) => {
-    return proprietorDocumentTypesList.find(dt => dt.value === value)?.label || value;
-  };
+  }, [toast]);
 
   const columns = useMemo(() => [
     { 
-      accessorKey: (item: ProprietorDocument) => getDocumentTypeLabel(item.documentType), 
+      accessorKey: (item: ProprietorDocument) => getDocumentTypeLabelUtil(item.documentType), 
       header: 'Document Type' 
     },
     { 
@@ -151,7 +135,7 @@ export default function ProprietorDocumentsPage() {
         </div>
       ),
     },
-  ], [documents]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [handleDownload, handleDeleteDocument]);
 
   return (
     <div className="container mx-auto py-8">
@@ -192,8 +176,6 @@ export default function ProprietorDocumentsPage() {
         <DataTable
           columns={columns}
           data={documents}
-          // onEdit={handleEditDocument} // Edit functionality can be added later
-          // onDelete={handleDeleteDocument} // Delete is handled via AlertDialog in actions column
         />
       )}
 
@@ -211,10 +193,8 @@ export default function ProprietorDocumentsPage() {
             isOpen={isFormOpen}
             onClose={() => {
               setIsFormOpen(false);
-              // setEditingDocument(undefined);
             }}
             onSubmit={handleFormSubmit}
-            // defaultValues={editingDocument} // For future editing
           />
         </Suspense>
       )}

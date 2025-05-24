@@ -1,13 +1,13 @@
 
 "use client";
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { DataTable } from '@/components/common/data-table';
 import type { WorkLog, Labour } from '@/lib/types';
-import { initialWorkLogs, initialLabours } from '@/lib/data';
+import { initialWorkLogs /*, initialLabours */ } from '@/lib/data'; // Removed initialLabours to prevent overwrite
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { WORK_LOGS_STORAGE_KEY, LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
@@ -26,24 +26,21 @@ export default function WorkLogsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load labours from LocalStorage (read-only for this page)
     try {
       const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
-        // If no labours data, it might not be initialized yet by the main Labours page.
-        // Default to an empty array here and do NOT write initialLabours.
         setLabours([]);
-        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for work logs page. Defaulting to empty array.`);
+        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for work logs page. Labours list will be empty.`);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for work logs page:", error);
-      setLabours([]); // Default to empty on error
+      setLabours([]); 
       toast({
         variant: "destructive",
         title: "Error Loading Labour Data",
-        description: "Could not load labour information for work logs. Please check the Labours page."
+        description: "Could not load labour information for work logs. Please ensure Labours page has data."
       });
     }
 
@@ -54,37 +51,30 @@ export default function WorkLogsPage() {
   }, [toast]);
 
 
-  const handleAddWorkLog = () => {
+  const getLabourName = useCallback((labourId: string) => {
+    return labours.find(l => l.id === labourId)?.name || 'Unknown Labour';
+  }, [labours]);
+
+  const handleAddWorkLog = useCallback(() => {
     setEditingWorkLog(undefined);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleEditWorkLog = (workLog: WorkLog) => {
+  const handleEditWorkLog = useCallback((workLog: WorkLog) => {
     setEditingWorkLog(workLog);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleDeleteWorkLog = (workLogToDelete: WorkLog) => {
+  const handleDeleteWorkLog = useCallback((workLogToDelete: WorkLog) => {
     setWorkLogs(prevWorkLogs => prevWorkLogs.filter(wl => wl.id !== workLogToDelete.id));
     toast({
       title: "Work Log Deleted",
       description: `Work log for ${getLabourName(workLogToDelete.labourId)} on ${format(parseISO(workLogToDelete.date), 'PPP')} has been removed.`,
       variant: "destructive",
     });
-  };
-
-  const handleFormSubmit = async (workLogData: WorkLog) => { 
-    let finalWorkLog = { ...workLogData }; 
-
-    if (workLogData.pictureFile) { 
-      // Preview is set by form
-    } else if (editingWorkLog && !workLogData.pictureFile) {
-      finalWorkLog.picturePreview = editingWorkLog.picturePreview;
-    }
-    saveWorkLog(finalWorkLog);
-  };
+  }, [setWorkLogs, toast, getLabourName]);
   
-  const saveWorkLog = (workLogToSave: WorkLog) => {
+  const saveWorkLog = useCallback((workLogToSave: WorkLog) => {
     const { pictureFile, ...restOfWorkLog } = workLogToSave;
     const serializableWorkLog = { ...restOfWorkLog };
 
@@ -97,12 +87,19 @@ export default function WorkLogsPage() {
     }
     setIsFormOpen(false);
     setEditingWorkLog(undefined);
-  }
-  
-  const getLabourName = (labourId: string) => {
-    return labours.find(l => l.id === labourId)?.name || 'Unknown Labour';
-  };
+  }, [editingWorkLog, getLabourName, toast, setWorkLogs, setIsFormOpen, setEditingWorkLog]);
 
+  const handleFormSubmit = useCallback(async (workLogData: WorkLog) => { 
+    let finalWorkLog = { ...workLogData }; 
+
+    if (workLogData.pictureFile) { 
+      // Preview is set by form
+    } else if (editingWorkLog && !workLogData.pictureFile) {
+      finalWorkLog.picturePreview = editingWorkLog.picturePreview;
+    }
+    saveWorkLog(finalWorkLog);
+  }, [editingWorkLog, saveWorkLog]);
+  
   const columns = React.useMemo(() => [
     { 
       accessorKey: (item: WorkLog) => getLabourName(item.labourId), 
@@ -124,8 +121,7 @@ export default function WorkLogsPage() {
         <span className="text-xs text-muted-foreground">No image</span>
       )
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [labours]);
+  ], [getLabourName]);
 
   return (
     <div className="container mx-auto py-8">

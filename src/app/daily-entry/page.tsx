@@ -1,14 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2, Loader2, Share2, Briefcase, IndianRupee, Landmark, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
-// Removed DataTable import as it's no longer directly used for the main view
-// import { DataTable } from '@/components/common/data-table';
 import type { DailyLogEntry, Labour, PaymentMethod, AdvancePayment } from '@/lib/types';
-import { initialDailyLogEntries, initialLabours, initialAdvancePayments } from '@/lib/data';
+import { initialDailyLogEntries /*, initialLabours */, initialAdvancePayments } from '@/lib/data'; // Removed initialLabours
 import { format, parseISO, startOfDay } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,18 +53,16 @@ export default function DailyEntryPage() {
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
-        // If no labours data, it might not be initialized yet by the main Labours page.
-        // Default to an empty array here and do NOT write initialLabours.
         setLabours([]);
-        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for daily entry page. Defaulting to empty array.`);
+        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for daily entry page. Labours list will be empty.`);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for daily entry page:", error);
-      setLabours([]); // Default to empty on error
+      setLabours([]); 
       toast({
         variant: "destructive",
         title: "Error Loading Labour Data",
-        description: "Could not load labour information for daily entries. Please check the Labours page."
+        description: "Could not load labour information for daily entries. Please ensure Labours page has data."
       });
     }
 
@@ -76,7 +72,15 @@ export default function DailyEntryPage() {
     }
   }, [toast]);
 
-  const handleAddEntry = () => {
+  const getLabourInfo = useCallback((labourId: string) => {
+    const labour = labours.find(l => l.id === labourId);
+    return {
+      name: labour?.name || 'Unknown Labour',
+      photoPreview: labour?.photoPreview
+    };
+  }, [labours]);
+
+  const handleAddEntry = useCallback(() => {
     if (labours.length === 0) {
       toast({
         title: "No Labours Found",
@@ -87,9 +91,9 @@ export default function DailyEntryPage() {
     }
     setIsFormOpen(true);
     setLastSubmissionDetails(null);
-  };
+  }, [labours, toast]);
 
-  const handleFormSubmit = (formData: BulkDailyLogEntriesFormData) => {
+  const handleFormSubmit = useCallback((formData: BulkDailyLogEntriesFormData) => {
     const newDailyEntriesList: DailyLogEntry[] = [];
     const newAdvancePaymentsList: AdvancePayment[] = [];
 
@@ -124,10 +128,8 @@ export default function DailyEntryPage() {
       }
     });
 
-    // Update daily entries
     setDailyEntries(currentEntries => [...newDailyEntriesList, ...currentEntries].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime() || (a.labourName || "").localeCompare(b.labourName || "")));
 
-    // Update advances if any were made
     if (newAdvancePaymentsList.length > 0) {
       try {
         const storedAdvances = localStorage.getItem(ADVANCES_STORAGE_KEY);
@@ -151,20 +153,13 @@ export default function DailyEntryPage() {
     setLastSubmissionDetails({
       date: formData.date,
       workLocation: formData.workLocation,
-      entries: newDailyEntriesList, // Use the created daily entries for the WhatsApp share
+      entries: newDailyEntriesList,
     });
     setIsFormOpen(false);
-  };
+  }, [getLabourInfo, setDailyEntries, toast, setLastSubmissionDetails, setIsFormOpen]);
 
-  const getLabourInfo = (labourId: string) => {
-    const labour = labours.find(l => l.id === labourId);
-    return {
-      name: labour?.name || 'Unknown Labour',
-      photoPreview: labour?.photoPreview
-    };
-  };
 
-  const handleShareToWhatsApp = () => {
+  const handleShareToWhatsApp = useCallback(() => {
     if (!lastSubmissionDetails) return;
 
     const { date, workLocation, entries } = lastSubmissionDetails;
@@ -189,7 +184,7 @@ export default function DailyEntryPage() {
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message.trim())}`;
     window.open(whatsappUrl, '_blank');
-  };
+  }, [lastSubmissionDetails]);
 
   const groupedEntries = useMemo(() => {
     return dailyEntries.reduce((acc: GroupedEntries, entry) => {
@@ -209,7 +204,7 @@ export default function DailyEntryPage() {
     return Object.keys(groupedEntries).sort((a, b) => parseISO(b).getTime() - parseISO(a).getTime());
   }, [groupedEntries]);
 
-  const toggleDateExpansion = (dateStr: string) => {
+  const toggleDateExpansion = useCallback((dateStr: string) => {
     setExpandedDates(prev => {
       const newSet = new Set(prev);
       if (newSet.has(dateStr)) {
@@ -219,7 +214,7 @@ export default function DailyEntryPage() {
       }
       return newSet;
     });
-  };
+  }, []);
 
   return (
     <div className="container mx-auto py-8">
@@ -283,7 +278,6 @@ export default function DailyEntryPage() {
                 <CardContent className="p-4 pt-0 border-t">
                   <ScrollArea className="max-h-[60vh]">
                      <div className="space-y-4 pt-4 pr-3">
-                       {/* Work Locations */}
                         {workLocations.size > 0 && (
                           <div className="mb-4">
                             <h4 className="font-semibold text-md mb-2 flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary" />Work Location(s)</h4>
@@ -292,7 +286,6 @@ export default function DailyEntryPage() {
                             </ul>
                           </div>
                         )}
-                       {/* Attendance Details */}
                         <Accordion type="multiple" defaultValue={['present', 'absent', 'advances']}>
                           {presentEntries.length > 0 && (
                              <AccordionItem value="present">
@@ -384,7 +377,6 @@ export default function DailyEntryPage() {
         })}
       </div>
 
-      {/* Form Dialog */}
       {isFormOpen && (
         <Suspense fallback={
           <div className="fixed inset-0 bg-background/30 backdrop-blur-sm flex items-center justify-center z-[60]">

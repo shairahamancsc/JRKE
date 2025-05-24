@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -9,15 +9,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { DataTable } from '@/components/common/data-table';
 import { IndianRupee, CalendarIcon, AlertTriangle, Loader2, Wallet, Scale } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay, differenceInDays } from 'date-fns';
-import type { Labour, DailyLogEntry, AdvancePayment, PaymentRow } from '@/lib/types'; // Updated to PaymentRow
+import type { Labour, DailyLogEntry, AdvancePayment, PaymentRow } from '@/lib/types';
 import { LABOURS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { initialLabours, initialDailyLogEntries, initialAdvancePayments } from '@/lib/data'; // For fallback
+import { initialLabours, initialDailyLogEntries, initialAdvancePayments } from '@/lib/data'; 
 
-export default function PaymentPage() { // Renamed component
+export default function PaymentPage() {
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date } | undefined>({});
-  const [paymentData, setPaymentData] = useState<PaymentRow[]>([]); // Renamed state
+  const [paymentData, setPaymentData] = useState<PaymentRow[]>([]);
   const [totalNetPayable, setTotalNetPayable] = useState<number>(0);
   const [labours, setLabours] = useState<Labour[]>([]);
   const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
@@ -45,7 +45,7 @@ export default function PaymentPage() { // Renamed component
     }
   }, [toast]);
 
-  const handleCalculatePayment = () => { // Renamed function
+  const handleCalculatePayment = useCallback(() => {
     if (!dateRange?.from || !dateRange?.to) {
       toast({ title: "Select Date Range", description: "Please select a valid start and end date.", variant: "destructive" });
       return;
@@ -96,7 +96,7 @@ export default function PaymentPage() { // Renamed component
         };
       });
 
-    setPaymentData(calculatedData); // Renamed state setter
+    setPaymentData(calculatedData);
     setTotalNetPayable(currentTotalNetPayable);
     setIsLoading(false);
     setCalculationDone(true);
@@ -111,7 +111,7 @@ export default function PaymentPage() { // Renamed component
             toast({ title: "No Data Calculated", description: "No attendance records found for the selected period or no labours with valid salary rates.", variant: "default" });
         }
     }
-  };
+  }, [dateRange, labours, dailyEntries, advances, toast, setPaymentData, setTotalNetPayable, setIsLoading, setCalculationDone]);
   
   const columns = useMemo(() => [
     { accessorKey: 'labourName' as keyof PaymentRow, header: 'Labour Name' },
@@ -148,7 +148,7 @@ export default function PaymentPage() { // Renamed component
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
             <Wallet className="h-8 w-8 text-primary" />
-            <CardTitle className="text-2xl font-bold">Labour Payment Calculator</CardTitle> {/* Updated Text */}
+            <CardTitle className="text-2xl font-bold">Labour Payment Calculator</CardTitle>
           </div>
           <CardDescription>Calculate net payable salary for labours based on attendance and advances within a selected date range.</CardDescription>
         </CardHeader>
@@ -192,12 +192,12 @@ export default function PaymentPage() { // Renamed component
                 </Popover>
             </div>
             <Button 
-              onClick={handleCalculatePayment} // Renamed handler
+              onClick={handleCalculatePayment}
               disabled={isLoading || !dateRange?.from || !dateRange?.to}
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <IndianRupee className="mr-2 h-4 w-4" />}
-              Calculate Payment {/* Updated Text */}
+              Calculate Payment
             </Button>
           </div>
            {labours.filter(l => typeof l.salaryRate !== 'number' || l.salaryRate <= 0).length > 0 && (
@@ -212,10 +212,10 @@ export default function PaymentPage() { // Renamed component
       {calculationDone && (
         <Card className="shadow-xl">
           <CardHeader>
-            <CardTitle>Payment Results</CardTitle> {/* Updated Text */}
+            <CardTitle>Payment Results</CardTitle>
             {dateRange?.from && dateRange?.to && (
                  <CardDescription>
-                    Showing payment for the period: {format(dateRange.from, "PPP")} to {format(dateRange.to, "PPP")}. {/* Updated Text */}
+                    Showing payment for the period: {format(dateRange.from, "PPP")} to {format(dateRange.to, "PPP")}.
                  </CardDescription>
             )}
           </CardHeader>
@@ -225,15 +225,15 @@ export default function PaymentPage() { // Renamed component
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2 text-muted-foreground">Calculating...</span>
               </div>
-            ) : paymentData.length > 0 ? ( // Renamed state
-              <DataTable columns={columns} data={paymentData} /> // Renamed state
+            ) : paymentData.length > 0 ? (
+              <DataTable columns={columns} data={paymentData} />
             ) : (
               <p className="text-center text-muted-foreground py-6">
-                No payment data to display for the selected criteria. Ensure labours have salary rates and there are attendance records in this period. {/* Updated Text */}
+                No payment data to display for the selected criteria. Ensure labours have salary rates and there are attendance records in this period.
               </p>
             )}
           </CardContent>
-           {paymentData.length > 0 && !isLoading && ( // Renamed state
+           {paymentData.length > 0 && !isLoading && (
             <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-4 border-t">
                 <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
                     <Scale className="h-6 w-6 text-primary" />

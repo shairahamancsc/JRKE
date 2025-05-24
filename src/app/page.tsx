@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, IndianRupee, ClipboardList, PlusCircle, /* ArrowRight, */ ClipboardCheck, CalendarIcon, UserCircle2, Briefcase, Landmark, Info } from 'lucide-react'; // ArrowRight removed
+import { Users, IndianRupee, ClipboardList, PlusCircle, ClipboardCheck, CalendarIcon, UserCircle2, Briefcase, Landmark, Info } from 'lucide-react';
 import { initialLabours, initialAdvancePayments, initialWorkLogs, initialDailyLogEntries } from '@/lib/data';
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY, WORK_LOGS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY } from '@/lib/storageKeys';
@@ -87,7 +87,6 @@ export default function DashboardPage() {
     { title: "Add New Labour", href: "/labours#add", icon: PlusCircle },
     { title: "Record Advance", href: "/advances#add", icon: PlusCircle },
     { title: "Daily Labour Entries", href: "/daily-entry#add", icon: ClipboardCheck },
-    // { title: "Generate Report", href: "/reports", icon: ArrowRight }, // Removed
   ], []);
 
   return (
@@ -187,7 +186,7 @@ export default function DashboardPage() {
               ) : filteredEntries.length > 0 ? (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 rounded-md border p-4 bg-background/50">
                   {filteredEntries.map((entry) => (
-                    <Card key={entry.id} className="p-4 bg-card shadow-sm"> {/* Increased padding */}
+                    <Card key={entry.id} className="p-4 bg-card shadow-sm">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <div className="flex items-center gap-3 flex-grow min-w-0">
                           <Avatar className="h-10 w-10 flex-shrink-0">
@@ -256,4 +255,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -97,7 +97,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
     }
   }, [defaultValues, reset, isOpen]);
 
-  const handleFileChange = (
+  const handleFileChange = useCallback((
     event: React.ChangeEvent<HTMLInputElement>,
     setPreview: React.Dispatch<React.SetStateAction<string | undefined>>,
     fileField: keyof LabourFormData,
@@ -115,9 +115,9 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       setValue(fileField, undefined);
       setPreview(defaultPreview); 
     }
-  };
+  }, [setValue]);
 
-  const handleFormSubmitInternal: SubmitHandler<LabourFormData> = (data) => {
+  const handleFormSubmitInternal: SubmitHandler<LabourFormData> = useCallback((data) => {
     onSubmit({
       id: defaultValues?.id || crypto.randomUUID(),
       name: data.name,
@@ -137,15 +137,16 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       salaryRate: data.salaryRate,
     });
     onClose();
-  };
+  }, [defaultValues, onSubmit, onClose, photoPreview, aadhaarPreview, panPreview, licensePreview]);
   
-  const renderPreview = (previewUrl: string | undefined, altText: string, dataAiHint: string) => {
+  const renderPreview = useCallback((previewUrl: string | undefined, altText: string, dataAiHint: string) => {
     if (!previewUrl) return null;
     if (previewUrl.startsWith('data:application/pdf')) {
       return <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center"><Eye className="mr-1 h-4 w-4" /> View PDF</a>;
     }
+    // Assuming Image component from 'next/image' or similar for optimized images
     return <Image src={previewUrl} alt={altText} width={100} height={60} className="rounded-md object-contain border" data-ai-hint={dataAiHint} />;
-  };
+  }, []);
 
 
   return (
