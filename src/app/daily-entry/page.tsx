@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, UserCircle2, Loader2, Share2, Briefcase, IndianRupee, Landmark, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import type { BulkDailyLogEntriesFormData } from '@/components/daily-entry/daily-entry-form';
 import type { DailyLogEntry, Labour, PaymentMethod, AdvancePayment } from '@/lib/types';
-import { initialDailyLogEntries /*, initialLabours */, initialAdvancePayments } from '@/lib/data'; // Removed initialLabours
+import { initialDailyLogEntries, initialAdvancePayments } from '@/lib/data'; 
 import { format, parseISO, startOfDay } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,7 +53,7 @@ export default function DailyEntryPage() {
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
-        setLabours([]);
+        setLabours([]); // Initialize to empty array if not found
         console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for daily entry page. Labours list will be empty.`);
       }
     } catch (error) {
@@ -76,7 +76,7 @@ export default function DailyEntryPage() {
     const labour = labours.find(l => l.id === labourId);
     return {
       name: labour?.name || 'Unknown Labour',
-      photoPreview: labour?.photoPreview
+      photoUrl: labour?.photoUrl // Changed from photoPreview
     };
   }, [labours]);
 
@@ -111,7 +111,7 @@ export default function DailyEntryPage() {
         advanceRemarks: advanceAmount && advanceAmount > 0 ? entryData.advanceRemarks : undefined,
         workLocation: entryData.attendanceStatus === 'present' ? formData.workLocation : undefined,
         labourName: labourInfo.name,
-        labourPhotoPreview: labourInfo.photoPreview,
+        labourPhotoPreview: labourInfo.photoUrl, // Using photoUrl from getLabourInfo
       };
       newDailyEntriesList.push(dailyEntry);
 
@@ -156,7 +156,7 @@ export default function DailyEntryPage() {
       entries: newDailyEntriesList,
     });
     setIsFormOpen(false);
-  }, [getLabourInfo, setDailyEntries, toast, setLastSubmissionDetails, setIsFormOpen]);
+  }, [getLabourInfo, setDailyEntries, toast]);
 
 
   const handleShareToWhatsApp = useCallback(() => {

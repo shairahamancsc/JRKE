@@ -3,8 +3,8 @@ export interface Labour {
   id: string;
   name: string;
   details: string; // e.g., contact, trade, skill level
-  photoPreview?: string; // Base64 or URL for preview
-  photoFile?: File; // To hold the actual file for upload
+  photoUrl?: string; // URL from Vercel Blob
+  photoFile?: File; // To hold the actual file for upload in forms
 
   phoneNo?: string;
   emergencyPhoneNo?: string;
@@ -13,13 +13,13 @@ export interface Labour {
   panNo?: string;
 
   aadhaarFile?: File;
-  aadhaarPreview?: string; // Base64 or URL for preview
+  aadhaarPreview?: string; // Base64 or URL for preview (consider moving to Blob URL too)
 
   panFile?: File;
-  panPreview?: string; // Base64 or URL for preview
+  panPreview?: string; // Base64 or URL for preview (consider moving to Blob URL too)
 
   licenseFile?: File;
-  licensePreview?: string; // Base64 or URL for preview
+  licensePreview?: string; // Base64 or URL for preview (consider moving to Blob URL too)
 
   salaryRate?: number; // New field for daily salary rate
 }
@@ -41,7 +41,7 @@ export interface WorkLog {
   date: string; // ISO string format
   location: string;
   workType: string;
-  picturePreview?: string; // Base64 or URL for preview
+  picturePreview?: string; // Base64 or URL for preview (consider moving to Blob URL too)
   pictureFile?: File; // To hold the actual file for upload
 }
 
@@ -56,7 +56,7 @@ export interface DailyLogEntry {
   workLocation?: string;
   // For convenience when displaying, not strictly part of the stored data model if derived
   labourName?: string;
-  labourPhotoPreview?: string;
+  labourPhotoPreview?: string; // This would ideally become labourPhotoUrl if consistent
 }
 
 // Added Supervisor type
@@ -85,7 +85,7 @@ export interface ProprietorDocument {
   documentType: ProprietorDocumentTypeValue;
   documentName: string; // User-provided name for the document, e.g., "Office Lease Agreement" if type is "Other"
   fileName: string;
-  fileDataUrl: string; // Store file as data URI for easy download
+  fileDataUrl: string; // Store file as data URI for easy download (consider moving to Blob URL too)
   uploadedAt: string; // ISO date string
   fileType?: string; // MIME type of the file
 }
@@ -100,4 +100,3 @@ export interface PaymentRow {
   totalAdvances: number;
   netPayable: number;
 }
-

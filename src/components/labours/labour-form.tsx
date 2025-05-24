@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCircle2, FileUp, Eye, Phone, Smartphone, IndianRupee } from "lucide-react";
+import { UserCircle2, FileUp, Eye, Phone, Smartphone, IndianRupee, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,9 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import type { Labour } from '@/lib/types';
+import { uploadLabourPhoto } from '@/lib/actions'; // Import the server action
+import { useToast } from '@/hooks/use-toast';
+
 
 const phoneRegex = /^[6-9]\d{9}$/; // Indian mobile number regex
 
@@ -53,10 +56,12 @@ interface LabourFormProps {
 }
 
 export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourFormProps) {
-  const [photoPreview, setPhotoPreview] = useState<string | undefined>(defaultValues?.photoPreview);
+  const [photoLocalPreview, setPhotoLocalPreview] = useState<string | undefined>(defaultValues?.photoUrl);
   const [aadhaarPreview, setAadhaarPreview] = useState<string | undefined>(defaultValues?.aadhaarPreview);
   const [panPreview, setPanPreview] = useState<string | undefined>(defaultValues?.panPreview);
   const [licensePreview, setLicensePreview] = useState<string | undefined>(defaultValues?.licensePreview);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
   
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<LabourFormData>({
     resolver: zodResolver(labourSchema),
@@ -90,7 +95,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
         licenseFile: undefined,
         salaryRate: defaultValues?.salaryRate,
       });
-      setPhotoPreview(defaultValues?.photoPreview);
+      setPhotoLocalPreview(defaultValues?.photoUrl); // Use photoUrl for existing preview
       setAadhaarPreview(defaultValues?.aadhaarPreview);
       setPanPreview(defaultValues?.panPreview);
       setLicensePreview(defaultValues?.licensePreview);
@@ -99,36 +104,75 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
 
   const handleFileChange = useCallback((
     event: React.ChangeEvent<HTMLInputElement>,
-    setPreview: React.Dispatch<React.SetStateAction<string | undefined>>,
-    fileField: keyof LabourFormData,
-    defaultPreview?: string
+    setLocalPreview: React.Dispatch<React.SetStateAction<string | undefined>>,
+    fileField: keyof LabourFormData
+    // defaultPreview?: string // Removed, not needed for local file changes
   ) => {
     const file = event.target.files?.[0];
     if (file) {
       setValue(fileField, file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result as string);
+        setLocalPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     } else {
       setValue(fileField, undefined);
-      setPreview(defaultPreview); 
+      // If clearing a new file, and there was an existing defaultValues.photoUrl, revert to it.
+      // For photoFile, revert to defaultValues.photoUrl if it exists
+      if (fileField === 'photoFile' && defaultValues?.photoUrl) {
+        setLocalPreview(defaultValues.photoUrl);
+      } else {
+         setLocalPreview(undefined);
+      }
     }
-  }, [setValue]);
+  }, [setValue, defaultValues?.photoUrl]);
 
-  const handleFormSubmitInternal: SubmitHandler<LabourFormData> = useCallback((data) => {
+
+  const handleFormSubmitInternal: SubmitHandler<LabourFormData> = useCallback(async (data) => {
+    setIsUploading(true);
+    let finalPhotoUrl = defaultValues?.photoUrl;
+
+    if (data.photoFile) {
+      const formData = new FormData();
+      formData.append('photoFile', data.photoFile);
+      try {
+        const uploadResult = await uploadLabourPhoto(formData);
+        if (uploadResult.success && uploadResult.url) {
+          finalPhotoUrl = uploadResult.url;
+        } else {
+          toast({
+            title: "Upload Failed",
+            description: uploadResult.error || "Could not upload labour photo.",
+            variant: "destructive",
+          });
+          setIsUploading(false);
+          return;
+        }
+      } catch (error) {
+         toast({
+            title: "Upload Error",
+            description: "An unexpected error occurred during photo upload.",
+            variant: "destructive",
+          });
+        setIsUploading(false);
+        return;
+      }
+    }
+
+    // For other documents, we're still using local previews for now.
+    // A full Vercel Blob integration would require similar upload logic for them.
     onSubmit({
       id: defaultValues?.id || crypto.randomUUID(),
       name: data.name,
       details: data.details,
-      photoFile: data.photoFile,
-      photoPreview: data.photoFile ? photoPreview : defaultValues?.photoPreview,
+      photoUrl: finalPhotoUrl, // Use the URL from Vercel Blob or existing
+      // photoFile is not part of the final Labour object stored
       phoneNo: data.phoneNo,
       emergencyPhoneNo: data.emergencyPhoneNo,
       aadhaarNo: data.aadhaarNo,
       panNo: data.panNo,
-      aadhaarFile: data.aadhaarFile,
+      aadhaarFile: data.aadhaarFile, // Keep for now, for consistency if not uploading to Blob
       aadhaarPreview: data.aadhaarFile ? aadhaarPreview : defaultValues?.aadhaarPreview,
       panFile: data.panFile,
       panPreview: data.panFile ? panPreview : defaultValues?.panPreview,
@@ -136,16 +180,16 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       licensePreview: data.licenseFile ? licensePreview : defaultValues?.licensePreview,
       salaryRate: data.salaryRate,
     });
+    setIsUploading(false);
     onClose();
-  }, [defaultValues, onSubmit, onClose, photoPreview, aadhaarPreview, panPreview, licensePreview]);
+  }, [defaultValues, onSubmit, onClose, aadhaarPreview, panPreview, licensePreview, toast]);
   
   const renderPreview = useCallback((previewUrl: string | undefined, altText: string, dataAiHint: string) => {
     if (!previewUrl) return null;
     if (previewUrl.startsWith('data:application/pdf')) {
       return <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center"><Eye className="mr-1 h-4 w-4" /> View PDF</a>;
     }
-    // Assuming Image component from 'next/image' or similar for optimized images
-    return <Image src={previewUrl} alt={altText} width={100} height={60} className="rounded-md object-contain border" data-ai-hint={dataAiHint} />;
+    return <Image src={previewUrl} alt={altText} width={100} height={60} className="rounded-md object-contain border" data-ai-hint={dataAiHint} unoptimized={previewUrl.startsWith('blob:') || previewUrl.startsWith('data:')} />;
   }, []);
 
 
@@ -165,19 +209,20 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
         <form onSubmit={handleSubmit(handleFormSubmitInternal)} className="space-y-4 py-4 overflow-y-auto max-h-[75vh] pr-3">
           <div className="flex flex-col items-center space-y-2">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={photoPreview} alt={defaultValues?.name || "Labour photo"} data-ai-hint="person portrait" />
+              <AvatarImage src={photoLocalPreview} alt={defaultValues?.name || "Labour photo"} data-ai-hint="person portrait" />
               <AvatarFallback>
                 <UserCircle2 className="h-16 w-16 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
             <Label htmlFor="photoFile" className="text-sm font-medium text-primary hover:underline cursor-pointer flex items-center gap-1">
-              <FileUp className="h-4 w-4" /> {photoPreview ? "Change Photo" : "Upload Photo"}
+              <FileUp className="h-4 w-4" /> {photoLocalPreview && !errors.photoFile ? "Change Photo" : "Upload Photo"}
             </Label>
             <Input 
               id="photoFile" 
               type="file" 
               accept="image/*" 
-              onChange={(e) => handleFileChange(e, setPhotoPreview, 'photoFile', defaultValues?.photoPreview)} 
+              {...register('photoFile')} // Use register here
+              onChange={(e) => handleFileChange(e, setPhotoLocalPreview, 'photoFile')} 
               className="hidden"
             />
              {errors.photoFile && <p className="text-xs text-destructive mt-1">{errors.photoFile.message}</p>}
@@ -239,7 +284,8 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
               id="aadhaarFile" 
               type="file" 
               accept="image/*,application/pdf" 
-              onChange={(e) => handleFileChange(e, setAadhaarPreview, 'aadhaarFile', defaultValues?.aadhaarPreview)}
+              {...register('aadhaarFile')}
+              onChange={(e) => handleFileChange(e, setAadhaarPreview, 'aadhaarFile')}
               className="file:text-primary file:font-semibold"
             />
             {errors.aadhaarFile && <p className="text-xs text-destructive mt-1">{errors.aadhaarFile.message}</p>}
@@ -252,7 +298,8 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
               id="panFile" 
               type="file" 
               accept="image/*,application/pdf" 
-              onChange={(e) => handleFileChange(e, setPanPreview, 'panFile', defaultValues?.panPreview)}
+              {...register('panFile')}
+              onChange={(e) => handleFileChange(e, setPanPreview, 'panFile')}
               className="file:text-primary file:font-semibold"
             />
             {errors.panFile && <p className="text-xs text-destructive mt-1">{errors.panFile.message}</p>}
@@ -265,7 +312,8 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
               id="licenseFile" 
               type="file" 
               accept="image/*,application/pdf" 
-              onChange={(e) => handleFileChange(e, setLicensePreview, 'licenseFile', defaultValues?.licensePreview)}
+              {...register('licenseFile')}
+              onChange={(e) => handleFileChange(e, setLicensePreview, 'licenseFile')}
               className="file:text-primary file:font-semibold"
             />
             {errors.licenseFile && <p className="text-xs text-destructive mt-1">{errors.licenseFile.message}</p>}
@@ -273,10 +321,10 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline" disabled={isUploading}>Cancel</Button>
             </DialogClose>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              {defaultValues ? 'Save Changes' : 'Add Labour'}
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isUploading}>
+              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (defaultValues ? 'Save Changes' : 'Add Labour')}
             </Button>
           </DialogFooter>
         </form>

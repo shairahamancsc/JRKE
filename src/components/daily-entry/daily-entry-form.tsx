@@ -40,7 +40,7 @@ const paymentMethodsList: { value: PaymentMethod; label: string }[] = [
 const individualLabourDailyEntrySchema = z.object({
   labourId: z.string(),
   labourName: z.string(), 
-  labourPhotoPreview: z.string().optional(), 
+  labourPhotoPreview: z.string().optional(), // Now expecting URL from Vercel Blob or placeholder
   attendanceStatus: z.enum(['present', 'absent'], { required_error: "Attendance status is required" }),
   advanceAmount: z.coerce.number().min(0, "Advance must be a non-negative amount.").optional().or(z.literal('')),
   advancePaymentMethod: z.enum(['phonepe', 'account', 'cash']).optional(),
@@ -63,17 +63,12 @@ const bulkDailyLogEntriesSchema = z.object({
 }).refine(data => {
     for (const entry of data.entries) {
         if (entry.advanceAmount && Number(entry.advanceAmount) > 0 && !entry.advancePaymentMethod) {
-            // This custom pathing is a bit tricky with useFieldArray, focusing on a general error for now.
-            // For specific field error, you might need more complex logic or a different validation approach.
             return false; 
         }
     }
     return true;
 }, {
     message: "Payment method is required if advance amount is greater than 0.",
-    // Path ideally would be `entries.${index}.advancePaymentMethod`, but Zod's refine path doesn't easily support dynamic indices.
-    // A general error or per-field validation might be more practical here.
-    // For simplicity, showing a general error at the 'entries' level.
     path: ["entries"], 
 });
 
@@ -115,7 +110,7 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, labours }: DailyEntr
         entries: labours.map(labour => ({
           labourId: labour.id,
           labourName: labour.name || 'Unknown Labour',
-          labourPhotoPreview: labour.photoPreview,
+          labourPhotoPreview: labour.photoUrl, // Use photoUrl from Vercel Blob
           attendanceStatus: 'present',
           advanceAmount: undefined,
           advancePaymentMethod: undefined,
@@ -339,4 +334,3 @@ export function DailyEntryForm({ isOpen, onClose, onSubmit, labours }: DailyEntr
     </Dialog>
   );
 }
-

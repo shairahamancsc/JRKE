@@ -18,7 +18,7 @@ const LabourForm = lazy(() => import('@/components/labours/labour-form').then(mo
 export default function LaboursPage() {
   const [labours, setLabours] = useDebouncedLocalStorage<Labour[]>(
     LABOURS_STORAGE_KEY,
-    initialLabours
+    initialLabours // This will initialize if the key is not found or data is invalid
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingLabour, setEditingLabour] = useState<Labour | undefined>(undefined);
@@ -30,7 +30,6 @@ export default function LaboursPage() {
       window.location.hash = ""; 
     }
   }, []);
-
 
   const handleAddLabour = useCallback(() => {
     setEditingLabour(undefined);
@@ -51,15 +50,13 @@ export default function LaboursPage() {
     });
   }, [setLabours, toast]);
 
+  // This function receives the final Labour object, potentially with photoUrl
   const saveLabour = useCallback((labourToSave: Labour) => {
-    const { photoFile, aadhaarFile, panFile, licenseFile, ...restOfLabour } = labourToSave;
+    // The photoFile is handled by the form and server action; we save the resulting photoUrl
     const finalLabourData: Labour = {
-        ...restOfLabour,
-        photoPreview: photoFile ? labourToSave.photoPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.photoPreview : labourToSave.photoPreview),
-        aadhaarPreview: aadhaarFile ? labourToSave.aadhaarPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.aadhaarPreview : labourToSave.aadhaarPreview),
-        panPreview: panFile ? labourToSave.panPreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.panPreview : labourToSave.panPreview),
-        licensePreview: licenseFile ? labourToSave.licensePreview : (editingLabour && labourToSave.id === editingLabour.id ? editingLabour.licensePreview : labourToSave.licensePreview),
-        salaryRate: labourToSave.salaryRate,
+        ...labourToSave, 
+        // photoUrl is already set by the form logic after upload
+        // Other previews (aadhaar, pan, license) are still data URIs for now
     };
 
     if (editingLabour) {
@@ -71,21 +68,21 @@ export default function LaboursPage() {
     }
     setIsFormOpen(false);
     setEditingLabour(undefined);
-  }, [editingLabour, setLabours, toast, setIsFormOpen, setEditingLabour]);
-
+  }, [editingLabour, setLabours, toast]);
 
   const handleFormSubmit = useCallback((labourData: Labour) => {
+    // labourData already contains photoUrl if a photo was uploaded/changed
     saveLabour(labourData);
   }, [saveLabour]);
 
 
   const columns = React.useMemo(() => [
     { 
-      accessorKey: 'photoPreview' as keyof Labour, 
+      accessorKey: 'photoUrl' as keyof Labour, // Changed from photoPreview
       header: 'Photo',
       cell: (item: Labour) => (
         <Avatar className="h-10 w-10">
-          <AvatarImage src={item.photoPreview} alt={item.name} data-ai-hint="person portrait" />
+          <AvatarImage src={item.photoUrl} alt={item.name} data-ai-hint="person portrait" />
           <AvatarFallback>
             <UserCircle2 className="h-6 w-6 text-muted-foreground" />
           </AvatarFallback>

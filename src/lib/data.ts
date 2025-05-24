@@ -8,43 +8,43 @@ export const initialLabours: Labour[] = [
     id: '1', 
     name: 'John Doe', 
     details: 'Skilled Carpenter, 5 years experience', 
-    photoPreview: 'https://picsum.photos/seed/labourer1/100/100',
+    photoUrl: 'https://placehold.co/100x100.png', // Changed from photoPreview
     phoneNo: '9876543210',
     emergencyPhoneNo: '8765432109',
     aadhaarNo: '123456789012',
     panNo: 'ABCDE1234F',
-    aadhaarPreview: 'https://picsum.photos/seed/aadhaar1/200/120',
-    panPreview: 'https://picsum.photos/seed/pan1/200/120',
+    aadhaarPreview: 'https://placehold.co/200x120.png',
+    panPreview: 'https://placehold.co/200x120.png',
     licensePreview: undefined,
-    salaryRate: 700, // Example salary rate
+    salaryRate: 700, 
   },
   { 
     id: '2', 
     name: 'Jane Smith', 
     details: 'General Labourer, reliable', 
-    photoPreview: 'https://picsum.photos/seed/labourer2/100/100',
+    photoUrl: 'https://placehold.co/100x100.png', // Changed from photoPreview
     phoneNo: '9988776655',
     emergencyPhoneNo: undefined,
     aadhaarNo: '234567890123',
     panNo: undefined,
-    aadhaarPreview: 'https://picsum.photos/seed/aadhaar2/200/120',
+    aadhaarPreview: 'https://placehold.co/200x120.png',
     panPreview: undefined,
-    licensePreview: 'https://picsum.photos/seed/license2/200/120',
-    salaryRate: 550, // Example salary rate
+    licensePreview: 'https://placehold.co/200x120.png',
+    salaryRate: 550, 
   },
   { 
     id: '3', 
     name: 'Mike Johnson', 
     details: 'Electrician, licensed', 
-    photoPreview: 'https://picsum.photos/seed/labourer3/100/100',
+    photoUrl: 'https://placehold.co/100x100.png', // Changed from photoPreview
     phoneNo: undefined,
     emergencyPhoneNo: '7654321098',
     aadhaarNo: undefined,
     panNo: 'FGHIJ5678K',
     aadhaarPreview: undefined,
-    panPreview: 'https://picsum.photos/seed/pan3/200/120',
+    panPreview: 'https://placehold.co/200x120.png',
     licensePreview: undefined,
-    salaryRate: 800, // Example salary rate
+    salaryRate: 800, 
   },
 ];
 
@@ -60,7 +60,7 @@ export const initialWorkLogs: WorkLog[] = [
     date: new Date().toISOString(), 
     location: 'Site A, Building 1', 
     workType: 'Framing',
-    picturePreview: 'https://picsum.photos/seed/picsum1/100/100'
+    picturePreview: 'https://placehold.co/100x100.png'
   },
   { 
     id: 'wl2', 
@@ -68,7 +68,7 @@ export const initialWorkLogs: WorkLog[] = [
     date: new Date().toISOString(), 
     location: 'Site B, Foundation', 
     workType: 'Concrete Pouring Support',
-    picturePreview: 'https://picsum.photos/seed/picsum2/100/100'
+    picturePreview: 'https://placehold.co/100x100.png'
   },
 ];
 
