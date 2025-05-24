@@ -17,14 +17,13 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
       style={{ animationDelay: '2s' }} // Start fading out after 2 seconds
     >
       <div className="text-center animate-scale-in-splash p-4">
-        <div className="relative mx-auto mb-3 sm:mb-4 h-16 w-auto sm:h-20 md:h-24 aspect-[250/153]"> {/* Adjusted for aspect ratio */}
-          <Image 
-            src="/jrk-logo.png" 
-            alt="JRK Enterprises Logo" 
-            fill // Use fill with a sized parent
-            priority // Preload the logo
-            className="object-contain" // Ensure logo fits well
-            data-ai-hint="company logo"
+        <div className="relative mx-auto mb-3 sm:mb-4 h-16 sm:h-20 md:h-24 aspect-[250/153]"> {/* Removed w-auto */}
+          <Image
+            src="/jrk-logo.png"
+            alt="JRK Enterprises Logo"
+            fill
+            priority
+            className="object-contain"
           />
         </div>
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">JRK ENTERPRISES</h1>

@@ -11,12 +11,12 @@ import {
   LayoutDashboard,
   // Building, // No longer needed here
   ClipboardCheck,
-  LogOut, 
-  UserPlus, 
-  FileArchive, 
+  LogOut,
+  UserPlus,
+  FileArchive,
   Calculator,
-  Wallet, 
-  Printer, 
+  Wallet,
+  Printer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -30,8 +30,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { SheetTitle } from "@/components/ui/sheet";
-import { useAuth } from "@/context/auth-context"; 
-import { useToast } from "@/hooks/use-toast"; 
+import { useAuth } from "@/context/auth-context";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -41,8 +41,8 @@ const navItems = [
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
   { href: "/payment", label: "Payment", icon: Wallet },
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
-  { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, 
-  { href: "/self-declaration-form", label: "Self Declaration", icon: Printer }, 
+  { href: "/gst-calculator", label: "GST Calculator", icon: Calculator },
+  { href: "/self-declaration-form", label: "Self Declaration", icon: Printer },
 ];
 
 const adminNavItems = [
@@ -53,7 +53,7 @@ const adminNavItems = [
 export function MainSidebar() {
   const pathname = usePathname();
   const { isMobile } = useSidebar();
-  const { isAuthenticated, logout, isLoading, currentUsername } = useAuth(); 
+  const { isAuthenticated, logout, isLoading, currentUsername } = useAuth();
   const { toast } = useToast();
 
   const handleLogout = () => {
@@ -75,13 +75,12 @@ export function MainSidebar() {
           <SheetTitle className="sr-only">Main Navigation Menu</SheetTitle>
         )}
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-          <div className="relative h-7 w-auto aspect-[250/153] text-sidebar-primary"> {/* Adjusted for aspect ratio */}
-            <Image 
-              src="/jrk-logo.png" 
-              alt="JRK Logo" 
+          <div className="relative h-7 aspect-[250/153] text-sidebar-primary"> {/* Removed w-auto */}
+            <Image
+              src="/jrk-logo.png"
+              alt="JRK Logo"
               fill
               className="object-contain"
-              data-ai-hint="company logo"
             />
           </div>
           <span className="group-data-[collapsible=icon]:hidden">JRK ENTERPRISES</span>
@@ -121,12 +120,12 @@ export function MainSidebar() {
            ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2 flex flex-col gap-2 items-stretch mt-auto"> 
+      <SidebarFooter className="p-2 flex flex-col gap-2 items-stretch mt-auto">
          <SidebarMenuButton
             onClick={handleLogout}
             tooltip={{ children: "Logout", side: 'right', align: 'center' }}
             className="justify-start w-full"
-            variant="ghost" 
+            variant="ghost"
          >
            <LogOut className="h-5 w-5" />
            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
