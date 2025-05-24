@@ -259,7 +259,7 @@ export default function SelfDeclarationFormPage() {
         </div>
 
         <p style={{ marginBottom: '15px', textIndent: '0px' }}>
-          I, {currentData.deponentTitle || '[Title]'} <strong>{currentData.deponentName || '[Applicant Name]'}</strong> {currentData.relation || '[Relation]'}. {currentData.relativeName || '[Relative Name]'} have applied for a single-phase new electricity connection from the authority of TPSODL.
+          I, <strong>{currentData.deponentTitle || '[Title]'}</strong> <strong>{currentData.deponentName || '[Applicant Name]'}</strong> {currentData.relation || '[Relation]'}. {currentData.relativeName || '[Relative Name]'} have applied for a single-phase new electricity connection from the authority of TPSODL.
         </p>
 
         <ol style={{ listStyleType: 'decimal', paddingLeft: '20px', marginBottom: '15px' }}>
