@@ -105,7 +105,7 @@ export default {
         },
          'slide-in-up-main': { // Keyframe for main content slide up after splash
            from: { transform: 'translateY(20px)', opacity: '0' },
-           to: { transform: 'translateY(0)', opacity: '1' } // Fixed: Added colon after 'to'
+           to: { transform: 'translateY(0)', opacity: '1' }
         }
   		},
   		animation: {
@@ -118,6 +118,7 @@ export default {
         'slide-in-up-main': 'slide-in-up-main 0.5s ease-out forwards', // Add main content slide up
   		},
       animationDelay: { // Add animation delay utility
+        '500': '500ms', // Added 500ms delay
         '2000': '2000ms',
       }
   	}
