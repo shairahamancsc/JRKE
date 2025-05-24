@@ -14,11 +14,11 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
   return (
     <div
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background animate-fade-out-splash animation-delay-2000"
-      style={{ animationDelay: '2s' }} // Start fading out after 2 seconds
+      // Removed inline style={{ animationDelay: '2s' }} as animation-delay-2000 class handles it
     >
       <div className="text-center animate-scale-in-splash p-4">
         <div className="relative mx-auto mb-3 sm:mb-4 h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 overflow-hidden">
-          {/* 
+          {/*
               Ensure splash-animation.gif is in the /public folder.
           */}
           <Image
