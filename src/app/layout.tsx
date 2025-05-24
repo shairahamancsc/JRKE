@@ -27,12 +27,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// Metadata might still be defined, but access control happens client-side
-// export const metadata: Metadata = {
-//   title: 'JRK ENTERPRISES',
-//   description: 'Manage labour, track advances, and log daily work.',
-// };
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -66,10 +60,10 @@ export default function RootLayout({
       <head>
         <title>JRK ENTERPRISES</title>
         <meta name="description" content="Manage labour, track advances, and log daily work." />
-        <link rel="icon" href="/favicon.ico" sizes="any" /> {/* Standard favicon link */}
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> {/* Optional: Apple touch icon */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#228B22" /> 
+        <meta name="theme-color" content="#228B22" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="JRK App" />
