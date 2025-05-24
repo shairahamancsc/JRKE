@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Printer, Loader2, FileText, Eye, EyeOff } from 'lucide-react';
+import { Download, Loader2, FileText, Eye, EyeOff } from 'lucide-react'; // Changed Printer to Download
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -70,12 +70,8 @@ export default function SelfDeclarationFormPage() {
     const wasInitiallyHidden = !showPreviewTemplate;
 
     if (wasInitiallyHidden) {
-      // If it was hidden by the preview state, make it visible for capture
       pdfTemplateElement.style.display = 'block';
     }
-    // Ensure content is rendered
-    // By using currentData from watch, React should keep the hidden div populated.
-    // We add a small delay to ensure the browser has painted the up-to-date content.
     await new Promise(resolve => setTimeout(resolve, 100));
 
 
@@ -83,7 +79,7 @@ export default function SelfDeclarationFormPage() {
       const canvas = await html2canvas(pdfTemplateElement, {
         scale: 2, 
         useCORS: true,
-        logging: true, // Enable logging for html2canvas
+        logging: true,
       });
       const imgData = canvas.toDataURL('image/png');
 
@@ -112,15 +108,14 @@ export default function SelfDeclarationFormPage() {
       const scaledHeight = imgHeight * ratio;
 
       const xOffset = (pdfWidth - scaledWidth) / 2;
-      // Add a small top margin within the PDF
-      const yOffset = Math.max(20, (pdfHeight - scaledHeight) / 2); // Ensure at least 20pt margin or centered
+      const yOffset = Math.max(20, (pdfHeight - scaledHeight) / 2);
 
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
-      pdf.output('dataurlnewwindow'); 
+      pdf.save('self-declaration.pdf'); // Changed to download
 
       toast({
-        title: 'PDF Generated',
-        description: 'The self-declaration PDF has been generated and opened in a new tab.',
+        title: 'PDF Downloaded',
+        description: 'The self-declaration PDF has been generated and downloaded.',
       });
 
     } catch (error) {
@@ -132,10 +127,8 @@ export default function SelfDeclarationFormPage() {
       });
     } finally {
        if (wasInitiallyHidden) {
-        // If we made it visible only for capture, hide it again
         pdfTemplateElement.style.display = 'none';
        }
-       // If it was already visible due to showPreviewTemplate, leave it as is.
       setIsLoading(false);
     }
   };
@@ -226,18 +219,17 @@ export default function SelfDeclarationFormPage() {
               {showPreviewTemplate ? 'Hide Preview' : 'Preview Form'}
             </Button>
             <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-              Generate & Print PDF
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              Generate & Download PDF
             </Button>
           </CardFooter>
         </form>
       </Card>
 
-      {/* Template for PDF Generation - its visibility is now toggled by showPreviewTemplate state */}
       <div
         id="pdf-template"
         style={{ 
-          display: showPreviewTemplate ? 'block' : 'none', // Controlled by state
+          display: showPreviewTemplate ? 'block' : 'none', 
           width: '210mm', 
           minHeight: '297mm', 
           padding: '20mm', 
@@ -246,8 +238,8 @@ export default function SelfDeclarationFormPage() {
           lineHeight: '1.5',
           color: '#000', 
           backgroundColor: '#fff',
-          marginTop: '20px', // Add some space when previewing
-          border: showPreviewTemplate ? '1px solid #ccc' : 'none', // Border when previewing
+          marginTop: '20px', 
+          border: showPreviewTemplate ? '1px solid #ccc' : 'none', 
         }}
         className="bg-white text-black"
       >
