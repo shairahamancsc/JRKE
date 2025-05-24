@@ -59,7 +59,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
            <div className="flex justify-center mb-4">
-            <div className="relative h-12 aspect-[250/153]"> {/* Removed w-auto */}
+            <div className="relative h-12 w-auto"> {/* Removed fixed aspect ratio */}
               <Image
                 src="/jrk-logo.png"
                 alt="JRK Enterprises Logo"

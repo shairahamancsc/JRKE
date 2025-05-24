@@ -75,7 +75,7 @@ export function MainSidebar() {
           <SheetTitle className="sr-only">Main Navigation Menu</SheetTitle>
         )}
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-          <div className="relative h-7 aspect-[250/153] text-sidebar-primary"> {/* Removed w-auto */}
+          <div className="relative h-7 w-auto text-sidebar-primary"> {/* Removed fixed aspect ratio */}
             <Image
               src="/jrk-logo.png"
               alt="JRK Logo"
