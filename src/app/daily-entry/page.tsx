@@ -55,20 +55,26 @@ export default function DailyEntryPage() {
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
-        localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
-        setLabours(initialLabours);
+        // If no labours data, it might not be initialized yet by the main Labours page.
+        // Default to an empty array here and do NOT write initialLabours.
+        setLabours([]);
+        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for daily entry page. Defaulting to empty array.`);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for daily entry page:", error);
-      localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
-      setLabours(initialLabours);
+      setLabours([]); // Default to empty on error
+      toast({
+        variant: "destructive",
+        title: "Error Loading Labour Data",
+        description: "Could not load labour information for daily entries. Please check the Labours page."
+      });
     }
 
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = "";
     }
-  }, []);
+  }, [toast]);
 
   const handleAddEntry = () => {
     if (labours.length === 0) {

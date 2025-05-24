@@ -26,33 +26,38 @@ export default function AdvancesPage() {
     ADVANCES_STORAGE_KEY,
     initialAdvancePayments
   );
-  const [labours, setLabours] = useState<Labour[]>([]); // Labours are read, not managed by this page's debounced hook
+  const [labours, setLabours] = useState<Labour[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAdvance, setEditingAdvance] = useState<AdvancePayment | undefined>(undefined);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load labours from localStorage
+    // Load labours from localStorage (read-only for this page)
     try {
       const storedLabours = localStorage.getItem(LABOURS_STORAGE_KEY);
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
-        // Initialize labours in localStorage if not present
-        localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
-        setLabours(initialLabours);
+        // If no labours data, it might not be initialized yet by the main Labours page.
+        // Default to an empty array here and do NOT write initialLabours.
+        setLabours([]);
+        console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for advances page. Defaulting to empty array.`);
       }
     } catch (error) {
       console.error("Error loading labours from localStorage for advances page:", error);
-      localStorage.setItem(LABOURS_STORAGE_KEY, JSON.stringify(initialLabours));
-      setLabours(initialLabours);
+      setLabours([]); // Default to empty on error
+       toast({
+        variant: "destructive",
+        title: "Error Loading Labour Data",
+        description: "Could not load labour information for advances. Please check the Labours page."
+      });
     }
 
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; 
     }
-  }, []);
+  }, [toast]);
 
 
   const handleAddAdvance = () => {
@@ -120,7 +125,7 @@ export default function AdvancesPage() {
       cell: (item: AdvancePayment) => item.remarks || '-'
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [labours]); // Dependency on labours because getLabourName uses it
+  ], [labours]);
 
   return (
     <div className="container mx-auto py-8">
