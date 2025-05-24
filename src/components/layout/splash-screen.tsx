@@ -18,8 +18,7 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
     >
       <div className="text-center animate-scale-in-splash p-4">
         <div className="relative mx-auto mb-3 sm:mb-4 h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 overflow-hidden">
-          {/* Using an <img> tag for GIF might be more reliable for animations than next/image in some cases,
-              but next/image is generally preferred for optimization. We'll stick with next/image.
+          {/* 
               Ensure splash-animation.gif is in the /public folder.
           */}
           <Image
