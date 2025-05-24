@@ -17,17 +17,23 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
       style={{ animationDelay: '2s' }} // Start fading out after 2 seconds
     >
       <div className="text-center animate-scale-in-splash p-4">
-        <div className="relative mx-auto mb-3 sm:mb-4 h-16 sm:h-20 md:h-24 w-auto overflow-hidden"> {/* Ensure this line has w-auto and overflow-hidden */}
+        <div className="relative mx-auto mb-3 sm:mb-4 h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 overflow-hidden">
+          {/* Using an <img> tag for GIF might be more reliable for animations than next/image in some cases,
+              but next/image is generally preferred for optimization. We'll stick with next/image.
+              Ensure splash-animation.gif is in the /public folder.
+          */}
           <Image
-            src="/jrk-logo.png"
-            alt="JRK Enterprises Logo"
+            src="/splash-animation.gif"
+            alt="JRK Enterprises Loading Animation"
             fill
-            priority
+            priority // Good for LCP elements, which this effectively is during splash
             className="object-contain"
+            unoptimized // GIFs are often better unoptimized by next/image
           />
         </div>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">JRK ENTERPRISES</h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-2">Loading...</p>
+        {/* Optional: You can add back title or loading text if desired, or leave it clean with just the GIF */}
+        {/* <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">JRK ENTERPRISES</h1> */}
+        {/* <p className="text-sm sm:text-base text-muted-foreground mt-2">Loading...</p> */}
       </div>
       <p className="absolute bottom-10 text-xs sm:text-sm text-muted-foreground animate-fade-in animation-delay-500">
         Developed By Shaik Anisul Rahaman
