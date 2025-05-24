@@ -17,7 +17,7 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
       style={{ animationDelay: '2s' }} // Start fading out after 2 seconds
     >
       <div className="text-center animate-scale-in-splash p-4">
-        <div className="relative mx-auto mb-3 sm:mb-4 h-16 sm:h-20 md:h-24 w-auto overflow-hidden"> {/* Removed fixed aspect ratio, added w-auto */}
+        <div className="relative mx-auto mb-3 sm:mb-4 h-16 sm:h-20 md:h-24 w-auto overflow-hidden"> {/* Ensure this line has w-auto and overflow-hidden */}
           <Image
             src="/jrk-logo.png"
             alt="JRK Enterprises Logo"
