@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Building } from 'lucide-react'; // Using Building icon as a placeholder
+import Image from 'next/image'; // Import next/image
 
 interface SplashScreenProps {
   isVisible: boolean;
@@ -17,8 +17,16 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
       style={{ animationDelay: '2s' }} // Start fading out after 2 seconds
     >
       <div className="text-center animate-scale-in-splash p-4">
-        {/* Placeholder for 3D JRK Logo */}
-        <Building className="h-16 w-16 sm:h-20 md:h-24 text-primary mb-3 sm:mb-4 mx-auto" />
+        <div className="relative mx-auto mb-3 sm:mb-4 h-16 w-auto sm:h-20 md:h-24 aspect-[250/153]"> {/* Adjusted for aspect ratio */}
+          <Image 
+            src="/jrk-logo.png" 
+            alt="JRK Enterprises Logo" 
+            fill // Use fill with a sized parent
+            priority // Preload the logo
+            className="object-contain" // Ensure logo fits well
+            data-ai-hint="company logo"
+          />
+        </div>
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">JRK ENTERPRISES</h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-2">Loading...</p>
       </div>
@@ -28,4 +36,3 @@ export function SplashScreen({ isVisible }: SplashScreenProps) {
     </div>
   );
 }
-

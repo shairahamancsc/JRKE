@@ -2,13 +2,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from 'next/image'; // Import next/image
 import { usePathname } from "next/navigation";
 import {
   Users,
   IndianRupee,
   ClipboardList,
   LayoutDashboard,
-  Building,
+  // Building, // No longer needed here
   ClipboardCheck,
   LogOut, 
   UserPlus, 
@@ -38,7 +39,7 @@ const navItems = [
   { href: "/advances", label: "Advances", icon: IndianRupee },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
-  { href: "/payment", label: "Payment", icon: Wallet }, // Renamed from Payroll to Payment, href updated
+  { href: "/payment", label: "Payment", icon: Wallet },
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
   { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, 
   { href: "/self-declaration-form", label: "Self Declaration", icon: Printer }, 
@@ -74,7 +75,15 @@ export function MainSidebar() {
           <SheetTitle className="sr-only">Main Navigation Menu</SheetTitle>
         )}
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-          <Building className="h-7 w-7 text-sidebar-primary" />
+          <div className="relative h-7 w-auto aspect-[250/153] text-sidebar-primary"> {/* Adjusted for aspect ratio */}
+            <Image 
+              src="/jrk-logo.png" 
+              alt="JRK Logo" 
+              fill
+              className="object-contain"
+              data-ai-hint="company logo"
+            />
+          </div>
           <span className="group-data-[collapsible=icon]:hidden">JRK ENTERPRISES</span>
         </Link>
       </SidebarHeader>

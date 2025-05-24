@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image'; // Import next/image
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Building } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -58,7 +59,15 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
            <div className="flex justify-center mb-4">
-             <Building className="h-12 w-12 text-primary" />
+            <div className="relative h-12 w-auto aspect-[250/153]"> {/* Adjusted for aspect ratio */}
+              <Image 
+                src="/jrk-logo.png" 
+                alt="JRK Enterprises Logo" 
+                fill 
+                className="object-contain"
+                data-ai-hint="company logo"
+              />
+            </div>
            </div>
           <CardTitle className="text-2xl font-bold text-foreground">JRK ENTERPRISES</CardTitle>
           <CardDescription>Please log in to continue</CardDescription>
