@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Printer, Loader2, FileText } from 'lucide-react';
+import { Printer, Loader2, FileText, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -41,6 +41,7 @@ type DeclarationFormData = z.infer<typeof declarationFormSchema>;
 
 export default function SelfDeclarationFormPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showPreviewTemplate, setShowPreviewTemplate] = useState(false);
   const { toast } = useToast();
 
   const { control, register, handleSubmit, watch, formState: { errors } } = useForm<DeclarationFormData>({
@@ -66,16 +67,35 @@ export default function SelfDeclarationFormPage() {
       return;
     }
     
-    const originalDisplay = pdfTemplateElement.style.display;
-    pdfTemplateElement.style.display = 'block';
+    const wasInitiallyHidden = !showPreviewTemplate;
+
+    if (wasInitiallyHidden) {
+      // If it was hidden by the preview state, make it visible for capture
+      pdfTemplateElement.style.display = 'block';
+    }
+    // Ensure content is rendered
+    // By using currentData from watch, React should keep the hidden div populated.
+    // We add a small delay to ensure the browser has painted the up-to-date content.
+    await new Promise(resolve => setTimeout(resolve, 100));
 
 
     try {
       const canvas = await html2canvas(pdfTemplateElement, {
         scale: 2, 
         useCORS: true,
+        logging: true, // Enable logging for html2canvas
       });
       const imgData = canvas.toDataURL('image/png');
+
+      if (!imgData || imgData === 'data:,') {
+        toast({
+          title: 'PDF Generation Error',
+          description: 'Failed to capture form content for PDF. The captured image was empty.',
+          variant: 'destructive',
+        });
+        throw new Error("html2canvas captured an empty image.");
+      }
+      
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'pt', 
@@ -92,7 +112,8 @@ export default function SelfDeclarationFormPage() {
       const scaledHeight = imgHeight * ratio;
 
       const xOffset = (pdfWidth - scaledWidth) / 2;
-      const yOffset = (pdfHeight - scaledHeight) / 2;
+      // Add a small top margin within the PDF
+      const yOffset = Math.max(20, (pdfHeight - scaledHeight) / 2); // Ensure at least 20pt margin or centered
 
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, scaledWidth, scaledHeight);
       pdf.output('dataurlnewwindow'); 
@@ -106,17 +127,25 @@ export default function SelfDeclarationFormPage() {
       console.error('Error generating PDF:', error);
       toast({
         title: 'PDF Generation Failed',
-        description: 'An error occurred while generating the PDF. Please try again.',
+        description: 'An error occurred while generating the PDF. Please check console for details.',
         variant: 'destructive',
       });
     } finally {
-       pdfTemplateElement.style.display = originalDisplay;
+       if (wasInitiallyHidden) {
+        // If we made it visible only for capture, hide it again
+        pdfTemplateElement.style.display = 'none';
+       }
+       // If it was already visible due to showPreviewTemplate, leave it as is.
       setIsLoading(false);
     }
   };
 
   const onSubmit: SubmitHandler<DeclarationFormData> = (data) => {
     generatePdf(data);
+  };
+
+  const togglePreview = () => {
+    setShowPreviewTemplate(!showPreviewTemplate);
   };
 
   const currentData = watch(); 
@@ -191,7 +220,11 @@ export default function SelfDeclarationFormPage() {
             </div>
 
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col sm:flex-row gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={togglePreview} className="w-full sm:w-auto">
+              {showPreviewTemplate ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+              {showPreviewTemplate ? 'Hide Preview' : 'Preview Form'}
+            </Button>
             <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
               Generate & Print PDF
@@ -200,9 +233,11 @@ export default function SelfDeclarationFormPage() {
         </form>
       </Card>
 
-      {/* Hidden Template for PDF Generation */}
-      <div id="pdf-template" style={{ 
-          display: 'none', 
+      {/* Template for PDF Generation - its visibility is now toggled by showPreviewTemplate state */}
+      <div
+        id="pdf-template"
+        style={{ 
+          display: showPreviewTemplate ? 'block' : 'none', // Controlled by state
           width: '210mm', 
           minHeight: '297mm', 
           padding: '20mm', 
@@ -210,9 +245,11 @@ export default function SelfDeclarationFormPage() {
           fontSize: '11pt', 
           lineHeight: '1.5',
           color: '#000', 
-          backgroundColor: '#fff' 
+          backgroundColor: '#fff',
+          marginTop: '20px', // Add some space when previewing
+          border: showPreviewTemplate ? '1px solid #ccc' : 'none', // Border when previewing
         }}
-        className="bg-white text-black" 
+        className="bg-white text-black"
       >
         <div style={{ textAlign: 'center', marginBottom: '20px', fontWeight: 'bold', fontSize: '14pt' }}>
           SELF DECLARATION
