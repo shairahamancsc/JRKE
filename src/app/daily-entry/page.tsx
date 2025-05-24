@@ -16,6 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { DAILY_ENTRIES_STORAGE_KEY, LABOURS_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
 import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 const DailyEntryForm = lazy(() => import('@/components/daily-entry/daily-entry-form').then(module => ({ default: module.DailyEntryForm })));
 
@@ -53,7 +54,7 @@ export default function DailyEntryPage() {
       if (storedLabours) {
         setLabours(JSON.parse(storedLabours));
       } else {
-        setLabours([]); // Initialize to empty array if not found
+        setLabours([]); 
         console.warn(`${LABOURS_STORAGE_KEY} not found in localStorage for daily entry page. Labours list will be empty.`);
       }
     } catch (error) {
@@ -76,7 +77,7 @@ export default function DailyEntryPage() {
     const labour = labours.find(l => l.id === labourId);
     return {
       name: labour?.name || 'Unknown Labour',
-      photoUrl: labour?.photoUrl // Changed from photoPreview
+      photoUrl: labour?.photoUrl 
     };
   }, [labours]);
 
@@ -111,7 +112,7 @@ export default function DailyEntryPage() {
         advanceRemarks: advanceAmount && advanceAmount > 0 ? entryData.advanceRemarks : undefined,
         workLocation: entryData.attendanceStatus === 'present' ? formData.workLocation : undefined,
         labourName: labourInfo.name,
-        labourPhotoPreview: labourInfo.photoUrl, // Using photoUrl from getLabourInfo
+        labourPhotoPreview: labourInfo.photoUrl,
       };
       newDailyEntriesList.push(dailyEntry);
 
@@ -173,14 +174,14 @@ export default function DailyEntryPage() {
       .map(e => `${e.labourName || 'Unknown Labour'}: ₹${e.advanceAmount?.toFixed(2)}`);
     const advancesTakenText = advancesTakenList.length > 0 ? advancesTakenList.join('\n- ') : 'No advances taken';
 
-    let message = `${formattedDate}\n\n`;
-    message += `Present:\n- ${presentLaboursText}\n\n`;
+    let message = `*Daily Report: ${formattedDate}*\n\n`;
+    message += `*Present Labours (${presentLaboursList.length}):*\n- ${presentLaboursText}\n\n`;
     if (workLocation && presentLaboursList.length > 0) {
-      message += `Work Info:\n${workLocation}\n\n`;
+      message += `*Work Information:*\n${workLocation}\n\n`;
     } else if (presentLaboursList.length > 0) {
-      message += `Work Info:\nNot Specified\n\n`;
+      message += `*Work Information:*\nNot Specified\n\n`;
     }
-    message += `Advances:\n- ${advancesTakenText}`;
+    message += `*Advances Taken (${advancesTakenList.length}):*\n- ${advancesTakenText}`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message.trim())}`;
     window.open(whatsappUrl, '_blank');
@@ -234,7 +235,7 @@ export default function DailyEntryPage() {
               className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white dark:text-white"
             >
               <Share2 className="mr-2 h-5 w-5" />
-              Share via WhatsApp
+              Share Report
             </Button>
           )}
         </div>
@@ -259,29 +260,34 @@ export default function DailyEntryPage() {
           const isExpanded = expandedDates.has(dateStr);
 
           return (
-            <Card key={dateStr} className="shadow-md overflow-hidden">
+            <Card key={dateStr} className="shadow-md overflow-hidden bg-card hover:shadow-lg transition-shadow duration-200">
               <CardHeader
-                className="flex flex-row items-center justify-between space-y-0 p-4 bg-card hover:bg-muted/50 cursor-pointer"
+                className="flex flex-row items-center justify-between space-y-0 p-4 bg-card hover:bg-muted/30 cursor-pointer"
                 onClick={() => toggleDateExpansion(dateStr)}
               >
-                <CardTitle className="text-lg font-semibold">
-                  {format(parseISO(dateStr), 'PPP')}
-                </CardTitle>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>{presentEntries.length} Present</span>
-                  <span>{absentEntries.length} Absent</span>
-                  <span>{advanceEntries.length} Advances</span>
-                  {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                <div>
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    {format(parseISO(dateStr), 'PPP')}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    {format(parseISO(dateStr), 'eeee')}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap justify-end">
+                  <Badge variant="outline" className="border-green-500/50 text-green-700 dark:text-green-300 bg-green-500/10">{presentEntries.length} Present</Badge>
+                  <Badge variant="outline" className="border-red-500/50 text-red-700 dark:text-red-300 bg-red-500/10">{absentEntries.length} Absent</Badge>
+                  <Badge variant="outline" className="border-blue-500/50 text-blue-700 dark:text-blue-300 bg-blue-500/10">{advanceEntries.length} Advances</Badge>
+                  {isExpanded ? <ChevronUp className="h-5 w-5 ml-2" /> : <ChevronDown className="h-5 w-5 ml-2" />}
                 </div>
               </CardHeader>
               {isExpanded && (
-                <CardContent className="p-4 pt-0 border-t">
+                <CardContent className="p-4 pt-0 border-t border-border/50">
                   <ScrollArea className="max-h-[60vh]">
                      <div className="space-y-4 pt-4 pr-3">
                         {workLocations.size > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-semibold text-md mb-2 flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary" />Work Location(s)</h4>
-                            <ul className="list-disc list-inside pl-2 text-muted-foreground space-y-1">
+                          <div className="mb-4 p-3 rounded-md bg-muted/30 border border-border/50">
+                            <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-foreground"><Briefcase className="h-5 w-5 text-primary" />Work Location(s)</h4>
+                            <ul className="list-disc list-inside pl-2 text-muted-foreground space-y-1 text-sm">
                               {Array.from(workLocations).map((loc, i) => <li key={i}>{loc || 'Not specified'}</li>)}
                             </ul>
                           </div>
@@ -289,19 +295,21 @@ export default function DailyEntryPage() {
                         <Accordion type="multiple" defaultValue={['present', 'absent', 'advances']}>
                           {presentEntries.length > 0 && (
                              <AccordionItem value="present">
-                                <AccordionTrigger className="text-md font-medium text-green-700 dark:text-green-400 hover:no-underline">
+                                <AccordionTrigger className="text-md font-medium text-green-700 dark:text-green-400 hover:no-underline hover:text-green-600 dark:hover:text-green-300">
                                   Present ({presentEntries.length})
                                 </AccordionTrigger>
-                                <AccordionContent className="pl-2">
+                                <AccordionContent className="pl-1">
                                    <div className="space-y-3 mt-2">
                                       {presentEntries.map(entry => (
-                                         <div key={entry.id} className="flex items-center gap-3 p-2 rounded-md bg-background/50 border">
-                                            <Avatar className="h-9 w-9">
-                                              <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face"/>
-                                              <AvatarFallback><UserCircle2 className="h-5 w-5"/></AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium text-sm">{entry.labourName || 'Unknown Labour'}</span>
-                                         </div>
+                                         <Card key={entry.id} className="p-3 bg-background/70 border border-border/50 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-10 w-10 border">
+                                                  <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face"/>
+                                                  <AvatarFallback><UserCircle2 className="h-5 w-5"/></AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-medium text-sm text-foreground">{entry.labourName || 'Unknown Labour'}</span>
+                                            </div>
+                                         </Card>
                                       ))}
                                    </div>
                                 </AccordionContent>
@@ -309,19 +317,21 @@ export default function DailyEntryPage() {
                           )}
                            {absentEntries.length > 0 && (
                              <AccordionItem value="absent">
-                                <AccordionTrigger className="text-md font-medium text-red-700 dark:text-red-400 hover:no-underline">
+                                <AccordionTrigger className="text-md font-medium text-red-700 dark:text-red-400 hover:no-underline hover:text-red-600 dark:hover:text-red-300">
                                   Absent ({absentEntries.length})
                                 </AccordionTrigger>
-                                <AccordionContent className="pl-2">
+                                <AccordionContent className="pl-1">
                                    <div className="space-y-3 mt-2">
                                       {absentEntries.map(entry => (
-                                         <div key={entry.id} className="flex items-center gap-3 p-2 rounded-md bg-background/50 border">
-                                            <Avatar className="h-9 w-9">
-                                              <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face"/>
-                                              <AvatarFallback><UserCircle2 className="h-5 w-5"/></AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium text-sm">{entry.labourName || 'Unknown Labour'}</span>
-                                         </div>
+                                         <Card key={entry.id} className="p-3 bg-background/70 border border-border/50 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-10 w-10 border">
+                                                <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face"/>
+                                                <AvatarFallback><UserCircle2 className="h-5 w-5"/></AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-medium text-sm text-foreground">{entry.labourName || 'Unknown Labour'}</span>
+                                            </div>
+                                         </Card>
                                       ))}
                                    </div>
                                 </AccordionContent>
@@ -329,26 +339,26 @@ export default function DailyEntryPage() {
                           )}
                            {advanceEntries.length > 0 && (
                              <AccordionItem value="advances">
-                                <AccordionTrigger className="text-md font-medium text-blue-700 dark:text-blue-400 hover:no-underline">
+                                <AccordionTrigger className="text-md font-medium text-blue-700 dark:text-blue-400 hover:no-underline hover:text-blue-600 dark:hover:text-blue-300">
                                   Advances ({advanceEntries.length})
                                 </AccordionTrigger>
-                                <AccordionContent className="pl-2">
+                                <AccordionContent className="pl-1">
                                   <div className="space-y-3 mt-2">
                                     {advanceEntries.map(entry => (
-                                      <Card key={`${entry.id}-advance`} className="p-3 bg-background/50 border">
+                                      <Card key={`${entry.id}-advance`} className="p-3 bg-background/70 border border-border/50 shadow-sm">
                                          <div className="flex items-center gap-3 mb-2">
-                                            <Avatar className="h-9 w-9">
+                                            <Avatar className="h-10 w-10 border">
                                               <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face"/>
                                               <AvatarFallback><UserCircle2 className="h-5 w-5"/></AvatarFallback>
                                             </Avatar>
-                                            <span className="font-medium text-sm">{entry.labourName || 'Unknown Labour'}</span>
+                                            <span className="font-medium text-sm text-foreground">{entry.labourName || 'Unknown Labour'}</span>
                                          </div>
-                                        <div className="text-sm space-y-1 pl-12">
+                                        <div className="text-sm space-y-1.5 pl-12">
                                           <div className="flex items-center gap-1.5">
-                                            <IndianRupee className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                            <span className="font-semibold">₹{entry.advanceAmount?.toFixed(2)}</span>
+                                            <IndianRupee className="h-4 w-4 text-accent flex-shrink-0" />
+                                            <span className="font-semibold text-foreground">₹{entry.advanceAmount?.toFixed(2)}</span>
                                             {entry.advancePaymentMethod && (
-                                                <Badge variant="secondary" className="ml-2 whitespace-nowrap text-xs">
+                                                <Badge variant="secondary" className="ml-2 whitespace-nowrap text-xs py-0.5 px-2">
                                                    <Landmark className="inline h-3 w-3 mr-1 text-muted-foreground" />
                                                    {paymentMethodLabels[entry.advancePaymentMethod] || entry.advancePaymentMethod}
                                                 </Badge>
@@ -357,7 +367,7 @@ export default function DailyEntryPage() {
                                           {entry.advanceRemarks && (
                                             <div className="flex items-start gap-1.5">
                                               <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                              <p className="text-muted-foreground">{entry.advanceRemarks}</p>
+                                              <p className="text-muted-foreground text-xs">{entry.advanceRemarks}</p>
                                             </div>
                                           )}
                                         </div>
@@ -397,3 +407,4 @@ export default function DailyEntryPage() {
     </div>
   );
 }
+

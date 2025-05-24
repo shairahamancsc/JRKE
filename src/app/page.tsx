@@ -70,7 +70,7 @@ export default function DashboardPage() {
           return false;
         }
       });
-      setFilteredEntries(filtered);
+      setFilteredEntries(filtered.sort((a,b) => (a.labourName || "").localeCompare(b.labourName || "")));
     } else {
       setFilteredEntries([]);
     }
@@ -117,7 +117,7 @@ export default function DashboardPage() {
             <Card key={index} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                <card.icon className={`h-5 w-5 ${card.color}`} />
+                <card.icon className={cn("h-5 w-5", card.color)} />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">{card.value}</div>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
 
 
       <h2 className="text-2xl font-semibold mb-6 text-foreground">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Adjusted for 3 columns */}
         {quickLinks.map((link, index) => (
           <Link href={link.href} key={index} passHref>
             <Button variant="outline" className="w-full h-20 justify-start p-4 text-left shadow-sm hover:shadow-md transition-shadow duration-300 bg-card hover:bg-accent/10">
@@ -141,6 +141,12 @@ export default function DashboardPage() {
             </Button>
           </Link>
         ))}
+         <Link href="/gst-calculator" passHref>
+            <Button variant="outline" className="w-full h-20 justify-start p-4 text-left shadow-sm hover:shadow-md transition-shadow duration-300 bg-card hover:bg-accent/10">
+              <IndianRupee className="h-6 w-6 mr-3 text-primary" /> {/* Changed Calculator icon to IndianRupee */}
+              <span className="text-md font-medium text-card-foreground">GST Calculator</span>
+            </Button>
+          </Link>
       </div>
 
       <Card className="mt-10 shadow-lg">
@@ -184,68 +190,77 @@ export default function DashboardPage() {
               {isLoading ? (
                 <p className="text-muted-foreground">Loading entries...</p>
               ) : filteredEntries.length > 0 ? (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 rounded-md border p-4 bg-background/50">
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 rounded-md border p-4 bg-background/50">
                   {filteredEntries.map((entry) => (
-                    <Card key={entry.id} className="p-4 bg-card shadow-sm">
-                      <div className="flex items-center justify-between gap-2 mb-2">
+                    <Card key={entry.id} className="p-4 bg-card shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between gap-2 mb-3">
                         <div className="flex items-center gap-3 flex-grow min-w-0">
-                          <Avatar className="h-10 w-10 flex-shrink-0">
+                          <Avatar className="h-11 w-11 flex-shrink-0 border">
                             <AvatarImage src={entry.labourPhotoPreview} alt={entry.labourName || "Labour"} data-ai-hint="person face" />
-                            <AvatarFallback>
-                              {entry.labourName && entry.labourName.length > 0 ? entry.labourName.charAt(0).toUpperCase() : <UserCircle2 className="h-5 w-5 text-muted-foreground" />}
+                            <AvatarFallback className="text-lg">
+                              {entry.labourName && entry.labourName.length > 0 ? entry.labourName.charAt(0).toUpperCase() : <UserCircle2 className="h-6 w-6 text-muted-foreground" />}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-grow min-w-0">
-                            <p className="font-medium text-sm truncate" title={entry.labourName || 'Unknown Labour'}>{entry.labourName || 'Unknown Labour'}</p>
+                            <p className="font-semibold text-md truncate text-foreground" title={entry.labourName || 'Unknown Labour'}>{entry.labourName || 'Unknown Labour'}</p>
                           </div>
                         </div>
                         <Badge
-                          variant={entry.attendanceStatus === 'present' ? 'default' : 'secondary'}
-                          className={`whitespace-nowrap flex-shrink-0 ${entry.attendanceStatus === 'present' ?
-                                      'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30 dark:bg-green-700/30 dark:text-green-300 dark:border-green-700/40 dark:hover:bg-green-700/40' :
-                                      'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30 dark:bg-red-700/30 dark:text-red-300 dark:border-red-700/40 dark:hover:bg-red-700/40'}`}
+                          variant={entry.attendanceStatus === 'present' ? 'default' : 'destructive'}
+                          className={cn("whitespace-nowrap flex-shrink-0 py-1 px-3 text-xs",
+                            entry.attendanceStatus === 'present' ? 
+                            'bg-green-100 text-green-700 border-green-300 dark:bg-green-700/20 dark:text-green-300 dark:border-green-700/30' :
+                            'bg-red-100 text-red-700 border-red-300 dark:bg-red-700/20 dark:text-red-300 dark:border-red-700/30'
+                          )}
                         >
                           {entry.attendanceStatus.charAt(0).toUpperCase() + entry.attendanceStatus.slice(1)}
                         </Badge>
                       </div>
 
                       {((entry.attendanceStatus === 'present' && entry.workLocation) || (entry.advanceAmount && entry.advanceAmount > 0)) && (
-                        <div className="mt-2 pt-2 border-t border-border/50 text-xs space-y-1">
+                        <div className="mt-3 pt-3 border-t border-border/60 text-sm space-y-2">
                           {entry.attendanceStatus === 'present' && entry.workLocation && (
-                            <div className="flex items-start gap-1.5">
-                              <Briefcase className="h-3.5 w-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-                              <p className="text-muted-foreground"><span className="font-medium text-foreground/90">Work:</span> {entry.workLocation}</p>
+                            <div className="flex items-start gap-2 text-muted-foreground">
+                              <Briefcase className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                              <div>
+                                <span className="font-medium text-foreground/90">Work:</span> {entry.workLocation}
+                              </div>
                             </div>
                           )}
                           {entry.advanceAmount && entry.advanceAmount > 0 && (
                             <>
-                              <div className="flex items-start gap-1.5">
-                                <IndianRupee className="h-3.5 w-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                <p className="text-muted-foreground">
+                              <div className="flex items-start gap-2 text-muted-foreground">
+                                <IndianRupee className="h-4 w-4 mt-0.5 text-accent flex-shrink-0" />
+                                <div>
                                   <span className="font-medium text-foreground/90">Advance:</span> ₹{entry.advanceAmount.toFixed(2)}
                                   {entry.advancePaymentMethod && (
-                                    <>
-                                      <Landmark className="inline h-3 w-3 ml-2 mr-0.5 text-muted-foreground" />
-                                      {paymentMethodLabels[entry.advancePaymentMethod] || entry.advancePaymentMethod}
-                                    </>
+                                    <Badge variant="secondary" className="ml-2 text-xs">
+                                       <Landmark className="inline h-3 w-3 mr-1 text-muted-foreground" />
+                                       {paymentMethodLabels[entry.advancePaymentMethod] || entry.advancePaymentMethod}
+                                    </Badge>
                                   )}
-                                </p>
+                                </div>
                               </div>
                               {entry.advanceRemarks && (
-                                <div className="flex items-start gap-1.5">
-                                  <Info className="h-3.5 w-3.5 mt-0.5 text-muted-foreground flex-shrink-0" />
-                                  <p className="text-muted-foreground"><span className="font-medium text-foreground/90">Remarks:</span> {entry.advanceRemarks}</p>
+                                <div className="flex items-start gap-2 text-muted-foreground">
+                                  <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                  <div>
+                                    <span className="font-medium text-foreground/90">Remarks:</span> {entry.advanceRemarks}
+                                  </div>
                                 </div>
                               )}
                             </>
                           )}
                         </div>
                       )}
+                      {entry.attendanceStatus === 'absent' && !(entry.advanceAmount && entry.advanceAmount > 0) && (
+                         <p className="text-xs text-center text-muted-foreground/70 italic mt-2">No work or advance details for absent labour.</p>
+                      )}
                     </Card>
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-4">No attendance records found for this date.</p>
+                <p className="text-muted-foreground text-center py-6">No attendance records found for this date.</p>
               )}
             </div>
           )}
@@ -255,3 +270,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
