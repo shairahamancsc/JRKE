@@ -13,9 +13,10 @@ import { PanelLeft } from 'lucide-react';
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { BottomToolbar } from '@/components/layout/bottom-toolbar';
 import { SplashScreen } from '@/components/layout/splash-screen';
-import { AuthProvider } from '@/context/auth-context'; // Import AuthProvider
-import { AuthGuard } from '@/components/layout/auth-guard'; // Import AuthGuard
-import FloatingShapesBackground from '@/components/layout/floating-shapes-background'; // Import the new background component
+import { AuthProvider } from '@/context/auth-context';
+import { AuthGuard } from '@/components/layout/auth-guard';
+import FloatingShapesBackground from '@/components/layout/floating-shapes-background';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -44,7 +45,6 @@ export default function RootLayout({
        return () => clearTimeout(removeTimer);
     }, 2000);
 
-    // Register Service Worker for PWA capabilities
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
@@ -72,17 +72,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <AuthProvider> {/* Wrap everything in AuthProvider */}
+        <AuthProvider>
           <SplashScreen isVisible={showSplash} />
-          <AuthGuard> {/* Wrap main content structure in AuthGuard */}
+          <AuthGuard>
             <ThemeProvider
               attribute="class"
               defaultTheme="system"
               enableSystem
               disableTransitionOnChange
             >
-              <FloatingShapesBackground /> {/* Add the floating shapes background here */}
-              {/* Conditionally render content after splash screen timeout */}
+              <FloatingShapesBackground />
               <div className={showContent ? 'animate-slide-in-up-main' : 'opacity-0'}>
                   <SidebarProvider defaultOpen>
                     <MainSidebar />
@@ -98,6 +97,7 @@ export default function RootLayout({
                   <Toaster />
                   <BottomToolbar />
               </div>
+              <SpeedInsights />
             </ThemeProvider>
           </AuthGuard>
         </AuthProvider>
