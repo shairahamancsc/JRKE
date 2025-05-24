@@ -292,8 +292,8 @@ export default function SelfDeclarationFormPage() {
 
         <div style={{ marginTop: '40px' }}>
           <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>DEPONENT/APPLICANT</div>
-          <div style={{ marginBottom: '5px' }}>Name: {currentData.deponentName || '[Applicant Name]'}</div>
-          <div style={{ marginBottom: '20px' }}>Contact No: {currentData.contactNo || '[Contact No.]'}</div>
+          <div style={{ marginBottom: '5px' }}>Name: <strong>{currentData.deponentName || '[Applicant Name]'}</strong></div>
+          <div style={{ marginBottom: '20px' }}>Contact No: <strong>{currentData.contactNo || '[Contact No.]'}</strong></div>
           <div>Signature: _________________________</div>
         </div>
       </div>
