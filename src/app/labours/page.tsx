@@ -3,33 +3,51 @@
 
 import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, UserCircle2, Loader2, FileText, Phone, Smartphone, IndianRupee } from 'lucide-react';
+import { PlusCircle, UserCircle2, Loader2, FileText } from 'lucide-react';
 import { DataTable } from '@/components/common/data-table';
 import type { Labour } from '@/lib/types';
-import { initialLabours } from '@/lib/data';
+// import { initialLabours } from '@/lib/data'; // No longer used for initialization here
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LABOURS_STORAGE_KEY } from '@/lib/storageKeys';
-import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
+// import { LABOURS_STORAGE_KEY } from '@/lib/storageKeys'; // No longer using localStorage directly here
+// import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage'; // No longer using this hook here
+import { getAllLabours, addLabour, updateLabour, deleteLabourById } from '@/lib/labour-actions';
+import { uploadLabourPhoto } from '@/lib/actions'; // For photo uploads to Vercel Blob
 
 const LabourForm = lazy(() => import('@/components/labours/labour-form').then(module => ({ default: module.LabourForm })));
 
 export default function LaboursPage() {
-  const [labours, setLabours] = useDebouncedLocalStorage<Labour[]>(
-    LABOURS_STORAGE_KEY,
-    initialLabours // This will initialize if the key is not found or data is invalid
-  );
+  const [labours, setLabours] = useState<Labour[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingLabour, setEditingLabour] = useState<Labour | undefined>(undefined);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const { toast } = useToast();
 
+  const fetchLabours = useCallback(async () => {
+    setIsLoadingData(true);
+    try {
+      const serverLabours = await getAllLabours();
+      setLabours(serverLabours);
+    } catch (error) {
+      console.error("Failed to fetch labours:", error);
+      toast({
+        title: "Error",
+        description: "Could not load labours from the server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
+    fetchLabours();
     if (typeof window !== "undefined" && window.location.hash === "#add") {
       setIsFormOpen(true);
       window.location.hash = ""; 
     }
-  }, []);
+  }, [fetchLabours]);
 
   const handleAddLabour = useCallback(() => {
     setEditingLabour(undefined);
@@ -41,44 +59,59 @@ export default function LaboursPage() {
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteLabour = useCallback((labourToDelete: Labour) => {
-    setLabours(prevLabours => prevLabours.filter(l => l.id !== labourToDelete.id));
-    toast({
-      title: "Labour Deleted",
-      description: `${labourToDelete.name} has been removed.`,
-      variant: "destructive",
-    });
-  }, [setLabours, toast]);
-
-  // This function receives the final Labour object, potentially with photoUrl
-  const saveLabour = useCallback((labourToSave: Labour) => {
-    // The photoFile is handled by the form and server action; we save the resulting photoUrl
-    const finalLabourData: Labour = {
-        ...labourToSave, 
-        // photoUrl is already set by the form logic after upload
-        // Other previews (aadhaar, pan, license) are still data URIs for now
-    };
-
-    if (editingLabour) {
-      setLabours(prevLabours => prevLabours.map(l => l.id === finalLabourData.id ? finalLabourData : l));
-      toast({ title: "Labour Updated", description: `${finalLabourData.name}'s details have been updated.` });
-    } else {
-      setLabours(prevLabours => [finalLabourData, ...prevLabours]);
-      toast({ title: "Labour Added", description: `${finalLabourData.name} has been added.` });
+  const handleDeleteLabour = useCallback(async (labourToDelete: Labour) => {
+    try {
+      await deleteLabourById(labourToDelete.id);
+      setLabours(prevLabours => prevLabours.filter(l => l.id !== labourToDelete.id));
+      toast({
+        title: "Labour Deleted",
+        description: `${labourToDelete.name} has been removed.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Failed to delete labour:", error);
+      toast({
+        title: "Error Deleting Labour",
+        description: "Could not delete labour. Please try again.",
+        variant: "destructive",
+      });
     }
-    setIsFormOpen(false);
-    setEditingLabour(undefined);
-  }, [editingLabour, setLabours, toast]);
+  }, [toast]);
 
-  const handleFormSubmit = useCallback((labourData: Labour) => {
-    // labourData already contains photoUrl if a photo was uploaded/changed
-    saveLabour(labourData);
-  }, [saveLabour]);
+  const handleFormSubmit = useCallback(async (submittedLabourData: Labour) => {
+    // Photo upload is handled within LabourForm which calls uploadLabourPhoto server action
+    // and passes the photoUrl in submittedLabourData.
+    // File fields like photoFile, aadhaarFile etc. are not part of the Labour type stored on server.
+    const { photoFile, aadhaarFile, panFile, licenseFile, ...storableLabourData } = submittedLabourData;
 
+    try {
+      if (editingLabour) {
+        const updated = await updateLabour(storableLabourData);
+        setLabours(prevLabours => prevLabours.map(l => l.id === updated.id ? updated : l));
+        toast({ title: "Labour Updated", description: `${updated.name}'s details have been updated.` });
+      } else {
+        // For addLabour, we pass data excluding 'id' as it's generated by the action.
+        // Also, file objects are not passed to server action for adding, only their URLs/previews after upload.
+        const { id, ...dataForAdd } = storableLabourData; 
+        const newLabour = await addLabour(dataForAdd);
+        setLabours(prevLabours => [newLabour, ...prevLabours]);
+        toast({ title: "Labour Added", description: `${newLabour.name} has been added.` });
+      }
+      setIsFormOpen(false);
+      setEditingLabour(undefined);
+    } catch (error) {
+      console.error("Failed to save labour:", error);
+      toast({
+        title: "Error Saving Labour",
+        description: "Could not save labour details. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [editingLabour, toast]);
 
   const columns = React.useMemo(() => [
     { 
-      accessorKey: 'photoUrl' as keyof Labour, // Changed from photoPreview
+      accessorKey: 'photoUrl' as keyof Labour,
       header: 'Photo',
       cell: (item: Labour) => (
         <Avatar className="h-10 w-10">
@@ -125,7 +158,7 @@ export default function LaboursPage() {
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{doc.name} uploaded</p>
+                  <p>{doc.name} uploaded (preview only)</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -134,6 +167,15 @@ export default function LaboursPage() {
       )
     }
   ], []);
+
+  if (isLoadingData) {
+    return (
+      <div className="container mx-auto py-8 flex justify-center items-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <span className="ml-2">Loading labours...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8">
