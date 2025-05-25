@@ -10,4 +10,4 @@ export const SUPERVISORS_STORAGE_KEY = 'jrk-supervisors';
 export const PROPRIETOR_DOCUMENTS_STORAGE_KEY = 'jrk-proprietor-documents';
 
 // Vercel KV specific keys (example for labours)
-export const LABOURS_KV_STORAGE_KEY = 'jrk-labours-kv'; // New key for Vercel KV
+export const LABOURS_KV_STORAGE_KEY = 'jrk_labours'; // Changed hyphen to underscore

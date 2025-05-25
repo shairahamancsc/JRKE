@@ -4,7 +4,7 @@
 import { kv } from '@vercel/kv';
 import type { Labour } from './types';
 
-const LABOURS_KV_KEY = 'jrk-labours';
+const LABOURS_KV_KEY = 'jrk_labours'; // Changed hyphen to underscore
 
 export async function getAllLabours(): Promise<Labour[]> {
   try {
