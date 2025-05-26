@@ -3,15 +3,13 @@
 
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Download, Trash2, Eye, FileText, Loader2, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Download, Trash2, Loader2, FileText } from 'lucide-react';
 import { DataTable } from '@/components/common/data-table';
-import type { ProprietorDocument, ProprietorDocumentTypeValue } from '@/lib/types';
-import { initialProprietorDocuments, proprietorDocumentTypesList } from '@/lib/data';
+import type { ProprietorDocument } from '@/lib/types';
+import { proprietorDocumentTypesList } from '@/lib/data';
 import { format, parseISO } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
-import { PROPRIETOR_DOCUMENTS_STORAGE_KEY } from '@/lib/storageKeys';
-import useDebouncedLocalStorage from '@/hooks/useDebouncedLocalStorage';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,79 +19,109 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { getAllProprietorDocuments, deleteProprietorDocument } from '@/lib/proprietor-document-actions';
 
-const ProprietorDocumentForm = lazy(() => 
+const ProprietorDocumentForm = lazy(() =>
   import('@/components/proprietor-documents/proprietor-document-form').then(module => ({ default: module.ProprietorDocumentForm }))
 );
 
-// Utility function, can be outside the component
 const getDocumentTypeLabelUtil = (value: string) => {
   return proprietorDocumentTypesList.find(dt => dt.value === value)?.label || value;
 };
 
-
 export default function ProprietorDocumentsPage() {
-  const [documents, setDocuments] = useDebouncedLocalStorage<ProprietorDocument[]>(
-    PROPRIETOR_DOCUMENTS_STORAGE_KEY,
-    initialProprietorDocuments
-  );
+  const [documents, setDocuments] = useState<ProprietorDocument[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const { toast } = useToast();
+
+  const fetchDocuments = useCallback(async () => {
+    setIsLoadingData(true);
+    try {
+      const serverDocuments = await getAllProprietorDocuments();
+      setDocuments(serverDocuments);
+    } catch (error) {
+      console.error("Failed to fetch documents:", error);
+      toast({
+        title: "Error Loading Documents",
+        description: "Could not load documents from the server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
   const handleAddDocument = useCallback(() => {
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteDocument = useCallback((docToDelete: ProprietorDocument) => {
-    setDocuments(prevDocs => prevDocs.filter(d => d.id !== docToDelete.id));
-    toast({
-      title: "Document Deleted",
-      description: `${docToDelete.documentName} (${docToDelete.fileName}) has been removed.`,
-      variant: "destructive",
-    });
-  }, [setDocuments, toast]);
+  const handleDeleteDocument = useCallback(async (docToDelete: ProprietorDocument) => {
+    try {
+      await deleteProprietorDocument(docToDelete.id, docToDelete.blobUrl);
+      setDocuments(prevDocs => prevDocs.filter(d => d.id !== docToDelete.id));
+      toast({
+        title: "Document Deleted",
+        description: `${docToDelete.documentName} (${docToDelete.fileName}) has been removed.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Failed to delete document:", error);
+      toast({
+        title: "Error Deleting Document",
+        description: "Could not delete document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
-  const handleFormSubmit = useCallback((docData: ProprietorDocument) => {
-      setDocuments(prevDocs => [docData, ...prevDocs].sort((a, b) => parseISO(b.uploadedAt).getTime() - parseISO(a.uploadedAt).getTime()));
-      toast({ title: "Document Uploaded", description: `${docData.documentName} (${docData.fileName}) has been uploaded.` });
-    setIsFormOpen(false);
-  }, [setDocuments, toast]);
+  const handleFormSubmitSuccess = useCallback((newDocument: ProprietorDocument) => {
+    setDocuments(prevDocs => [newDocument, ...prevDocs].sort((a, b) => parseISO(b.uploadedAt).getTime() - parseISO(a.uploadedAt).getTime()));
+    // Toast is handled within the form on successful addProprietorDocument call
+  }, []);
 
-  const handleDownload = useCallback((fileDataUrl: string, fileName: string) => {
+
+  const handleDownload = useCallback((blobUrl: string, fileName: string) => {
+    // For public Vercel Blob URLs, a direct link is often enough.
+    // If blobs were private, you'd need a server action to generate a signed URL.
     try {
       const link = document.createElement('a');
-      link.href = fileDataUrl;
-      link.download = fileName;
+      link.href = blobUrl;
+      link.target = "_blank"; // Open in new tab to let browser handle download/display
+      link.download = fileName; // Suggest filename
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       toast({ title: "Download Started", description: `${fileName} is downloading.` });
     } catch (error) {
-      console.error("Error downloading file:", error);
+      console.error("Error initiating download:", error);
       toast({ title: "Download Error", description: `Could not start download for ${fileName}.`, variant: "destructive" });
     }
   }, [toast]);
 
   const columns = useMemo(() => [
-    { 
-      accessorKey: (item: ProprietorDocument) => getDocumentTypeLabelUtil(item.documentType), 
-      header: 'Document Type' 
+    {
+      accessorKey: (item: ProprietorDocument) => getDocumentTypeLabelUtil(item.documentType),
+      header: 'Document Type'
     },
-    { 
-      accessorKey: 'documentName' as keyof ProprietorDocument, 
+    {
+      accessorKey: 'documentName' as keyof ProprietorDocument,
       header: 'Document Name',
     },
-    { 
-      accessorKey: 'fileName' as keyof ProprietorDocument, 
+    {
+      accessorKey: 'fileName' as keyof ProprietorDocument,
       header: 'File Name',
       cell: (item: ProprietorDocument) => (
         <span className="truncate" title={item.fileName}>{item.fileName}</span>
       )
     },
-    { 
-      accessorKey: 'uploadedAt' as keyof ProprietorDocument, 
+    {
+      accessorKey: 'uploadedAt' as keyof ProprietorDocument,
       header: 'Uploaded At',
       cell: (item: ProprietorDocument) => format(parseISO(item.uploadedAt), 'PPP p')
     },
@@ -102,10 +130,10 @@ export default function ProprietorDocumentsPage() {
       header: 'Actions',
       cell: (item: ProprietorDocument) => (
         <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => handleDownload(item.fileDataUrl, item.fileName)}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleDownload(item.blobUrl, item.fileName)}
             aria-label="Download document"
           >
             <Download className="h-4 w-4" />
@@ -121,7 +149,7 @@ export default function ProprietorDocumentsPage() {
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete the document
-                  <span className="font-semibold"> {item.documentName} ({item.fileName})</span>.
+                  <span className="font-semibold"> {item.documentName} ({item.fileName})</span> and its associated file.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -137,6 +165,15 @@ export default function ProprietorDocumentsPage() {
     },
   ], [handleDownload, handleDeleteDocument]);
 
+  if (isLoadingData) {
+    return (
+      <div className="container mx-auto py-8 flex justify-center items-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <span className="ml-2">Loading documents...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col items-start sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
@@ -144,27 +181,15 @@ export default function ProprietorDocumentsPage() {
           <h1 className="text-3xl font-bold text-foreground">Proprietor Documents</h1>
           <p className="text-muted-foreground mt-1">Manage company GST, PAN, Aadhaar, and other important documents.</p>
         </div>
-        <Button 
-          onClick={handleAddDocument} 
+        <Button
+          onClick={handleAddDocument}
           className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground self-stretch sm:self-auto"
         >
           <PlusCircle className="mr-2 h-5 w-5" /> Upload Document
         </Button>
       </div>
-      
-      <Card className="mb-6 bg-destructive/5 border-destructive/20 shadow-sm">
-        <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
-          <AlertTriangle className="h-6 w-6 text-destructive mt-1 flex-shrink-0" />
-          <div>
-            <CardTitle className="text-lg text-destructive">Storage & Security Notice</CardTitle>
-            <CardDescription className="text-destructive/80">
-              Documents are stored in your browser's local storage. This is suitable for demo purposes only. 
-              For production, use secure server-side storage. Do not upload highly sensitive personal data.
-              Clearing browser data will remove these documents.
-            </CardDescription>
-          </div>
-        </CardHeader>
-      </Card>
+
+      {/* Removed the localStorage warning card */}
 
       {documents.length === 0 && !isFormOpen ? (
         <Card>
@@ -176,9 +201,10 @@ export default function ProprietorDocumentsPage() {
         <DataTable
           columns={columns}
           data={documents}
+          // Edit functionality is not implemented in this scope for proprietor documents
+          // onDelete is handled by the AlertDialog within the cell
         />
       )}
-
 
       {isFormOpen && (
         <Suspense fallback={
@@ -191,10 +217,8 @@ export default function ProprietorDocumentsPage() {
         }>
           <ProprietorDocumentForm
             isOpen={isFormOpen}
-            onClose={() => {
-              setIsFormOpen(false);
-            }}
-            onSubmit={handleFormSubmit}
+            onClose={() => setIsFormOpen(false)}
+            onSubmitSuccess={handleFormSubmitSuccess}
           />
         </Suspense>
       )}

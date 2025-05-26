@@ -7,7 +7,8 @@ export const DAILY_ENTRIES_STORAGE_KEY = 'jrk-labor-management-daily-entries';
 export const AUTH_STORAGE_KEY = 'jrk-auth-status';
 export const CURRENT_USER_STORAGE_KEY = 'jrk-current-user';
 export const SUPERVISORS_STORAGE_KEY = 'jrk-supervisors';
-export const PROPRIETOR_DOCUMENTS_STORAGE_KEY = 'jrk-proprietor-documents';
+export const PROPRIETOR_DOCUMENTS_STORAGE_KEY = 'jrk-proprietor-documents'; // To be replaced by Vercel KV
 
-// Vercel KV specific keys (example for labours)
-export const LABOURS_KV_STORAGE_KEY = 'jrk_labours'; // Changed hyphen to underscore
+// Vercel KV specific keys
+export const LABOURS_KV_STORAGE_KEY = 'jrk_labours';
+export const PROPRIETOR_DOCUMENTS_KV_KEY = 'jrk_proprietor_documents';

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,8 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea'; // For document name if type is 'other'
-import { FileUp, Eye, FileText, AlertCircle } from 'lucide-react';
+import { FileUp, Eye, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,16 +22,18 @@ import {
 } from '@/components/ui/dialog';
 import type { ProprietorDocument, ProprietorDocumentTypeValue } from '@/lib/types';
 import { proprietorDocumentTypesList } from '@/lib/data';
+import { uploadProprietorDocumentFile, addProprietorDocument } from '@/lib/proprietor-document-actions';
+import { useToast } from '@/hooks/use-toast';
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 const proprietorDocumentSchema = z.object({
   documentType: z.custom<ProprietorDocumentTypeValue>(
-    (val) => proprietorDocumentTypesList.some(type => type.value === val), 
+    (val) => proprietorDocumentTypesList.some(type => type.value === val),
     { message: "Document type is required" }
   ),
-  documentName: z.string().min(1, "Document name is required"), // Will be pre-filled or for 'other'
+  documentName: z.string().min(1, "Document name is required"),
   file: z.instanceof(File, { message: "File is required." })
     .refine(file => file.size > 0, "File cannot be empty.")
     .refine(file => file.size <= MAX_FILE_SIZE_BYTES, `File size must be less than ${MAX_FILE_SIZE_MB}MB.`),
@@ -43,19 +44,20 @@ type ProprietorDocumentFormData = z.infer<typeof proprietorDocumentSchema>;
 interface ProprietorDocumentFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ProprietorDocument) => void;
-  defaultValues?: ProprietorDocument; // For editing, though not implemented yet
+  onSubmitSuccess: (newDocument: ProprietorDocument) => void;
 }
 
-export function ProprietorDocumentForm({ isOpen, onClose, onSubmit, defaultValues }: ProprietorDocumentFormProps) {
-  const [filePreview, setFilePreview] = useState<string | undefined>(defaultValues?.fileDataUrl);
-  const [currentFileType, setCurrentFileType] = useState<string | undefined>(defaultValues?.fileType);
-  
+export function ProprietorDocumentForm({ isOpen, onClose, onSubmitSuccess }: ProprietorDocumentFormProps) {
+  const [localFilePreview, setLocalFilePreview] = useState<string | undefined>(undefined);
+  const [currentFileType, setCurrentFileType] = useState<string | undefined>(undefined);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+
   const { control, register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ProprietorDocumentFormData>({
     resolver: zodResolver(proprietorDocumentSchema),
     defaultValues: {
-      documentType: defaultValues?.documentType || proprietorDocumentTypesList[0]?.value,
-      documentName: defaultValues?.documentName || '',
+      documentType: proprietorDocumentTypesList[0]?.value,
+      documentName: proprietorDocumentTypesList[0]?.label,
       file: undefined,
     },
   });
@@ -64,18 +66,17 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmit, defaultValue
 
   useEffect(() => {
     if (isOpen) {
-      const initialType = defaultValues?.documentType || proprietorDocumentTypesList[0]?.value;
-      const initialName = defaultValues?.documentName || 
-                          (initialType !== 'other' ? proprietorDocumentTypesList.find(dt => dt.value === initialType)?.label : '') || '';
+      const initialType = proprietorDocumentTypesList[0]?.value;
+      const initialName = proprietorDocumentTypesList.find(dt => dt.value === initialType)?.label || '';
       reset({
         documentType: initialType,
         documentName: initialName,
         file: undefined,
       });
-      setFilePreview(defaultValues?.fileDataUrl);
-      setCurrentFileType(defaultValues?.fileType);
+      setLocalFilePreview(undefined);
+      setCurrentFileType(undefined);
     }
-  }, [defaultValues, reset, isOpen]);
+  }, [reset, isOpen]);
 
   useEffect(() => {
     if (selectedDocumentType && selectedDocumentType !== 'other') {
@@ -83,10 +84,10 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmit, defaultValue
       if (typeLabel) {
         setValue('documentName', typeLabel, { shouldValidate: true });
       }
-    } else if (selectedDocumentType === 'other' && !defaultValues) {
-       setValue('documentName', '', { shouldValidate: true }); // Clear if switching to other and not editing
+    } else if (selectedDocumentType === 'other') {
+       setValue('documentName', '', { shouldValidate: true });
     }
-  }, [selectedDocumentType, setValue, defaultValues]);
+  }, [selectedDocumentType, setValue]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -95,41 +96,64 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmit, defaultValue
       setCurrentFileType(file.type);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFilePreview(reader.result as string);
+        setLocalFilePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     } else {
       setValue('file', undefined, { shouldValidate: true });
-      setFilePreview(undefined);
+      setLocalFilePreview(undefined);
       setCurrentFileType(undefined);
     }
   };
 
-  const handleFormSubmitInternal: SubmitHandler<ProprietorDocumentFormData> = (data) => {
-    if (!data.file || !filePreview) {
-      // This case should ideally be caught by Zod, but as a fallback
-      console.error("File or file preview is missing.");
+  const handleFormSubmitInternal: SubmitHandler<ProprietorDocumentFormData> = async (data) => {
+    if (!data.file) {
+      toast({ title: "Error", description: "No file selected.", variant: "destructive" });
       return;
     }
-    onSubmit({
-      id: defaultValues?.id || crypto.randomUUID(),
-      documentType: data.documentType,
-      documentName: data.documentName,
-      fileName: data.file.name,
-      fileDataUrl: filePreview, // filePreview is the data URL
-      fileType: data.file.type,
-      uploadedAt: new Date().toISOString(),
-    });
-    onClose();
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', data.file);
+
+    try {
+      const uploadResult = await uploadProprietorDocumentFile(formData);
+      if (!uploadResult.success || !uploadResult.url) {
+        toast({ title: "File Upload Failed", description: uploadResult.error || "Could not upload file.", variant: "destructive" });
+        setIsUploading(false);
+        return;
+      }
+
+      const documentMetadata: Omit<ProprietorDocument, 'id' | 'uploadedAt'> = {
+        documentType: data.documentType,
+        documentName: data.documentName,
+        fileName: data.file.name,
+        blobUrl: uploadResult.url,
+        fileType: data.file.type,
+      };
+      
+      // uploadedAt will be set by the server action
+      const newDocument = await addProprietorDocument(documentMetadata as Omit<ProprietorDocument, 'id'>); // Cast to satisfy type, uploadedAt is added by server
+
+      onSubmitSuccess(newDocument); // Pass the full document object with server-set ID and uploadedAt
+      toast({ title: "Document Uploaded", description: `${newDocument.documentName} has been successfully uploaded.` });
+      onClose();
+
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      toast({ title: "Submission Error", description: "An error occurred. Please try again.", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const renderPreview = () => {
-    if (!filePreview) return null;
+    if (!localFilePreview) return null;
     if (currentFileType?.startsWith('image/')) {
-      return <Image src={filePreview} alt="File preview" width={120} height={80} className="rounded-md object-contain border" data-ai-hint="document image"/>;
+      return <Image src={localFilePreview} alt="File preview" width={120} height={80} className="rounded-md object-contain border" data-ai-hint="document scan" />;
     }
     if (currentFileType === 'application/pdf') {
-      return <a href={filePreview} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 p-2 border rounded-md bg-muted/50"><FileText className="h-5 w-5" /> View PDF Preview</a>;
+      return <a href={localFilePreview} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 p-2 border rounded-md bg-muted/50"><FileText className="h-5 w-5" /> View PDF Preview</a>;
     }
     return <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50 flex items-center gap-1"><FileText className="h-5 w-5" />{watch('file')?.name || 'File Selected'}</div>;
   };
@@ -138,7 +162,7 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmit, defaultValue
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{defaultValues ? 'Edit Document' : 'Upload Proprietor Document'}</DialogTitle>
+          <DialogTitle>Upload Proprietor Document</DialogTitle>
           <DialogDescription>
             Select document type, provide a name, and upload the file. Max file size: {MAX_FILE_SIZE_MB}MB.
           </DialogDescription>
@@ -169,45 +193,45 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmit, defaultValue
 
           <div>
             <Label htmlFor="documentName">Document Name</Label>
-            <Input 
-              id="documentName" 
-              {...register('documentName')} 
+            <Input
+              id="documentName"
+              {...register('documentName')}
               className={errors.documentName ? 'border-destructive' : ''}
-              readOnly={selectedDocumentType !== 'other' && !defaultValues} // Readonly if not 'other' unless editing
+              readOnly={selectedDocumentType !== 'other'}
               placeholder={selectedDocumentType === 'other' ? "Enter a name for this document" : "Pre-filled based on type"}
             />
             {errors.documentName && <p className="text-xs text-destructive mt-1">{errors.documentName.message}</p>}
           </div>
-          
+
           <div>
-            <Label htmlFor="file" className="flex items-center gap-1 cursor-pointer text-primary hover:underline">
+            <Label htmlFor="file-upload-proprietor" className="flex items-center gap-1 cursor-pointer text-primary hover:underline">
               <FileUp className="h-4 w-4" />
-              {filePreview ? "Change File" : "Upload File"}
+              {localFilePreview ? "Change File" : "Upload File"}
             </Label>
-            <Input 
-              id="file" 
-              type="file" 
-              accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" 
+            <Input
+              id="file-upload-proprietor" // Unique ID for this input
+              type="file"
+              accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+              {...register('file')} // Use register from useForm
               onChange={handleFileChange}
-              className="hidden" // Hidden because Label acts as trigger
+              className="hidden"
             />
-            {filePreview && <div className="mt-2">{renderPreview()}</div>}
+            {localFilePreview && <div className="mt-2">{renderPreview()}</div>}
             {errors.file && <p className="text-xs text-destructive mt-1">{errors.file.message}</p>}
           </div>
-          
+
           {watch('file') && watch('file')!.size > MAX_FILE_SIZE_BYTES && (
             <p className="text-xs text-destructive flex items-center gap-1">
               <AlertCircle className="h-4 w-4"/> File size exceeds {MAX_FILE_SIZE_MB}MB limit.
             </p>
           )}
 
-
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline" disabled={isUploading}>Cancel</Button>
             </DialogClose>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              {defaultValues ? 'Save Changes' : 'Upload Document'}
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isUploading}>
+              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Upload Document'}
             </Button>
           </DialogFooter>
         </form>

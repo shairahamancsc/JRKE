@@ -83,16 +83,17 @@ export type ProprietorDocumentTypeValue = typeof proprietorDocumentTypes[number]
 export interface ProprietorDocument {
   id: string;
   documentType: ProprietorDocumentTypeValue;
-  documentName: string; // User-provided name for the document, e.g., "Office Lease Agreement" if type is "Other"
+  documentName: string;
   fileName: string;
-  fileDataUrl: string; // Store file as data URI for easy download (consider moving to Blob URL too)
+  blobUrl: string; // Changed from fileDataUrl
   uploadedAt: string; // ISO date string
   fileType?: string; // MIME type of the file
+  // fileDataUrl is removed, file content is now in Vercel Blob referenced by blobUrl
 }
 
 // Renamed PayrollRow to PaymentRow
 export interface PaymentRow {
-  id: string; 
+  id: string;
   labourName: string;
   salaryRate: number;
   presentDays: number;
