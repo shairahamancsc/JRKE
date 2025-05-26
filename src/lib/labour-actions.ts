@@ -4,7 +4,7 @@
 import { kv } from '@vercel/kv';
 import type { Labour } from './types';
 
-const LABOURS_KV_KEY = 'jrk_labours'; // Changed hyphen to underscore
+const LABOURS_KV_KEY = 'jrk_labours';
 
 export async function getAllLabours(): Promise<Labour[]> {
   try {
@@ -12,38 +12,90 @@ export async function getAllLabours(): Promise<Labour[]> {
     return labours || [];
   } catch (error) {
     console.error("Error fetching labours from KV:", error);
+    // In a production app, you might want to throw the error or return a more specific error object.
     return [];
   }
 }
 
-export async function addLabour(labourData: Omit<Labour, 'id' | 'photoFile' | 'aadhaarFile' | 'panFile' | 'licenseFile'>): Promise<Labour> {
+export async function addLabour(
+  labourDataFromClient: Omit<Labour, 'id'> // Type received from client might include File objects
+): Promise<Labour> {
   try {
     const labours = await getAllLabours();
-    const newLabour: Labour = {
-      ...labourData,
+
+    // Destructure and explicitly exclude File objects.
+    // Only store serializable data (like photoUrl, aadhaarPreview, etc.) in KV.
+    const {
+      photoFile,      // Exclude
+      aadhaarFile,    // Exclude
+      panFile,        // Exclude
+      licenseFile,    // Exclude
+      ...storableClientData // This contains photoUrl, aadhaarPreview etc. if they were set
+    } = labourDataFromClient;
+
+    const newLabourForKV: Labour = {
+      ...storableClientData, // Spread the serializable fields
       id: crypto.randomUUID(),
-      // File related fields (photoFile, etc.) are handled client-side for upload then URL is stored
+      // Ensure all fields of Labour type are defined, even if undefined from client
+      name: storableClientData.name,
+      details: storableClientData.details,
+      photoUrl: storableClientData.photoUrl,
+      phoneNo: storableClientData.phoneNo,
+      emergencyPhoneNo: storableClientData.emergencyPhoneNo,
+      aadhaarNo: storableClientData.aadhaarNo,
+      panNo: storableClientData.panNo,
+      aadhaarPreview: storableClientData.aadhaarPreview,
+      panPreview: storableClientData.panPreview,
+      licensePreview: storableClientData.licensePreview,
+      salaryRate: storableClientData.salaryRate,
     };
-    const updatedLabours = [...labours, newLabour];
+
+    const updatedLabours = [...labours, newLabourForKV];
     await kv.set(LABOURS_KV_KEY, updatedLabours);
-    return newLabour;
+    return newLabourForKV; // Return the data as it was stored in KV
   } catch (error) {
     console.error("Error adding labour to KV:", error);
     throw new Error("Failed to add labour.");
   }
 }
 
-export async function updateLabour(updatedLabourData: Labour): Promise<Labour> {
+export async function updateLabour(
+  updatedLabourDataFromClient: Labour // Type received from client might include File objects
+): Promise<Labour> {
   try {
     let labours = await getAllLabours();
-    // Remove file fields as they are not part of the stored Labour model in KV directly
-    const { photoFile, aadhaarFile, panFile, licenseFile, ...storableLabourData } = updatedLabourData;
+
+    // Destructure and explicitly exclude File objects.
+    const {
+      photoFile,      // Exclude
+      aadhaarFile,    // Exclude
+      panFile,        // Exclude
+      licenseFile,    // Exclude
+      ...storableClientData
+    } = updatedLabourDataFromClient;
+    
+    // Ensure all fields of Labour type are defined for the update
+    const updatedLabourForKV: Labour = {
+        id: storableClientData.id, // id must be present for update
+        name: storableClientData.name,
+        details: storableClientData.details,
+        photoUrl: storableClientData.photoUrl,
+        phoneNo: storableClientData.phoneNo,
+        emergencyPhoneNo: storableClientData.emergencyPhoneNo,
+        aadhaarNo: storableClientData.aadhaarNo,
+        panNo: storableClientData.panNo,
+        aadhaarPreview: storableClientData.aadhaarPreview,
+        panPreview: storableClientData.panPreview,
+        licensePreview: storableClientData.licensePreview,
+        salaryRate: storableClientData.salaryRate,
+    };
+
 
     labours = labours.map(labour =>
-      labour.id === storableLabourData.id ? storableLabourData : labour
+      labour.id === updatedLabourForKV.id ? updatedLabourForKV : labour
     );
     await kv.set(LABOURS_KV_KEY, labours);
-    return storableLabourData;
+    return updatedLabourForKV; // Return the data as it was stored in KV
   } catch (error) {
     console.error("Error updating labour in KV:", error);
     throw new Error("Failed to update labour.");
