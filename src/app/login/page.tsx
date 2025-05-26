@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
@@ -59,11 +59,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
            <div className="flex justify-center mb-4">
-            <div className="relative h-12 w-auto"> {/* Removed fixed aspect ratio */}
+            <div className="relative h-12 w-auto overflow-hidden"> {/* Removed fixed aspect ratio, added w-auto */}
               <Image
                 src="/jrk-logo.png"
                 alt="JRK Enterprises Logo"
                 fill
+                sizes="100vw"
                 className="object-contain"
               />
             </div>

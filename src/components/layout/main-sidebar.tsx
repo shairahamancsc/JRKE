@@ -2,14 +2,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 import { usePathname } from "next/navigation";
 import {
   Users,
   IndianRupee,
   ClipboardList,
   LayoutDashboard,
-  // Building, // No longer needed here
   ClipboardCheck,
   LogOut,
   UserPlus,
@@ -75,11 +74,12 @@ export function MainSidebar() {
           <SheetTitle className="sr-only">Main Navigation Menu</SheetTitle>
         )}
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-          <div className="relative h-7 w-auto text-sidebar-primary"> {/* Removed fixed aspect ratio */}
+          <div className="relative h-7 w-auto text-sidebar-primary overflow-hidden"> {/* Added w-auto and overflow-hidden */}
             <Image
               src="/jrk-logo.png"
               alt="JRK Logo"
               fill
+              sizes="100vw"
               className="object-contain"
             />
           </div>
