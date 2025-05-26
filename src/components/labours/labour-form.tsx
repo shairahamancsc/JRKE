@@ -22,11 +22,11 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import type { Labour } from '@/lib/types';
-import { uploadLabourPhoto } from '@/lib/actions'; // Import the server action
+import { uploadLabourPhoto } from '@/lib/actions'; 
 import { useToast } from '@/hooks/use-toast';
 
 
-const phoneRegex = /^[6-9]\d{9}$/; // Indian mobile number regex
+const phoneRegex = /^[6-9]\d{9}$/; 
 
 const labourSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -63,7 +63,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<LabourFormData>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<LabourFormData>({
     resolver: zodResolver(labourSchema),
     defaultValues: {
       name: defaultValues?.name || '',
@@ -76,9 +76,13 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       aadhaarFile: undefined,
       panFile: undefined,
       licenseFile: undefined,
-      salaryRate: defaultValues?.salaryRate ?? undefined, // Ensure undefined if not provided
+      salaryRate: defaultValues?.salaryRate ?? undefined, 
     },
   });
+
+  const aadhaarFileValue = watch('aadhaarFile');
+  const panFileValue = watch('panFile');
+  const licenseFileValue = watch('licenseFile');
 
   React.useEffect(() => {
     if (isOpen) { 
@@ -95,7 +99,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
         licenseFile: undefined,
         salaryRate: defaultValues?.salaryRate ?? undefined,
       });
-      setPhotoLocalPreview(defaultValues?.photoUrl); // Use photoUrl for existing preview
+      setPhotoLocalPreview(defaultValues?.photoUrl); 
       setAadhaarPreview(defaultValues?.aadhaarPreview);
       setPanPreview(defaultValues?.panPreview);
       setLicensePreview(defaultValues?.licensePreview);
@@ -104,7 +108,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
 
   const handleFileChange = useCallback((
     event: React.ChangeEvent<HTMLInputElement>,
-    setLocalPreview: React.Dispatch<React.SetStateAction<string | undefined>>,
+    setLocalPreviewState: React.Dispatch<React.SetStateAction<string | undefined>>,
     fileField: keyof LabourFormData
   ) => {
     const file = event.target.files?.[0];
@@ -112,18 +116,24 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       setValue(fileField, file, { shouldValidate: true });
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLocalPreview(reader.result as string);
+        setLocalPreviewState(reader.result as string);
       };
       reader.readAsDataURL(file);
     } else {
       setValue(fileField, undefined, { shouldValidate: true });
-      if (fileField === 'photoFile' && defaultValues?.photoUrl) {
-        setLocalPreview(defaultValues.photoUrl);
+      if (fileField === 'photoFile') {
+        setLocalPreviewState(defaultValues?.photoUrl);
+      } else if (fileField === 'aadhaarFile') {
+        setLocalPreviewState(defaultValues?.aadhaarPreview);
+      } else if (fileField === 'panFile') {
+        setLocalPreviewState(defaultValues?.panPreview);
+      } else if (fileField === 'licenseFile') {
+        setLocalPreviewState(defaultValues?.licensePreview);
       } else {
-         setLocalPreview(undefined);
+        setLocalPreviewState(undefined);
       }
     }
-  }, [setValue, defaultValues?.photoUrl]);
+  }, [setValue, defaultValues]);
 
 
   const handleFormSubmitInternal: SubmitHandler<LabourFormData> = useCallback(async (data) => {
@@ -166,7 +176,6 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       emergencyPhoneNo: data.emergencyPhoneNo,
       aadhaarNo: data.aadhaarNo,
       panNo: data.panNo,
-      // Pass File objects to onSubmit as Labour type expects them; they are stripped by server actions.
       photoFile: data.photoFile ?? undefined, 
       aadhaarFile: data.aadhaarFile ?? undefined,
       aadhaarPreview: data.aadhaarFile ? aadhaarPreview : defaultValues?.aadhaarPreview,
@@ -174,7 +183,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       panPreview: data.panFile ? panPreview : defaultValues?.panPreview,
       licenseFile: data.licenseFile ?? undefined,
       licensePreview: data.licenseFile ? licensePreview : defaultValues?.licensePreview,
-      salaryRate: data.salaryRate ?? undefined, // Ensure undefined is passed if not set
+      salaryRate: data.salaryRate ?? undefined, 
     });
     setIsUploading(false);
     onClose();
@@ -275,43 +284,49 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
 
           <div className="space-y-2">
             <Label htmlFor="aadhaarFile">Aadhaar Card (Optional)</Label>
-            {aadhaarPreview && <div className="mt-1 mb-2">{renderPreview(aadhaarPreview, "Aadhaar Card Preview", "document id")}</div>}
             <Input 
               id="aadhaarFile" 
               type="file" 
               accept="image/*,application/pdf" 
-              {...register('aadhaarFile')}
               onChange={(e) => handleFileChange(e, setAadhaarPreview, 'aadhaarFile')}
               className="file:text-primary file:font-semibold"
             />
+            {aadhaarFileValue && (
+              <p className="text-xs text-muted-foreground mt-1">Selected: {aadhaarFileValue.name}</p>
+            )}
+            {aadhaarPreview && <div className="mt-1 mb-2">{renderPreview(aadhaarPreview, "Aadhaar Card Preview", "document id")}</div>}
             {errors.aadhaarFile && <p className="text-xs text-destructive mt-1">{errors.aadhaarFile.message}</p>}
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="panFile">PAN Card (Optional)</Label>
-             {panPreview && <div className="mt-1 mb-2">{renderPreview(panPreview, "PAN Card Preview", "document id")}</div>}
             <Input 
               id="panFile" 
               type="file" 
               accept="image/*,application/pdf" 
-              {...register('panFile')}
               onChange={(e) => handleFileChange(e, setPanPreview, 'panFile')}
               className="file:text-primary file:font-semibold"
             />
+            {panFileValue && (
+              <p className="text-xs text-muted-foreground mt-1">Selected: {panFileValue.name}</p>
+            )}
+            {panPreview && <div className="mt-1 mb-2">{renderPreview(panPreview, "PAN Card Preview", "document id")}</div>}
             {errors.panFile && <p className="text-xs text-destructive mt-1">{errors.panFile.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="licenseFile">Driving License (Optional)</Label>
-            {licensePreview && <div className="mt-1 mb-2">{renderPreview(licensePreview, "Driving License Preview", "document id")}</div>}
             <Input 
               id="licenseFile" 
               type="file" 
               accept="image/*,application/pdf" 
-              {...register('licenseFile')}
               onChange={(e) => handleFileChange(e, setLicensePreview, 'licenseFile')}
               className="file:text-primary file:font-semibold"
             />
+            {licenseFileValue && (
+              <p className="text-xs text-muted-foreground mt-1">Selected: {licenseFileValue.name}</p>
+            )}
+            {licensePreview && <div className="mt-1 mb-2">{renderPreview(licensePreview, "Driving License Preview", "document id")}</div>}
             {errors.licenseFile && <p className="text-xs text-destructive mt-1">{errors.licenseFile.message}</p>}
           </div>
 
@@ -328,8 +343,3 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
     </Dialog>
   );
 }
-
-
-    
-
-    

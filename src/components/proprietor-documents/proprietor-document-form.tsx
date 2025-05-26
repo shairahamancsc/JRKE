@@ -63,6 +63,7 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmitSuccess }: Pro
   });
 
   const selectedDocumentType = watch('documentType');
+  const currentFile = watch('file'); // Watch the file field
 
   useEffect(() => {
     if (isOpen) {
@@ -132,10 +133,9 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmitSuccess }: Pro
         fileType: data.file.type,
       };
       
-      // uploadedAt will be set by the server action
-      const newDocument = await addProprietorDocument(documentMetadata as Omit<ProprietorDocument, 'id'>); // Cast to satisfy type, uploadedAt is added by server
+      const newDocument = await addProprietorDocument(documentMetadata as Omit<ProprietorDocument, 'id'>); 
 
-      onSubmitSuccess(newDocument); // Pass the full document object with server-set ID and uploadedAt
+      onSubmitSuccess(newDocument); 
       toast({ title: "Document Uploaded", description: `${newDocument.documentName} has been successfully uploaded.` });
       onClose();
 
@@ -209,13 +209,18 @@ export function ProprietorDocumentForm({ isOpen, onClose, onSubmitSuccess }: Pro
               {localFilePreview ? "Change File" : "Upload File"}
             </Label>
             <Input
-              id="file-upload-proprietor" // Unique ID for this input
+              id="file-upload-proprietor" 
               type="file"
               accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
-              {...register('file')} // Use register from useForm
+              {...register('file')} 
               onChange={handleFileChange}
               className="hidden"
             />
+            {currentFile && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Selected file: {currentFile.name}
+              </p>
+            )}
             {localFilePreview && <div className="mt-2">{renderPreview()}</div>}
             {errors.file && <p className="text-xs text-destructive mt-1">{errors.file.message}</p>}
           </div>
