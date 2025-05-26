@@ -31,7 +31,7 @@ const phoneRegex = /^[6-9]\d{9}$/; // Indian mobile number regex
 const labourSchema = z.object({
   name: z.string().min(1, "Name is required"),
   details: z.string().min(1, "Details are required"),
-  photoFile: z.instanceof(File).optional().nullable(), // Allow null
+  photoFile: z.instanceof(File).optional().nullable(),
   phoneNo: z.string().optional().or(z.literal('')).refine(val => !val || phoneRegex.test(val), {
     message: "Invalid phone number format (must be 10 digits starting with 6-9).",
   }),
@@ -40,9 +40,9 @@ const labourSchema = z.object({
   }),
   aadhaarNo: z.string().optional().or(z.literal('')),
   panNo: z.string().optional().or(z.literal('')),
-  aadhaarFile: z.instanceof(File).optional().nullable(), // Allow null
-  panFile: z.instanceof(File).optional().nullable(),     // Allow null
-  licenseFile: z.instanceof(File).optional().nullable(), // Allow null
+  aadhaarFile: z.instanceof(File).optional().nullable(),
+  panFile: z.instanceof(File).optional().nullable(),
+  licenseFile: z.instanceof(File).optional().nullable(),
   salaryRate: z.coerce.number().min(0, "Salary rate must be a non-negative number.").optional(),
 });
 
@@ -274,7 +274,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="aadhaarFile">Aadhaar Card</Label>
+            <Label htmlFor="aadhaarFile">Aadhaar Card (Optional)</Label>
             {aadhaarPreview && <div className="mt-1 mb-2">{renderPreview(aadhaarPreview, "Aadhaar Card Preview", "document id")}</div>}
             <Input 
               id="aadhaarFile" 
@@ -288,7 +288,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="panFile">PAN Card</Label>
+            <Label htmlFor="panFile">PAN Card (Optional)</Label>
              {panPreview && <div className="mt-1 mb-2">{renderPreview(panPreview, "PAN Card Preview", "document id")}</div>}
             <Input 
               id="panFile" 
@@ -329,5 +329,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
   );
 }
 
+
+    
 
     
