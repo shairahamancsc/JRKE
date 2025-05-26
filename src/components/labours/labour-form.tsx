@@ -31,7 +31,7 @@ const phoneRegex = /^[6-9]\d{9}$/; // Indian mobile number regex
 const labourSchema = z.object({
   name: z.string().min(1, "Name is required"),
   details: z.string().min(1, "Details are required"),
-  photoFile: z.instanceof(File).optional(),
+  photoFile: z.instanceof(File).optional().nullable(), // Allow null
   phoneNo: z.string().optional().or(z.literal('')).refine(val => !val || phoneRegex.test(val), {
     message: "Invalid phone number format (must be 10 digits starting with 6-9).",
   }),
@@ -40,10 +40,10 @@ const labourSchema = z.object({
   }),
   aadhaarNo: z.string().optional().or(z.literal('')),
   panNo: z.string().optional().or(z.literal('')),
-  aadhaarFile: z.instanceof(File).optional(),
-  panFile: z.instanceof(File).optional(),
-  licenseFile: z.instanceof(File).optional(),
-  salaryRate: z.coerce.number().min(0, "Salary rate must be a positive number.").optional(),
+  aadhaarFile: z.instanceof(File).optional().nullable(), // Allow null
+  panFile: z.instanceof(File).optional().nullable(),     // Allow null
+  licenseFile: z.instanceof(File).optional().nullable(), // Allow null
+  salaryRate: z.coerce.number().min(0, "Salary rate must be a non-negative number.").optional(),
 });
 
 type LabourFormData = z.infer<typeof labourSchema>;
@@ -76,7 +76,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       aadhaarFile: undefined,
       panFile: undefined,
       licenseFile: undefined,
-      salaryRate: defaultValues?.salaryRate,
+      salaryRate: defaultValues?.salaryRate ?? undefined, // Ensure undefined if not provided
     },
   });
 
@@ -93,7 +93,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
         aadhaarFile: undefined,
         panFile: undefined,
         licenseFile: undefined,
-        salaryRate: defaultValues?.salaryRate,
+        salaryRate: defaultValues?.salaryRate ?? undefined,
       });
       setPhotoLocalPreview(defaultValues?.photoUrl); // Use photoUrl for existing preview
       setAadhaarPreview(defaultValues?.aadhaarPreview);
@@ -106,20 +106,17 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
     event: React.ChangeEvent<HTMLInputElement>,
     setLocalPreview: React.Dispatch<React.SetStateAction<string | undefined>>,
     fileField: keyof LabourFormData
-    // defaultPreview?: string // Removed, not needed for local file changes
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setValue(fileField, file);
+      setValue(fileField, file, { shouldValidate: true });
       const reader = new FileReader();
       reader.onloadend = () => {
         setLocalPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     } else {
-      setValue(fileField, undefined);
-      // If clearing a new file, and there was an existing defaultValues.photoUrl, revert to it.
-      // For photoFile, revert to defaultValues.photoUrl if it exists
+      setValue(fileField, undefined, { shouldValidate: true });
       if (fileField === 'photoFile' && defaultValues?.photoUrl) {
         setLocalPreview(defaultValues.photoUrl);
       } else {
@@ -160,25 +157,24 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
       }
     }
 
-    // For other documents, we're still using local previews for now.
-    // A full Vercel Blob integration would require similar upload logic for them.
     onSubmit({
       id: defaultValues?.id || crypto.randomUUID(),
       name: data.name,
       details: data.details,
-      photoUrl: finalPhotoUrl, // Use the URL from Vercel Blob or existing
-      // photoFile is not part of the final Labour object stored
+      photoUrl: finalPhotoUrl,
       phoneNo: data.phoneNo,
       emergencyPhoneNo: data.emergencyPhoneNo,
       aadhaarNo: data.aadhaarNo,
       panNo: data.panNo,
-      aadhaarFile: data.aadhaarFile, // Keep for now, for consistency if not uploading to Blob
+      // Pass File objects to onSubmit as Labour type expects them; they are stripped by server actions.
+      photoFile: data.photoFile ?? undefined, 
+      aadhaarFile: data.aadhaarFile ?? undefined,
       aadhaarPreview: data.aadhaarFile ? aadhaarPreview : defaultValues?.aadhaarPreview,
-      panFile: data.panFile,
+      panFile: data.panFile ?? undefined,
       panPreview: data.panFile ? panPreview : defaultValues?.panPreview,
-      licenseFile: data.licenseFile,
+      licenseFile: data.licenseFile ?? undefined,
       licensePreview: data.licenseFile ? licensePreview : defaultValues?.licensePreview,
-      salaryRate: data.salaryRate,
+      salaryRate: data.salaryRate ?? undefined, // Ensure undefined is passed if not set
     });
     setIsUploading(false);
     onClose();
@@ -221,7 +217,7 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
               id="photoFile" 
               type="file" 
               accept="image/*" 
-              {...register('photoFile')} // Use register here
+              {...register('photoFile')}
               onChange={(e) => handleFileChange(e, setPhotoLocalPreview, 'photoFile')} 
               className="hidden"
             />
@@ -332,3 +328,6 @@ export function LabourForm({ isOpen, onClose, onSubmit, defaultValues }: LabourF
     </Dialog>
   );
 }
+
+
+    
