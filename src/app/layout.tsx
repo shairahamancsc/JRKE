@@ -16,7 +16,7 @@ import { SplashScreen } from '@/components/layout/splash-screen';
 import { AuthProvider } from '@/context/auth-context';
 import { AuthGuard } from '@/components/layout/auth-guard';
 import FloatingShapesBackground from '@/components/layout/floating-shapes-background';
-import { SpeedInsights } from "@vercel/speed-insights/next";
+// Removed Vercel Speed Insights for Netlify compatibility
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -97,7 +97,7 @@ export default function RootLayout({
                   <Toaster />
                   <BottomToolbar />
               </div>
-              <SpeedInsights />
+              {/* <SpeedInsights /> Removed for Netlify compatibility */}
             </ThemeProvider>
           </AuthGuard>
         </AuthProvider>
