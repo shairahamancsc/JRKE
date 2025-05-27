@@ -1,9 +1,11 @@
 
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+// Removed 'import type { NextRequest } from 'next/server';' as it's TypeScript syntax.
+// The 'request' parameter will implicitly be of type NextRequest by Next.js.
+// For explicit type hinting in a .js file, JSDoc can be used if desired.
 
 // This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
+export function middleware(request) { // Removed ': NextRequest' type annotation
   // Example: You could add logic here, like redirecting or setting headers.
   // For instance, to log the path being accessed:
   // console.log('Middleware triggered for path:', request.nextUrl.pathname);
