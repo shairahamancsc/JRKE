@@ -2,7 +2,8 @@
 "use client";
 
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import React, { useState, useEffect } from 'react';
 import './globals.css';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -18,15 +19,9 @@ import { AuthGuard } from '@/components/layout/auth-guard';
 import FloatingShapesBackground from '@/components/layout/floating-shapes-background';
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+// Note: The 'geist' package handles its own font loading.
+// We don't need to instantiate it like with next/font/google.
+// The imported GeistSans and GeistMono objects directly provide .variable.
 
 export default function RootLayout({
   children,
@@ -69,7 +64,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="JRK App" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>

@@ -11,19 +11,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Example model
-// model Example {
-//   id        String   @id @default(cuid())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// Define your Labour model here
-// model Labour {
-//   id                String    @id @default(cuid())
-//   name              String
-//   details           String
-//   photoUrl          String?
+// Define your models here, e.g.,
+// model User {
+//   id    Int    @id @default(autoincrement())
+//   email String @unique
 //   phoneNo           String?
 //   emergencyPhoneNo  String?
 //   aadhaarNo         String?
@@ -34,3 +25,9 @@ datasource db {
 //   salaryRate        Float?
 //   // Define other fields and relationships as needed
 // }
+
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String?
+}
