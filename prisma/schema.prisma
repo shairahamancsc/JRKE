@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // This will come from your Vercel Postgres
+  // directUrl = env("DIRECT_DATABASE_URL") // Optional: for specific use cases like Vercel Data Cache
+}
+
+// Example model - you will replace this with your actual data models
+// (e.g., Labour, AdvancePayment, DailyLogEntry, etc.)
+model Example {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String?
+}
+
+// Example of how you might define a Labour model:
+// model Labour {
+//   id                String    @id @default(cuid())
+//   name              String
+//   details           String
+//   photoUrl          String?
+//   phoneNo           String?
+//   emergencyPhoneNo  String?
+//   aadhaarNo         String?
+//   panNo             String?
+//   aadhaarPreview    String?   // Or consider storing these as related file records if needed
+//   panPreview        String?
+//   licensePreview    String?
+//   salaryRate        Float?
+//   createdAt         DateTime  @default(now())
+//   updatedAt         DateTime  @updatedAt
+//   // Define relations to other models like DailyLogEntry, AdvancePayment if needed
+//   // dailyEntries      DailyLogEntry[]
+//   // advancePayments   AdvancePayment[]
+// }
+
