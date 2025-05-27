@@ -36,15 +36,9 @@ const completionCertificateSchema = z.object({
   district: z.string().min(1, "District is required"),
   state: z.string().min(1, "State is required"),
   installationCategory: z.string().min(1, "Category is required"),
-  installationPurposeDetails: z.string().min(1, "Purpose details are required"),
+  // installationPurposeDetails: z.string().min(1, "Purpose details are required"), // Removed
   equipment: z.string().min(1, "Equipment details are required"),
   totalLoad: z.coerce.number().positive("Total load must be a positive number"),
-  // Removed optional wiring fields
-  // typeOfSystemWiring: z.string().optional(),
-  // conductorSizeDetails: z.string().optional(),
-  // overheadLineSpec: z.string().optional(),
-  // lengthOfLine: z.string().optional(),
-  // averageSpanLength: z.string().optional(),
 });
 
 type CompletionCertificateFormData = z.infer<typeof completionCertificateSchema>;
@@ -239,11 +233,7 @@ export default function CompletionCertificatePage() {
                   />
                   {errors.installationCategory && <p className="text-xs text-destructive mt-1">{errors.installationCategory.message}</p>}
                 </div>
-                 <div>
-                  <Label htmlFor="installationPurposeDetails">Purpose Details</Label>
-                  <Input id="installationPurposeDetails" {...register('installationPurposeDetails')} className={errors.installationPurposeDetails ? 'border-destructive' : ''} placeholder="e.g., Domestic use, Shop lighting"/>
-                  {errors.installationPurposeDetails && <p className="text-xs text-destructive mt-1">{errors.installationPurposeDetails.message}</p>}
-                </div>
+                {/* Removed installationPurposeDetails field */}
                 <div>
                   <Label htmlFor="equipment">Equipment (for Voltage/System of Supply)</Label>
                   <Input id="equipment" {...register('equipment')} className={errors.equipment ? 'border-destructive' : ''} placeholder="e.g., Lighting, Fans, Motor"/>
@@ -256,8 +246,6 @@ export default function CompletionCertificatePage() {
                 </div>
               </div>
             </div>
-
-            {/* Removed the "Additional Wiring Information (Optional)" form fields section */}
 
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row gap-2 justify-end">
@@ -290,7 +278,7 @@ export default function CompletionCertificatePage() {
           <span style={{ display: 'inline-block', width: '200pt' }}>Of the Electrical Installation</span>: At. {currentData.village || '[Village]'}, Dist. {currentData.district || '[District]'}, {currentData.state || '[State]'}
         </div>
         <div style={{ marginBottom: '15px' }}>
-          <span style={{ display: 'inline-block', width: '200pt' }}>Purpose of installation</span>: {currentData.installationCategory || '[Category]'} {currentData.installationPurposeDetails || '[Purpose Details]'}
+          <span style={{ display: 'inline-block', width: '200pt' }}>Purpose of installation</span>: {currentData.installationCategory || '[Category]'}
         </div>
         <div style={{ marginBottom: '20px' }}>
           <span style={{ display: 'inline-block', width: '200pt' }}>ii. Voltage and System of Supply</span>: 220V, 1-Ph, 50HZ
@@ -310,11 +298,11 @@ export default function CompletionCertificatePage() {
 
         <div style={{ marginBottom: '5px' }}>
             <span style={{ display: 'inline-block', width: '280pt' }}>b) Type of system of wiring:</span>
-            <span>{currentData.typeOfSystemWiring || 'N/A'}</span>
+            <span>N/A</span>
         </div>
         <div style={{ marginBottom: '5px' }}>
             <span style={{ display: 'inline-block', width: '280pt' }}>c) Conductor Size:</span>
-            <span>{currentData.conductorSizeDetails || 'N/A'}</span>
+            <span>N/A</span>
         </div>
         <div style={{ marginBottom: '5px' }}>
           <span style={{ display: 'inline-block', width: '280pt' }}>d) if the work involves installation
@@ -325,13 +313,13 @@ export default function CompletionCertificatePage() {
                 <span style={{ display: 'inline-block', width: '260pt' }}>i) Conductor/Cable Size</span>: 4Sqmm Alu Cable
             </div>
             <div style={{ marginBottom: '5px' }}>
-                <span style={{ display: 'inline-block', width: '260pt' }}>ii) and specification of supports of overhead line</span>: {currentData.overheadLineSpec || 'N/A'}
+                <span style={{ display: 'inline-block', width: '260pt' }}>ii) and specification of supports of overhead line</span>: N/A
             </div>
             <div style={{ marginBottom: '5px' }}>
-                <span style={{ display: 'inline-block', width: '260pt' }}>iii) Length of the line</span>: {currentData.lengthOfLine || 'N/A'}
+                <span style={{ display: 'inline-block', width: '260pt' }}>iii) Length of the line</span>: N/A
             </div>
             <div style={{ marginBottom: '5px' }}>
-                <span style={{ display: 'inline-block', width: '260pt' }}>iv) Average Span Length</span>: {currentData.averageSpanLength || 'N/A'}
+                <span style={{ display: 'inline-block', width: '260pt' }}>iv) Average Span Length</span>: N/A
             </div>
         </div>
         <div style={{ marginBottom: '20px' }}>
