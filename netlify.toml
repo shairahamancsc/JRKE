@@ -1,16 +1,2 @@
-[build]
-  command = "pnpm run build"
-  publish = ".next"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-[build.environment]
-  NODE_VERSION = "20"
-  # Specify the pnpm version based on your package.json's packageManager field
-  PNPM_VERSION = "10.11.0"
-
-# Optional: If you need to run the dev server via Netlify CLI in a specific way
-# [dev]
-#  command = "pnpm run dev" # or next dev -p <port>
-#  port = 9002
+# This file should be deleted for Vercel deployment.
+# Its content is made empty as the AI cannot delete files.
