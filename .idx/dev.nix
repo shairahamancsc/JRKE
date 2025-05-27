@@ -7,7 +7,7 @@
   packages = [
     pkgs.nodejs_20
     pkgs.zulu
-    pkgs.pnpm
+    pkgs.pnpm # orpnpm add prisma --save-dev
   ];
   # Sets environment variables in the workspace
   env = {};

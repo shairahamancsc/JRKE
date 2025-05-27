@@ -2,25 +2,23 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL") // This will come from your Vercel Postgres
-  // directUrl = env("DIRECT_DATABASE_URL") // Optional: for specific use cases like Vercel Data Cache
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// Example model - you will replace this with your actual data models
-// (e.g., Labour, AdvancePayment, DailyLogEntry, etc.)
-model Example {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String?
-}
+// Example model
+// model Example {
+//   id        String   @id @default(cuid())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
 
-// Example of how you might define a Labour model:
+// Define your Labour model here
 // model Labour {
 //   id                String    @id @default(cuid())
 //   name              String
@@ -30,14 +28,9 @@ model Example {
 //   emergencyPhoneNo  String?
 //   aadhaarNo         String?
 //   panNo             String?
-//   aadhaarPreview    String?   // Or consider storing these as related file records if needed
-//   panPreview        String?
-//   licensePreview    String?
+//   aadhaarPreview    String?   // URL or Base64
+//   panPreview        String?   // URL or Base64
+//   licensePreview    String?   // URL or Base64
 //   salaryRate        Float?
-//   createdAt         DateTime  @default(now())
-//   updatedAt         DateTime  @updatedAt
-//   // Define relations to other models like DailyLogEntry, AdvancePayment if needed
-//   // dailyEntries      DailyLogEntry[]
-//   // advancePayments   AdvancePayment[]
+//   // Define other fields and relationships as needed
 // }
-
