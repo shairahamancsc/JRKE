@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -156,5 +157,6 @@ body {
 }
 
 .dark .floating-shape {
-   background-color: hsl(var(--accent) / 0.2); /* Dark mode: Using accent color with 20% opacity */
+   background-color: hsl(var(--accent) / 0.25); /* Dark mode: Using accent color, increased opacity */
 }
+
