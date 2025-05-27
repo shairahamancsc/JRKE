@@ -16,7 +16,7 @@ import {
   Calculator,
   Wallet,
   Printer,
-  Award, // Added Award icon
+  // Award, // Removed Award icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -43,7 +43,7 @@ const navItems = [
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
   { href: "/gst-calculator", label: "GST Calculator", icon: Calculator },
   { href: "/self-declaration-form", label: "Self Declaration", icon: Printer },
-  { href: "/completion-certificate", label: "Completion Cert.", icon: Award }, // New Item
+  // { href: "/completion-certificate", label: "Completion Cert.", icon: Award }, // Removed Completion Certificate
 ];
 
 const adminNavItems = [
