@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Download, Loader2, Award, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -40,11 +39,12 @@ const completionCertificateSchema = z.object({
   installationPurposeDetails: z.string().min(1, "Purpose details are required"),
   equipment: z.string().min(1, "Equipment details are required"),
   totalLoad: z.coerce.number().positive("Total load must be a positive number"),
-  typeOfSystemWiring: z.string().optional(),
-  conductorSizeDetails: z.string().optional(),
-  overheadLineSpec: z.string().optional(),
-  lengthOfLine: z.string().optional(),
-  averageSpanLength: z.string().optional(),
+  // Removed optional wiring fields
+  // typeOfSystemWiring: z.string().optional(),
+  // conductorSizeDetails: z.string().optional(),
+  // overheadLineSpec: z.string().optional(),
+  // lengthOfLine: z.string().optional(),
+  // averageSpanLength: z.string().optional(),
 });
 
 type CompletionCertificateFormData = z.infer<typeof completionCertificateSchema>;
@@ -60,7 +60,6 @@ export default function CompletionCertificatePage() {
       ownerTitle: 'Mr.',
       state: 'Odisha', // Default state
       installationCategory: 'Domestic',
-      // Optional fields are undefined by default
     }
   });
 
@@ -145,8 +144,8 @@ export default function CompletionCertificatePage() {
       display: showPreviewTemplate ? 'block' : 'none',
       width: '210mm',
       minHeight: '297mm',
-      padding: '15mm', // Adjusted padding slightly
-      fontFamily: 'Times New Roman, serif', // Common for certificates
+      padding: '15mm', 
+      fontFamily: 'Times New Roman, serif', 
       fontSize: '12pt',
       lineHeight: '1.6',
       color: '#000',
@@ -258,31 +257,7 @@ export default function CompletionCertificatePage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-                <Label className="font-semibold text-md">Additional Wiring Information (Optional)</Label>
-                <div className="p-4 border rounded-md bg-muted/20 space-y-4">
-                    <div>
-                        <Label htmlFor="typeOfSystemWiring">b) Type of system of wiring:</Label>
-                        <Textarea id="typeOfSystemWiring" {...register('typeOfSystemWiring')} placeholder="Describe system of wiring" rows={2}/>
-                    </div>
-                    <div>
-                        <Label htmlFor="conductorSizeDetails">c) Conductor Size:</Label>
-                        <Textarea id="conductorSizeDetails" {...register('conductorSizeDetails')} placeholder="Specify conductor size if different or additional" rows={2}/>
-                    </div>
-                    <div>
-                        <Label htmlFor="overheadLineSpec">ii) Specification of supports of overhead line:</Label>
-                        <Textarea id="overheadLineSpec" {...register('overheadLineSpec')} placeholder="Details of supports" rows={2}/>
-                    </div>
-                    <div>
-                        <Label htmlFor="lengthOfLine">iii) Length of the line:</Label>
-                        <Input id="lengthOfLine" {...register('lengthOfLine')} placeholder="e.g., 50 meters"/>
-                    </div>
-                    <div>
-                        <Label htmlFor="averageSpanLength">iv) Average Span Length:</Label>
-                        <Input id="averageSpanLength" {...register('averageSpanLength')} placeholder="e.g., 20 meters"/>
-                    </div>
-                </div>
-            </div>
+            {/* Removed the "Additional Wiring Information (Optional)" form fields section */}
 
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row gap-2 justify-end">
@@ -363,18 +338,8 @@ export default function CompletionCertificatePage() {
           <span style={{ display: 'inline-block', width: '280pt' }}>v) State if clearance are maintaine2
           As per relavant section of I.E.R.1956</span>: YES
         </div>
-        
-        {/* Placeholder for contractor details if needed in future */}
-        {/*
-        <div style={{ marginTop: '30px', paddingTop: '15px', borderTop: '1px dashed #ccc' }}>
-          <p>Details of Contractor (if applicable)</p>
-          <p>Name: _________________________</p>
-          <p>License No: ____________________</p>
-          <p>Signature: _____________________</p>
-        </div>
-        */}
-
       </div>
     </div>
   );
 }
+
