@@ -98,9 +98,11 @@ export function MainSidebar() {
                   tooltip={{ children: item.label, side: 'right', align: 'center' }}
                   className="justify-start"
                 >
-                  <Link href={item.href} className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  <Link href={item.href}>
+                    <span className="flex items-center gap-3"> {/* Wrapper span */}
+                      <item.icon className="h-5 w-5" />
+                      <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -113,9 +115,11 @@ export function MainSidebar() {
                  tooltip={{ children: item.label, side: 'right', align: 'center' }}
                  className="justify-start"
                >
-                 <Link href={item.href} className="flex items-center gap-3">
-                   <item.icon className="h-5 w-5" />
-                   <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                 <Link href={item.href}>
+                  <span className="flex items-center gap-3"> {/* Wrapper span */}
+                    <item.icon className="h-5 w-5" />
+                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </span>
                  </Link>
                </SidebarMenuButton>
              </SidebarMenuItem>
