@@ -126,7 +126,7 @@ body {
 
 .floating-shape {
   position: absolute;
-  background-color: hsl(var(--primary) / 0.3); /* Semi-transparent primary color */
+  background-color: hsl(var(--primary) / 0.15); /* Light mode: 15% opaque primary color */
   border-radius: 50%; /* Circular shapes */
   animation-name: float;
   animation-timing-function: ease-in-out;
@@ -156,5 +156,5 @@ body {
 }
 
 .dark .floating-shape {
-   background-color: hsl(var(--primary) / 0.25); /* Adjusted opacity for dark mode */
+   background-color: hsl(var(--accent) / 0.2); /* Dark mode: Using accent color with 20% opacity */
 }
