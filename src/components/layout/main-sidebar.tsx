@@ -16,6 +16,7 @@ import {
   Calculator,
   Wallet,
   Printer,
+  Award, // Added Award icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -42,6 +43,7 @@ const navItems = [
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
   { href: "/gst-calculator", label: "GST Calculator", icon: Calculator },
   { href: "/self-declaration-form", label: "Self Declaration", icon: Printer },
+  { href: "/completion-certificate", label: "Completion Cert.", icon: Award }, // New Item
 ];
 
 const adminNavItems = [
@@ -74,7 +76,7 @@ export function MainSidebar() {
           <SheetTitle className="sr-only">Main Navigation Menu</SheetTitle>
         )}
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-sidebar-foreground hover:text-sidebar-primary transition-colors">
-          <div className="relative h-7 w-auto text-sidebar-primary overflow-hidden"> {/* Added w-auto and overflow-hidden */}
+          <div className="relative h-7 w-auto text-sidebar-primary overflow-hidden">
             <Image
               src="/jrk-logo.png"
               alt="JRK Logo"
