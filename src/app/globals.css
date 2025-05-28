@@ -104,15 +104,6 @@ body {
   }
 }
 
-/*
-  The following @keyframes and .animate-* classes are removed because
-  they are already defined in tailwind.config.ts and will be
-  generated as utility classes by Tailwind.
-  - fade-out-splash
-  - scale-in-splash
-  - slide-in-up-main
-*/
-
 /* Floating Shapes Background Animation */
 .floating-shapes-container {
   position: fixed;
@@ -157,6 +148,5 @@ body {
 }
 
 .dark .floating-shape {
-   background-color: hsl(var(--accent) / 0.25); /* Dark mode: Using accent color, increased opacity */
+   background-color: hsl(var(--primary) / 0.15); /* Reverted: Dark mode now uses primary color with 0.15 opacity */
 }
-
