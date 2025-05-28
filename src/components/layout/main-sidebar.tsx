@@ -13,10 +13,9 @@ import {
   LogOut,
   UserPlus,
   FileArchive,
-  Calculator,
+  // Calculator, // Removed Calculator icon
   Wallet,
   Printer,
-  // Award, // Removed Award icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -41,9 +40,8 @@ const navItems = [
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
   { href: "/payment", label: "Payment", icon: Wallet },
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
-  { href: "/gst-calculator", label: "GST Calculator", icon: Calculator },
+  // { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, // Removed GST Calculator
   { href: "/self-declaration-form", label: "Self Declaration", icon: Printer },
-  // { href: "/completion-certificate", label: "Completion Cert.", icon: Award }, // Removed Completion Certificate
 ];
 
 const adminNavItems = [
