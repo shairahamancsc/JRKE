@@ -16,7 +16,7 @@ import { BottomToolbar } from '@/components/layout/bottom-toolbar';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { AuthProvider } from '@/context/auth-context';
 import { AuthGuard } from '@/components/layout/auth-guard';
-import FloatingShapesBackground from '@/components/layout/floating-shapes-background';
+// import FloatingShapesBackground from '@/components/layout/floating-shapes-background'; // Removed
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Note: The 'geist' package handles its own font loading.
@@ -76,7 +76,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              <FloatingShapesBackground />
+              {/* <FloatingShapesBackground /> */} {/* Removed */}
               <div className={showContent ? 'animate-slide-in-up-main' : 'opacity-0'}>
                   <SidebarProvider defaultOpen>
                     <MainSidebar />
