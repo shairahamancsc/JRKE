@@ -1,8 +1,8 @@
 
-import {genkit, type GenkitPlugin} from 'genkit';
+import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-
-const plugins: GenkitPlugin[] = [];
+ 
+const plugins = [];
 let model: string | undefined = undefined;
 
 if (process.env.GOOGLE_API_KEY) {

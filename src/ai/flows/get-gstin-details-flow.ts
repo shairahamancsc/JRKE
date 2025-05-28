@@ -79,7 +79,7 @@ const getGstinDetailsFlow = ai.defineFlow(
     // Ensure your `ai` object in `genkit.ts` is configured for a model that supports tool use.
     const llmResponse = await ai.generate({
         prompt: `Fetch details for GSTIN: ${input.gstin}. Use the provided tool to get this information. Respond with the structured output from the tool. If the tool indicates the GSTIN was not found, include that information.`,
-        model: ai.getModel() || 'googleai/gemini-2.0-flash', // Use default or a fallback if available
+        model: 'googleai/gemini-2.0-flash', // Use default or a fallback if available
         tools: [fetchGstApiMockTool],
         output: {
             format: 'json',
@@ -96,7 +96,7 @@ const getGstinDetailsFlow = ai.defineFlow(
         // }
     });
 
-    const toolResponse = llmResponse.toolRequests?.[0]?.output?.tool_response;
+    const toolResponse = llmResponse.toolRequests?.[0]?.toolResponse;
 
     if (toolResponse) {
         return toolResponse as GetGstinDetailsOutput;

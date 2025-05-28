@@ -184,7 +184,7 @@ export default function PaymentPage() {
                       initialFocus
                       mode="range"
                       defaultMonth={dateRange?.from}
-                      selected={dateRange}
+                      selected={dateRange?.from && dateRange?.to ? dateRange as { from: Date, to: Date } : undefined}
                       onSelect={setDateRange}
                       numberOfMonths={2}
                     />

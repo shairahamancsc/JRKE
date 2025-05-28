@@ -1,23 +1,24 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/common/data-table';
 import { IndianRupee, CalendarIcon, AlertTriangle, Loader2, Wallet, Scale } from 'lucide-react';
-import { format, parseISO, isWithinInterval, startOfDay, endOfDay, differenceInDays } from 'date-fns';
-import type { Labour, DailyLogEntry, AdvancePayment, PayrollRow } from '@/lib/types';
+import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import type { Labour, DailyLogEntry, AdvancePayment, PaymentRow } from '@/lib/types'; // Changed PayrollRow to PaymentRow
 import { LABOURS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { initialLabours, initialDailyLogEntries, initialAdvancePayments } from '@/lib/data'; // For fallback
+import { initialLabours, initialDailyLogEntries, initialAdvancePayments } from '@/lib/data'; 
 
-export default function PayrollPage() {
+// Consider renaming this component to PaymentPage if this is the intended page for /payment route
+export default function PayrollPage() { // Or rename to PaymentPage
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date } | undefined>({});
-  const [payrollData, setPayrollData] = useState<PayrollRow[]>([]);
+  const [paymentData, setPaymentData] = useState<PaymentRow[]>([]); // Changed PayrollRow to PaymentRow
   const [totalNetPayable, setTotalNetPayable] = useState<number>(0);
   const [labours, setLabours] = useState<Labour[]>([]);
   const [dailyEntries, setDailyEntries] = useState<DailyLogEntry[]>([]);
@@ -45,7 +46,7 @@ export default function PayrollPage() {
     }
   }, [toast]);
 
-  const handleCalculatePayroll = () => {
+  const handleCalculatePayment = useCallback(() => { // Renamed from handleCalculatePayroll for consistency
     if (!dateRange?.from || !dateRange?.to) {
       toast({ title: "Select Date Range", description: "Please select a valid start and end date.", variant: "destructive" });
       return;
@@ -57,7 +58,7 @@ export default function PayrollPage() {
 
     setIsLoading(true);
     setCalculationDone(false);
-    setTotalNetPayable(0); // Reset total
+    setTotalNetPayable(0); 
 
     const interval = {
       start: startOfDay(dateRange.from),
@@ -66,7 +67,7 @@ export default function PayrollPage() {
 
     let currentTotalNetPayable = 0;
 
-    const calculatedData: PayrollRow[] = labours
+    const calculatedData: PaymentRow[] = labours // Changed PayrollRow to PaymentRow
       .filter(labour => typeof labour.salaryRate === 'number' && labour.salaryRate > 0)
       .map(labour => {
         const presentDays = dailyEntries.filter(entry =>
@@ -86,7 +87,7 @@ export default function PayrollPage() {
         currentTotalNetPayable += netPayable;
 
         return {
-          id: labour.id, // Changed from labourId to id
+          id: labour.id, 
           labourName: labour.name,
           salaryRate: labour.salaryRate || 0,
           presentDays,
@@ -96,7 +97,7 @@ export default function PayrollPage() {
         };
       });
 
-    setPayrollData(calculatedData);
+    setPaymentData(calculatedData);
     setTotalNetPayable(currentTotalNetPayable);
     setIsLoading(false);
     setCalculationDone(true);
@@ -111,30 +112,30 @@ export default function PayrollPage() {
             toast({ title: "No Data Calculated", description: "No attendance records found for the selected period or no labours with valid salary rates.", variant: "default" });
         }
     }
-  };
+  }, [dateRange, labours, dailyEntries, advances, toast]);
   
   const columns = useMemo(() => [
-    { accessorKey: 'labourName' as keyof PayrollRow, header: 'Labour Name' },
+    { accessorKey: 'labourName' as keyof PaymentRow, header: 'Labour Name' },
     { 
-      accessorKey: 'salaryRate' as keyof PayrollRow, 
+      accessorKey: 'salaryRate' as keyof PaymentRow, 
       header: 'Daily Rate',
-      cell: (item: PayrollRow) => `₹${item.salaryRate.toFixed(2)}`
+      cell: (item: PaymentRow) => `₹${item.salaryRate.toFixed(2)}`
     },
-    { accessorKey: 'presentDays' as keyof PayrollRow, header: 'Present Days' },
+    { accessorKey: 'presentDays' as keyof PaymentRow, header: 'Present Days' },
     { 
-      accessorKey: 'grossSalary' as keyof PayrollRow, 
+      accessorKey: 'grossSalary' as keyof PaymentRow, 
       header: 'Gross Salary',
-      cell: (item: PayrollRow) => `₹${item.grossSalary.toFixed(2)}`
+      cell: (item: PaymentRow) => `₹${item.grossSalary.toFixed(2)}`
     },
     { 
-      accessorKey: 'totalAdvances' as keyof PayrollRow, 
+      accessorKey: 'totalAdvances' as keyof PaymentRow, 
       header: 'Total Advances',
-      cell: (item: PayrollRow) => `₹${item.totalAdvances.toFixed(2)}`
+      cell: (item: PaymentRow) => `₹${item.totalAdvances.toFixed(2)}`
     },
     { 
-      accessorKey: 'netPayable' as keyof PayrollRow, 
+      accessorKey: 'netPayable' as keyof PaymentRow, 
       header: 'Net Payable',
-      cell: (item: PayrollRow) => (
+      cell: (item: PaymentRow) => (
         <span className={cn(item.netPayable < 0 ? 'text-destructive' : 'text-green-600 dark:text-green-400', 'font-semibold')}>
           ₹{item.netPayable.toFixed(2)}
         </span>
@@ -148,7 +149,7 @@ export default function PayrollPage() {
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
             <Wallet className="h-8 w-8 text-primary" />
-            <CardTitle className="text-2xl font-bold">Labour Payroll Calculator</CardTitle>
+            <CardTitle className="text-2xl font-bold">Labour Payment Calculator</CardTitle> {/* Updated Title */}
           </div>
           <CardDescription>Calculate net payable salary for labours based on attendance and advances within a selected date range.</CardDescription>
         </CardHeader>
@@ -192,18 +193,18 @@ export default function PayrollPage() {
                 </Popover>
             </div>
             <Button 
-              onClick={handleCalculatePayroll} 
+              onClick={handleCalculatePayment} 
               disabled={isLoading || !dateRange?.from || !dateRange?.to}
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <IndianRupee className="mr-2 h-4 w-4" />}
-              Calculate Payroll
+              Calculate Payment {/* Updated Button Text */}
             </Button>
           </div>
            {labours.filter(l => typeof l.salaryRate !== 'number' || l.salaryRate <= 0).length > 0 && (
              <div className="p-3 rounded-md bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 text-sm flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-                <span>Some labours do not have a valid daily salary rate set. Their payroll cannot be calculated. Please update their profiles in the <a href="/labours" className="underline font-medium hover:text-yellow-600 dark:hover:text-yellow-200">Labours section</a>.</span>
+                <span>Some labours do not have a valid daily salary rate set. Their payment cannot be calculated. Please update their profiles in the <a href="/labours" className="underline font-medium hover:text-yellow-600 dark:hover:text-yellow-200">Labours section</a>.</span>
              </div>
            )}
         </CardContent>
@@ -212,10 +213,10 @@ export default function PayrollPage() {
       {calculationDone && (
         <Card className="shadow-xl">
           <CardHeader>
-            <CardTitle>Payroll Results</CardTitle>
+            <CardTitle>Payment Results</CardTitle> {/* Updated Title */}
             {dateRange?.from && dateRange?.to && (
                  <CardDescription>
-                    Showing payroll for the period: {format(dateRange.from, "PPP")} to {format(dateRange.to, "PPP")}.
+                    Showing payment for the period: {format(dateRange.from, "PPP")} to {format(dateRange.to, "PPP")}.
                  </CardDescription>
             )}
           </CardHeader>
@@ -225,15 +226,15 @@ export default function PayrollPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2 text-muted-foreground">Calculating...</span>
               </div>
-            ) : payrollData.length > 0 ? (
-              <DataTable columns={columns} data={payrollData} />
+            ) : paymentData.length > 0 ? (
+              <DataTable columns={columns} data={paymentData} />
             ) : (
               <p className="text-center text-muted-foreground py-6">
-                No payroll data to display for the selected criteria. Ensure labours have salary rates and there are attendance records in this period.
+                No payment data to display for the selected criteria. Ensure labours have salary rates and there are attendance records in this period.
               </p>
             )}
           </CardContent>
-           {payrollData.length > 0 && !isLoading && (
+           {paymentData.length > 0 && !isLoading && (
             <CardFooter className="flex flex-col sm:flex-row justify-end items-center pt-4 border-t">
                 <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
                     <Scale className="h-6 w-6 text-primary" />
