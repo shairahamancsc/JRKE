@@ -10,6 +10,7 @@ import { DataTable } from '@/components/common/data-table';
 import { IndianRupee, CalendarIcon, AlertTriangle, Loader2, Wallet, Scale } from 'lucide-react';
 import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import type { Labour, DailyLogEntry, AdvancePayment, PaymentRow } from '@/lib/types'; // Changed PayrollRow to PaymentRow
+import type { DateRange } from 'react-day-picker'; // Import DateRange
 import { LABOURS_STORAGE_KEY, DAILY_ENTRIES_STORAGE_KEY, ADVANCES_STORAGE_KEY } from '@/lib/storageKeys';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -17,7 +18,7 @@ import { initialLabours, initialDailyLogEntries, initialAdvancePayments } from '
 
 // Consider renaming this component to PaymentPage if this is the intended page for /payment route
 export default function PayrollPage() { // Or rename to PaymentPage
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date } | undefined>({});
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // Initialize with undefined
   const [paymentData, setPaymentData] = useState<PaymentRow[]>([]); // Changed PayrollRow to PaymentRow
   const [totalNetPayable, setTotalNetPayable] = useState<number>(0);
   const [labours, setLabours] = useState<Labour[]>([]);
