@@ -13,9 +13,9 @@ import {
   LogOut,
   UserPlus,
   FileArchive,
-  // Calculator, // Removed Calculator icon
-  Wallet,
-  Printer,
+  Wallet, // Replaced Calculator with Wallet for Payment
+  Printer, // For Self Declaration
+  Search, // For GST Calculator
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -38,9 +38,9 @@ const navItems = [
   { href: "/advances", label: "Advances", icon: IndianRupee },
   { href: "/work-logs", label: "Work Logs", icon: ClipboardList },
   { href: "/daily-entry", label: "Daily Entry", icon: ClipboardCheck },
-  { href: "/payment", label: "Payment", icon: Wallet },
+  { href: "/payment", label: "Payment", icon: Wallet }, // Changed from Payroll
   { href: "/proprietor-documents", label: "Proprietor Docs", icon: FileArchive },
-  // { href: "/gst-calculator", label: "GST Calculator", icon: Calculator }, // Removed GST Calculator
+  { href: "/gst-calculator", label: "GST Validator", icon: Search }, // Restored GST link, using Search icon
   { href: "/self-declaration-form", label: "Self Declaration", icon: Printer },
 ];
 

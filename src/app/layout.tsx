@@ -16,12 +16,9 @@ import { BottomToolbar } from '@/components/layout/bottom-toolbar';
 import { SplashScreen } from '@/components/layout/splash-screen';
 import { AuthProvider } from '@/context/auth-context';
 import { AuthGuard } from '@/components/layout/auth-guard';
-// import FloatingShapesBackground from '@/components/layout/floating-shapes-background'; // Removed
+import FloatingShapesBackground from '@/components/layout/floating-shapes-background'; // Restored
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-// Note: The 'geist' package handles its own font loading.
-// We don't need to instantiate it like with next/font/google.
-// The imported GeistSans and GeistMono objects directly provide .variable.
 
 export default function RootLayout({
   children,
@@ -76,7 +73,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              {/* <FloatingShapesBackground /> */} {/* Removed */}
+              <FloatingShapesBackground /> {/* Restored */}
               <div className={showContent ? 'animate-slide-in-up-main' : 'opacity-0'}>
                   <SidebarProvider defaultOpen>
                     <MainSidebar />

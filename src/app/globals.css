@@ -104,8 +104,7 @@ body {
   }
 }
 
-/* Floating Shapes Background Animation - REMOVED */
-/*
+/* Floating Shapes Background Animation */
 .floating-shapes-container {
   position: fixed;
   top: 0;
@@ -151,4 +150,3 @@ body {
 .dark .floating-shape {
    background-color: hsl(var(--primary) / 0.15); 
 }
-*/
